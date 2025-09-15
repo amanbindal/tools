@@ -23810,6 +23810,19 @@
         if (!latest.post_earnings_move_3d && json.data.length > 1)
           latest = json.data[json.data.length - 2];
 
+        // Check if next earnings date is within 1 month
+        const nextDate = new Date(next.report_date);
+        nextDate.setHours(0, 0, 0, 0); // Set to start of day
+        const today = new Date();
+        const oneMonthFromNow = new Date();
+        oneMonthFromNow.setHours(0, 0, 0, 0)
+        oneMonthFromNow.setMonth(today.getMonth() + 1);
+        today.setDate(today.getDate() - 1); // minus one day
+        today.setHours(0, 0, 0, 0); // Set to start of day
+
+        // Skip if earnings date is not within next month
+        if (nextDate >= oneMonthFromNow || nextDate < today) return null;
+
         const beta = jsonStats && jsonStats.data ? parseFloat(jsonStats.data.beta) || 0 : 0;
         const ivRank = jsonIvData && jsonIvData.data ? parseFloat(jsonIvData.data.iv_rank) || 999 : 999;
         const preErPrice = parseFloat(latest.price) || 0;
@@ -24000,7 +24013,7 @@
         var straddleCalulated = parseFloat(data.straddle && data.straddle != "N/A" ? toDecimal(parseFloat(data.straddle) + parseFloat(data.straddle) * 0.15) : 0);
         var expMoveCalulated = parseFloat(data.expected_move_perc && data.expected_move_perc != 0 && data.expected_move_perc != 'N/A' ? toDecimal(parseFloat(data.expected_move_perc) + parseFloat(data.expected_move_perc) * 0.15) : 0);
         var straddleMoveRatioPerc = toDecimal(calcPostErMove1d / expMoveCalulated * 100);
-        if (!data || expMoveCalulated > calcPostErMove1d || straddleMoveRatioPerc < 100)
+        if (!data || !straddleCalulated)
           return;
         var postMove = parseFloat(data.post_earnings_move_1d && data.post_earnings_move_1d != 0 && data.post_earnings_move_1d != 'N/A' ? data.post_earnings_move_1d : 0);
         var p = parseFloat((expMoveCalulated && straddleCalulated && expMoveCalulated > 0 && straddleCalulated > 0 ? parseFloat(((straddleCalulated - expMoveCalulated) / expMoveCalulated) * 100) : 999).toFixed(2));
