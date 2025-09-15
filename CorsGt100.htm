@@ -230,6 +230,18 @@
     </table>
   </div>
   <script>
+
+    const ER_DATA_KEY = 'erDataList';
+    const ER_DATA_TIMESTAMP_KEY = 'erDataListTimestamp';
+    const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+    class ErData {
+      constructor(ticker, erDate) {
+        this.ticker = ticker;
+        this.erDate = erDate;
+      }
+    }
+    const erDataList = []; // Placeholder for earnings data
+
     const tickers = ['A', 'AA', 'AAL', 'AAMI', 'AAOI', 'AAON', 'AAP', 'AAPL', 'AAT', 'ABBV', 'ABCB', 'ABCL',
       'ABCM', 'ABEO', 'ABG', 'ABM', 'ABNB', 'ABOS', 'ABR', 'ABSI', 'ABT', 'ABUS', 'ACA', 'ACAD',
       'ACCO', 'ACDC', 'ACEL', 'ACGL', 'ACHC', 'ACHR', 'ACI', 'ACIC', 'ACIW', 'ACLS', 'ACLX', 'ACM',
@@ -23586,7 +23598,13 @@
         "Top5_Ticker": "XLK"
       }
     ];
-
+    // Build a fast lookup once (place this after the `const correlation = [...]` definition)
+    const correlationMap = new Map(
+      correlation.map(({ Ticker, Top1_Ticker, Top2_Ticker, Top3_Ticker, Top4_Ticker, Top5_Ticker }) => [
+        Ticker,
+        [Top1_Ticker, Top2_Ticker, Top3_Ticker, Top4_Ticker, Top5_Ticker]
+      ])
+    );
     function exportTableToCSV() {
       // Get the table element
       const table = document.querySelector('table');
@@ -23809,6 +23827,39 @@
         if (!latest.post_earnings_move_3d && json.data.length > 1)
           latest = json.data[json.data.length - 2];
 
+
+        const cachedData = getCache(ER_DATA_KEY);
+        const cachedTimestamp = localStorage.getItem(ER_DATA_TIMESTAMP_KEY);
+        if (cachedData && cachedTimestamp) {
+          // Use cached data
+          erDataList.splice(0, erDataList.length);
+          erDataList.push(...cachedData);
+          const age = Date.now() - Number(cachedTimestamp);
+          if (age > ONE_DAY_MS) {
+            const entry = cachedData.find(item => item.ticker === ticker);
+            if (!entry) {
+              erDataList.push(new ErData(ticker, next.report_date));
+            }
+          }
+          else {
+            // Create and store the ErData object
+            const entry = erDataList.find(item => item.ticker === ticker);
+            if (!entry) {
+              erDataList.push(new ErData(ticker, next.report_date));
+            }
+            setCache(ER_DATA_KEY, erDataList);
+            localStorage.setItem(ER_DATA_TIMESTAMP_KEY, Date.now().toString());
+          }
+        } else {
+          // Create and store the ErData object
+          const entry = erDataList.find(item => item.ticker === ticker);
+          if (!entry) {
+            erDataList.push(new ErData(ticker, next.report_date));
+          }
+          setCache(ER_DATA_KEY, erDataList);
+          localStorage.setItem(ER_DATA_TIMESTAMP_KEY, Date.now().toString());
+        }
+
         // Check if next earnings date is within 1 month
         const nextDate = new Date(next.report_date);
         nextDate.setHours(0, 0, 0, 0); // Set to start of day
@@ -23939,6 +23990,14 @@
       if (cached && cached.data && cached.fetchedAt &&
         !isNewBusinessDay(cached.fetchedAt) &&
         !isOverAnHour(cached.fetchedAt)) {
+
+        const cachedData = getCache(ER_DATA_KEY);
+        const cachedTimestamp = localStorage.getItem(ER_DATA_TIMESTAMP_KEY);
+        if (cachedData && cachedTimestamp) {
+          // Use cached data
+          erDataList.splice(0, erDataList.length);
+          erDataList.push(...cachedData);
+        }
         return cached.data;
       }
 
@@ -23979,14 +24038,10 @@
       }
     }
 
-    // Build a fast lookup once (place this after the `const correlation = [...]` definition)
-    const correlationMap = new Map(
-      correlation.map(({ Ticker, Top1_Ticker, Top2_Ticker, Top3_Ticker, Top4_Ticker, Top5_Ticker }) => [
-        Ticker,
-        [Top1_Ticker, Top2_Ticker, Top3_Ticker, Top4_Ticker, Top5_Ticker]
-      ])
-    );
-
+    function getNextDateForTicker(ticker) {
+      const entry = erDataList.find(item => item.ticker === ticker);
+      return entry ? entry.erDate : '';
+    }
     // Get the 5 correlation tickers for a given ticker (returns [] if none found)
     function getCorrelationTickers(ticker) {
       return correlationMap.get(ticker) || [];
@@ -24018,20 +24073,24 @@
         var p = parseFloat((expMoveCalulated && straddleCalulated && expMoveCalulated > 0 && straddleCalulated > 0 ? parseFloat(((straddleCalulated - expMoveCalulated) / expMoveCalulated) * 100) : 999).toFixed(2));
         var s = parseFloat(postMove != 0 && expMoveCalulated != 0 ? parseFloat(((Math.abs(postMove) - Math.abs(expMoveCalulated)) / Math.abs(expMoveCalulated)) * 100).toFixed(2) : 0);
         var corrs = getCorrelationTickers(ticker);
+        var erDateCor0 = getNextDateForTicker(corrs[0]);
+        var erDateCor1 = getNextDateForTicker(corrs[1]);
+        var erDateCor2 = getNextDateForTicker(corrs[2]);
+        var erDateCor3 = getNextDateForTicker(corrs[3]);
+        var erDateCor4 = getNextDateForTicker(corrs[4]);
         const row = `<tr id="row-${ticker}">
                     <td>${ticker}</td>
                     <td>${data.er_date}</td>
                     <td class="rsi">0</td>
                     <td>${parseFloat(data.iv_rank.toFixed(2))}</td>
                     <td style="${data.beta && data.beta > 1.29 ? 'color:green;' : 'color:inherit;'}">${data.beta ? parseFloat(data.beta.toFixed(2)) : 0}</td>
-                    <td>${s}</td>
                     <td>${p}</td>
                     <td style="${expMoveCalulated >= straddleCalulated ? 'color:green;' : 'color:red'}"><a href="https://unusualwhales.com/stock/${ticker}/earnings" target="_blank" style="color:inherit;">${straddleCalulated}</a></td>
-                    <td><a href="https://marketchameleon.com/Overview/${corrs[0]}" target="_blank">${corrs[0]}</td>
-                    <td><a href="https://marketchameleon.com/Overview/${corrs[1]}" target="_blank">${corrs[1]}</td>
-                    <td><a href="https://marketchameleon.com/Overview/${corrs[2]}" target="_blank">${corrs[2]}</td>
-                    <td><a href="https://marketchameleon.com/Overview/${corrs[3]}" target="_blank">${corrs[3]}</td>
-                    <td><a href="https://marketchameleon.com/Overview/${corrs[4]}" target="_blank">${corrs[4]}</td>
+                    <td><a href="https://marketchameleon.com/Overview/${corrs[0]}" target="_blank" title="${erDateCor0}">${corrs[0]}</td>
+                    <td><a href="https://marketchameleon.com/Overview/${corrs[1]}" target="_blank" title="${erDateCor1}">${corrs[1]}</td>
+                    <td><a href="https://marketchameleon.com/Overview/${corrs[2]}" target="_blank" title="${erDateCor2}">${corrs[2]}</td>
+                    <td><a href="https://marketchameleon.com/Overview/${corrs[3]}" target="_blank" title="${erDateCor3}">${corrs[3]}</td>
+                    <td><a href="https://marketchameleon.com/Overview/${corrs[4]}" target="_blank" title="${erDateCor4}">${corrs[4]}</td>
                     <td class="H52w">-</td>
                     <td class="H3m">-</td>
                       <td class="ma200">-</td>
