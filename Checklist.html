@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Explosive Move Checklist — Simple</title>
+  <style>
+    :root{--bg:#f6f8fb;--card:#ffffff;--muted:#6b7280;--accent:#2563eb;--good:#16a34a;--warn:#f59e0b;--bad:#ef4444;--glass:rgba(16,24,40,0.04)}
+    *{box-sizing:border-box;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial}
+    body{margin:0;background:var(--bg);color:#0f1724}
+    .wrap{max-width:980px;margin:28px auto;padding:18px}
+    header{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+    header h1{font-size:18px;margin:0}
+    .grid{display:grid;grid-template-columns:1fr 340px;gap:18px}
+    .card{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 6px 18px rgba(18,38,63,0.06)}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    input[type=text], input[type=number], select, textarea{width:100%;padding:9px;border-radius:8px;border:1px solid #e6eef6;background:transparent;color:inherit}
+    textarea{min-height:70px}
+    .row{display:flex;gap:10px}
+    .col{flex:1}
+    .btn{background:var(--accent);color:#fff;padding:9px 12px;border-radius:8px;border:none;cursor:pointer}
+    .btn.ghost{background:transparent;border:1px solid rgba(12,18,32,0.06);color:var(--muted)}
+    .small{font-size:13px;color:var(--muted)}
+    table{width:100%;border-collapse:collapse;margin-top:10px}
+    th,td{padding:8px;text-align:left;border-bottom:1px solid #f0f3f7;font-size:14px}
+    .badge{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:600}
+    .score-high{background:rgba(22,163,74,0.12);color:var(--good);border:1px solid rgba(22,163,74,0.18)}
+    .score-mid{background:rgba(245,158,11,0.08);color:var(--warn);border:1px solid rgba(245,158,11,0.12)}
+    .score-low{background:rgba(239,68,68,0.06);color:var(--bad);border:1px solid rgba(239,68,68,0.10)}
+    .muted-box{background:var(--glass);padding:10px;border-radius:8px;font-size:13px;color:var(--muted)}
+    footer{margin-top:16px;color:var(--muted);font-size:13px}
+    .controls{display:flex;gap:8px;margin-top:12px}
+    .hide-mobile{display:block}
+    @media(max-width:900px){.grid{grid-template-columns:1fr;}.hide-mobile{display:none}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Explosive Move Checklist — Simple</h1>
+      <div class="small">Uses Relative Volume StDev (preferred) or falls back to volume ratio. Stores locally, export CSV.</div>
+    </header>
+
+    <div class="grid">
+      <main class="card">
+        <h3 style="margin-top:0">Add / Score Ticker</h3>
+
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <input id="ticker" type="text" placeholder="Ticker (e.g., AAPL)" style="font-weight:600" />
+          <select id="preset">
+            <option value="standard">Standard</option>
+            <option value="aggressive">Aggressive</option>
+            <option value="conservative">Conservative</option>
+          </select>
+          <button id="applyPreset" class="btn">Apply</button>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
+          <div>
+            <label>Last Price $</label>
+            <input id="lastPrice" type="number" step="0.01" />
+          </div>
+          <div>
+            <label>ATR(14) $</label>
+            <input id="atr" type="number" step="0.01" />
+          </div>
+          <div>
+            <label>Straddle Mid (call+put) $</label>
+            <input id="straddle" type="number" step="0.01" placeholder="call_mid+put_mid" />
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
+          <div>
+            <label>Relative Vol (stdev units)</label>
+            <input id="relVolStdev" type="number" step="0.1" placeholder="e.g., 2.5 (sigma)" />
+          </div>
+          <div>
+            <label>Avg Vol(20) (fallback)</label>
+            <input id="avgVol20" type="number" placeholder="optional" />
+          </div>
+          <div>
+            <label>Today's Vol (fallback)</label>
+            <input id="volToday" type="number" placeholder="optional" />
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:10px">
+          <div>
+            <label>3‑month % change (decimal)</label>
+            <input id="threeMo" type="number" step="0.01" placeholder="0.60 = +60%" />
+          </div>
+          <div>
+            <label>Rel Perf vs QQQ (decimal)</label>
+            <input id="relPerf" type="number" step="0.01" placeholder="0.20 = +20%" />
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:6px">
+          <div>
+            <label>RSI(14)</label>
+            <input id="rsiVal" type="number" step="1" />
+          </div>
+          <div>
+            <label>IV Rank (0-100)</label>
+            <input id="ivRank" type="number" step="1" />
+          </div>
+          <div>
+            <label>Short Interest %</label>
+            <input id="shortPct" type="number" step="0.1" />
+          </div>
+        </div>
+
+        <div style="margin-bottom:8px">
+          <label>Notes</label>
+          <textarea id="notes" placeholder="Optional: headlines, catalyst, flow"></textarea>
+        </div>
+
+        <div class="controls">
+          <button id="calcBtn" class="btn">Score & Add</button>
+          <button id="clearBtn" class="btn ghost">Clear</button>
+          <button id="exportCSV" class="btn ghost" style="margin-left:auto">Export CSV</button>
+        </div>
+
+        <div style="margin-top:12px" class="muted-box small">
+          <strong>Why Relative Vol StDev?</strong>
+          <div>Relative volume measured in standard-deviation units ("sigma") is more robust than a simple ratio: it accounts for the stock's volume variability and avoids false positives on low-volatility names. <br/>
+          How to compute quickly: use your data provider or calculate (todayVol - meanVol20) / stdDevVol20. <em>If you don't have it, use AvgVol/TodayVol fields (fallback).</em></div>
+        </div>
+      </main>
+
+      <aside class="card">
+        <div style="display:flex;align-items:center;gap:8px">
+          <h3 style="margin:0">Candidates</h3>
+          <div style="margin-left:auto" class="small muted-box">Saved locally • <span id="count">0</span></div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:8px;margin-bottom:8px">
+          <input id="filterText" type="text" placeholder="Filter ticker or notes" />
+          <button id="refresh" class="btn ghost">Refresh</button>
+          <button id="clearAll" class="btn ghost">Clear All</button>
+        </div>
+
+        <div style="max-height:520px;overflow:auto">
+          <table id="tbl">
+            <thead><tr><th style="width:80px">Ticker</th><th>Score</th><th style="width:120px">Flags</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div style="margin-top:12px" class="muted-box small">
+          <strong>How to use:</strong>
+          <ol style="padding-left:18px;margin:6px 0">
+            <li>Run your scan and copy tickers into this tool.</li>
+            <li>Paste numeric values quickly (ATR, straddle mid, relVolStdev or avgVol/volToday, RSI).</li>
+            <li>Click "Score & Add" — top items are ranked automatically.</li>
+          </ol>
+        </div>
+      </aside>
+    </div>
+
+    <footer>
+      <div class="small">If you want, I can add an "auto-calc" button that fetches avg & std dev for a given ticker via a small Python snippet — tell me and I'll add it.</div>
+    </footer>
+  </div>
+
+<script>
+(function(){
+  const storageKey = 'explosive_checklist_v1_light';
+  const state = {items: [], editingIndex: -1};
+  const $ = id => document.getElementById(id);
+
+  function load(){
+    const raw = localStorage.getItem(storageKey);
+    if(raw) state.items = JSON.parse(raw);
+    renderList();
+  }
+  function save(){ localStorage.setItem(storageKey, JSON.stringify(state.items)); renderList(); }
+
+  function clearForm(){
+    ['ticker','lastPrice','atr','straddle','relVolStdev','avgVol20','volToday','threeMo','relPerf','rsiVal','ivRank','shortPct','notes'].forEach(id=>$(id).value='');
+    state.editingIndex = -1; $('calcBtn').innerText='Score & Add';
+  }
+
+  function applyPreset(){
+    const p = $('preset').value; if(p==='aggressive'){ $('ivRank').value=''; } else if(p==='conservative'){ $('ivRank').value=''; } else { $('ivRank').value=''; }
+  }
+
+  function computeScore(data){
+    // simple scoring: weighted checks (weights are fixed and tuned for simplicity)
+    let score=0; const flags=[];
+    const weights = {vol:25, straddle:25, rel:20, iv:15, short:15};
+    // Prefer Relative Vol StDev if provided
+    const relVol = (!isNaN(data.relVolStdev) && data.relVolStdev!==0) ? data.relVolStdev : ((data.avgVol20>0 && data.volToday>0) ? (data.volToday / data.avgVol20) : 0);
+
+    // If relVolStdev (sigma) provided, threshold at >2 sigma
+    if(!isNaN(data.relVolStdev) && data.relVolStdev>0){
+      if(data.relVolStdev >= 2){ score += weights.vol; flags.push('Volσ↑'); }
+    } else {
+      // fallback: ratio
+      if(relVol > 4){ score += weights.vol; flags.push('Vol↑'); }
+    }
+
+    if(data.atr>0 && data.straddle>0 && data.straddle < data.atr){ score += weights.straddle; flags.push('Straddle<ATR'); }
+
+    if(!isNaN(data.threeMo) && !isNaN(data.relPerf)){
+      if(data.threeMo > 0.6 && data.relPerf > 0.2 && data.rsi >= 75){ score += weights.rel; flags.push('Bubble'); }
+      if(data.threeMo < -0.35 && data.relPerf < -0.12 && data.rsi <= 30){ score += weights.rel; flags.push('Rebound'); }
+    }
+
+    if(!isNaN(data.ivRank) && data.ivRank < 40){ score += weights.iv; flags.push('LowIV'); }
+    if(!isNaN(data.shortPct) && data.shortPct >= 8){ score += weights.short; flags.push('Short↑'); }
+
+    const total = Object.values(weights).reduce((a,b)=>a+b,0);
+    const pct = Math.round((score/total)*100);
+    return {score:pct, flags:flags};
+  }
+
+  function addItem(){
+    const data = {
+      ticker: $('ticker').value.trim().toUpperCase(),
+      lastPrice: Number($('lastPrice').value)||0,
+      atr: Number($('atr').value)||0,
+      straddle: Number($('straddle').value)||0,
+      relVolStdev: Number($('relVolStdev').value)||NaN,
+      avgVol20: Number($('avgVol20').value)||0,
+      volToday: Number($('volToday').value)||0,
+      threeMo: Number($('threeMo').value)||0,
+      relPerf: Number($('relPerf').value)||0,
+      rsi: Number($('rsiVal').value)||0,
+      ivRank: Number($('ivRank').value)||NaN,
+      shortPct: Number($('shortPct').value)||NaN,
+      notes: $('notes').value||'',
+      created: (new Date()).toISOString()
+    };
+
+    if(!data.ticker){ alert('Ticker required'); return; }
+    const res = computeScore(data);
+    data.score = res.score; data.flags = res.flags;
+    state.items.unshift(data);
+    save(); clearForm();
+  }
+
+  function renderList(filter){
+    const tbody = document.querySelector('#tbl tbody'); tbody.innerHTML='';
+    const f = (filter||'').toLowerCase();
+    const items = state.items.filter(it=> !f || it.ticker.toLowerCase().includes(f) || (it.notes||'').toLowerCase().includes(f));
+    $('count').innerText = items.length;
+    items.forEach((it,idx)=>{
+      const tr = document.createElement('tr');
+      const tdTicker = document.createElement('td'); tdTicker.innerText = it.ticker;
+      const tdScore = document.createElement('td');
+      const badge = document.createElement('span'); badge.className='badge ' + (it.score>=75?'score-high':(it.score>=50?'score-mid':'score-low'));
+      badge.innerText = it.score + '%'; tdScore.appendChild(badge);
+      const tdFlags = document.createElement('td'); tdFlags.innerText = it.flags.join(', ');
+      const tdAct = document.createElement('td');
+      const btnE = document.createElement('button'); btnE.className='btn ghost'; btnE.innerText='Edit'; btnE.onclick=()=> loadToForm(idx);
+      const btnD = document.createElement('button'); btnD.className='btn ghost'; btnD.innerText='Del'; btnD.onclick=()=>{ if(confirm('Delete '+it.ticker+'?')){ state.items.splice(idx,1); save(); }};
+      tdAct.appendChild(btnE); tdAct.appendChild(btnD);
+      tr.appendChild(tdTicker); tr.appendChild(tdScore); tr.appendChild(tdFlags); tr.appendChild(tdAct);
+      tbody.appendChild(tr);
+    });
+  }
+
+  function loadToForm(index){
+    const it = state.items[index]; if(!it) return;
+    $('ticker').value = it.ticker; $('lastPrice').value = it.lastPrice||''; $('atr').value = it.atr||''; $('straddle').value = it.straddle||'';
+    $('relVolStdev').value = isNaN(it.relVolStdev)? '': it.relVolStdev; $('avgVol20').value = it.avgVol20||''; $('volToday').value = it.volToday||'';
+    $('threeMo').value = it.threeMo||''; $('relPerf').value = it.relPerf||''; $('rsiVal').value = it.rsi||''; $('ivRank').value = it.ivRank||''; $('shortPct').value = it.shortPct||''; $('notes').value = it.notes||'';
+    state.editingIndex = index; $('calcBtn').innerText='Update Item';
+  }
+
+  function exportCSV(){
+    const rows = [['Ticker','Score','Flags','Last','ATR','Straddle','RelVolStdev','AvgVol20','VolToday','3Mchg','RelPerf','RSI','IVRank','Short%','Notes','Created']];
+    state.items.forEach(it=> rows.push([it.ticker,it.score,it.flags.join('|'),it.lastPrice,it.atr,it.straddle,isNaN(it.relVolStdev)?'':it.relVolStdev,it.avgVol20,it.volToday,it.threeMo,it.relPerf,it.rsi,it.ivRank,it.shortPct,(it.notes||'').replace(/\n/g,' '),it.created]));
+    const csv = rows.map(r=> r.map(c=> '"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+    const blob = new Blob([csv],{type:'text/csv'});
+    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download='explosive_candidates.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  }
+
+  // events
+  $('calcBtn').addEventListener('click', ()=>{
+    if(state.editingIndex>=0){ // update
+      state.items[state.editingIndex] = (()=>{ const it = state.items[state.editingIndex]; const newIt = { ...it, ticker: $('ticker').value.trim().toUpperCase(), lastPrice:Number($('lastPrice').value)||it.lastPrice, atr:Number($('atr').value)||it.atr, straddle:Number($('straddle').value)||it.straddle, relVolStdev: Number($('relVolStdev').value)||it.relVolStdev, avgVol20:Number($('avgVol20').value)||it.avgVol20, volToday:Number($('volToday').value)||it.volToday, threeMo:Number($('threeMo').value)||it.threeMo, relPerf:Number($('relPerf').value)||it.relPerf, rsi:Number($('rsiVal').value)||it.rsi, ivRank:Number($('ivRank').value)||it.ivRank, shortPct:Number($('shortPct').value)||it.shortPct, notes:$('notes').value||it.notes, created:it.created}; const res=computeScore(newIt); newIt.score=res.score; newIt.flags=res.flags; return newIt; })(); save(); clearForm(); }
+    else addItem();
+  });
+  $('clearBtn').addEventListener('click', clearForm);
+  $('exportCSV').addEventListener('click', exportCSV);
+  $('refresh').addEventListener('click', ()=>renderList($('filterText').value));
+  $('clearAll').addEventListener('click', ()=>{ if(confirm('Clear all saved items?')){ state.items=[]; save(); }});
+  $('filterText').addEventListener('input', ()=>renderList($('filterText').value));
+  $('applyPreset').addEventListener('click', applyPreset);
+
+  load();
+})();
+</script>
+</body>
+</html>
