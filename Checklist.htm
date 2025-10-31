@@ -280,10 +280,8 @@
 
   function exportCSV(){
     const rows = [['Ticker','Score','Flags','Last','ATR','Straddle','RelVolStdev','AvgVol20','VolToday','3Mchg','RelPerf','RSI','IVRank','Short%','Notes','Created']];
-    state.items.forEach(it=> rows.push([it.ticker,it.score,it.flags.join('|'),it.lastPrice,it.atr,it.straddle,isNaN(it.relVolStdev)?'':it.relVolStdev,it.avgVol20,it.volToday,it.threeMo,it.relPerf,it.rsi,it.ivRank,it.shortPct,(it.notes||'').replace(/
-/g,' '),it.created]));
-    const csv = rows.map(r=> r.map(c=> '"'+String(c).replace(/"/g,'""')+'"').join(',')).join('
-');
+    state.items.forEach(it=> rows.push([it.ticker,it.score,it.flags.join('|'),it.lastPrice,it.atr,it.straddle,isNaN(it.relVolStdev)?'':it.relVolStdev,it.avgVol20,it.volToday,it.threeMo,it.relPerf,it.rsi,it.ivRank,it.shortPct,(it.notes||'').replace(g,' '),it.created]));
+    const csv = rows.map(r=> r.map(c=> '"'+String(c).replace(/"/g,'""')+'"').join(',')).join('');
     const blob = new Blob([csv],{type:'text/csv'});
     const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download='explosive_candidates.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
   }
