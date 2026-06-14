@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pro Pre-Earnings Strangle Auditor</title>
+    <style>
+        :root {
+            --bg-color: #0b0e14;
+            --surface-color: #151a23;
+            --border-color: #2a3241;
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent-blue: #3b82f6;
+            --danger-red: #ef4444;
+            --success-green: #10b981;
+            --warning-yellow: #f59e0b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+
+        body { background-color: var(--bg-color); color: var(--text-main); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+
+        .container { background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 12px; width: 100%; max-width: 900px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; }
+
+        @media (max-width: 768px) { .container { grid-template-columns: 1fr; } }
+
+        .section { padding: 25px; }
+        .inputs-section { border-right: 1px solid var(--border-color); }
+        @media (max-width: 768px) { .inputs-section { border-right: none; border-bottom: 1px solid var(--border-color); } }
+
+        h2 { font-size: 1.15rem; margin-bottom: 20px; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;}
+
+        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .input-group { margin-bottom: 15px; }
+        .input-group.full { grid-column: span 2; }
+        
+        label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; }
+        .label-warning { color: var(--warning-yellow); font-size: 0.7rem; display: block; margin-top: 2px;}
+        input { width: 100%; background-color: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-main); padding: 10px; border-radius: 6px; font-size: 1rem; outline: none; transition: border-color 0.2s; }
+        input:focus { border-color: var(--accent-blue); }
+
+        .results-section { background-color: #11151d; display: flex; flex-direction: column; }
+
+        .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .metric-card { background-color: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; }
+        .metric-title { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
+        .metric-value { font-size: 1.25rem; font-weight: 600; }
+
+        .flags-container { margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px; }
+        .flag { font-size: 0.85rem; padding: 8px 12px; border-radius: 6px; display: flex; align-items: center; gap: 8px; border: 1px solid var(--border-color); background-color: rgba(255,255,255,0.02);}
+        .flag.danger { border-color: var(--danger-red); color: #fca5a5; background-color: rgba(239, 68, 68, 0.1); }
+        .flag.warning { border-color: var(--warning-yellow); color: #fcd34d; background-color: rgba(245, 158, 11, 0.1); }
+        .flag.success { border-color: var(--success-green); color: #6ee7b7; background-color: rgba(16, 185, 129, 0.1); }
+
+        .verdict-box { margin-top: auto; padding: 20px; border-radius: 8px; text-align: center; border: 2px solid var(--border-color); background-color: var(--surface-color); }
+        .verdict-title { font-size: 1.5rem; font-weight: bold; margin-bottom: 8px; text-transform: uppercase;}
+        .verdict-desc { font-size: 0.9rem; line-height: 1.4; color: var(--text-muted); }
+
+        .status-cheap { border-color: var(--success-green); }
+        .status-cheap .verdict-title { color: var(--success-green); }
+        .status-fair { border-color: var(--warning-yellow); }
+        .status-fair .verdict-title { color: var(--warning-yellow); }
+        .status-expensive { border-color: var(--danger-red); }
+        .status-expensive .verdict-title { color: var(--danger-red); }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Input Form -->
+        <div class="section inputs-section">
+            <h2>Market Data Inputs</h2>
+            
+            <div class="input-grid">
+                <div class="input-group full">
+                    <label>Current Stock Price ($)</label>
+                    <input type="number" id="stockPrice" step="0.01" oninput="calculate()">
+                </div>
+
+                <div class="input-group">
+                    <label>Daily ATR ($)</label>
+                    <input type="number" id="atr" step="0.01" oninput="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>Days to Earnings</label>
+                    <input type="number" id="dte" step="1" oninput="calculate()">
+                </div>
+
+                <div class="input-group">
+                    <label>Current IV30 (%)</label>
+                    <input type="number" id="iv" step="0.1" placeholder="DO NOT use MA(20)" oninput="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>Current HV30 (%)</label>
+                    <input type="number" id="hv" step="0.1" placeholder="DO NOT use MA(20)" oninput="calculate()">
+                </div>
+
+                <div class="input-group full">
+                    <label>IV30 % Rank</label>
+                    <input type="number" id="ivr" step="0.1" placeholder="e.g. 25.0" oninput="calculate()">
+                </div>
+
+                <div class="input-group">
+                    <label>40-Delta Call ($)</label>
+                    <input type="number" id="callPrice" step="0.01" oninput="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>40-Delta Put ($)</label>
+                    <input type="number" id="putPrice" step="0.01" oninput="calculate()">
+                </div>
+            </div>
+        </div>
+
+        <!-- Real-Time Results -->
+        <div class="section results-section">
+            <h2>Execution Diagnostics</h2>
+
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-title">Expected Move Cap</div>
+                    <div class="metric-value" id="valExpectedMove">$0.00</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Total Premium Cost</div>
+                    <div class="metric-value" id="valTotalPremium">$0.00</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Breakeven Distance</div>
+                    <div class="metric-value" id="valBreakeven">0.00%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Premium Inflation Ratio</div>
+                    <div class="metric-value" id="valPIR">0.00</div>
+                </div>
+            </div>
+
+            <!-- Contextual Flags -->
+            <div class="flags-container" id="flagsContainer">
+                <div class="flag">Awaiting input data to generate structural flags...</div>
+            </div>
+
+            <!-- Final Verdict -->
+            <div class="verdict-box" id="verdictBox">
+                <div class="verdict-title" id="verdictTitle">STANDBY</div>
+                <div class="verdict-desc" id="verdictDesc">Enter all fields to audit the trade. Do not use smoothed averages.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function calculate() {
+            const stockPrice = parseFloat(document.getElementById('stockPrice').value);
+            const atr = parseFloat(document.getElementById('atr').value);
+            const dte = parseInt(document.getElementById('dte').value);
+            const iv = parseFloat(document.getElementById('iv').value);
+            const hv = parseFloat(document.getElementById('hv').value);
+            const ivr = parseFloat(document.getElementById('ivr').value);
+            const callPrice = parseFloat(document.getElementById('callPrice').value);
+            const putPrice = parseFloat(document.getElementById('putPrice').value);
+
+            const verdictBox = document.getElementById('verdictBox');
+            const flagsContainer = document.getElementById('flagsContainer');
+
+            if (!stockPrice || !atr || !dte || !iv || !hv || !ivr || !callPrice || !putPrice) {
+                return;
+            }
+
+            if (dte <= 3) {
+                flagsContainer.innerHTML = `<div class="flag danger">ERROR: Holding time must be > 3 days for this strategy.</div>`;
+                return;
+            }
+
+            const daysToHold = dte - 3;
+            const expectedMove = atr * Math.sqrt(daysToHold);
+            const totalPremium = callPrice + putPrice;
+            const pir = totalPremium / expectedMove;
+            const breakevenPct = (totalPremium / stockPrice) * 100;
+
+            document.getElementById('valExpectedMove').textContent = '$' + expectedMove.toFixed(2);
+            document.getElementById('valTotalPremium').textContent = '$' + totalPremium.toFixed(2);
+            document.getElementById('valBreakeven').textContent = breakevenPct.toFixed(2) + '%';
+            document.getElementById('valPIR').textContent = pir.toFixed(2);
+
+            let flagsHtml = '';
+            let fatalFlaw = false;
+
+            if (iv > hv) {
+                flagsHtml += `<div class="flag danger">⚠️ IV30 > HV30: Current options are structurally overpriced compared to actual stock movement.</div>`;
+                fatalFlaw = true;
+            } else {
+                flagsHtml += `<div class="flag success">✅ IV30 < HV30: Current premium is mathematically underpriced. Structural edge confirmed.</div>`;
+            }
+
+            if (ivr >= 40) {
+                flagsHtml += `<div class="flag danger">⚠️ IV30 Rank > 40%: The pre-earnings pump has already happened. Vega expansion is capped.</div>`;
+                fatalFlaw = true;
+            } else if (ivr > 30) {
+                flagsHtml += `<div class="flag warning">⚠️ IV30 Rank is elevated. Margin of safety for Vega expansion is shrinking.</div>`;
+            } else {
+                flagsHtml += `<div class="flag success">✅ IV30 Rank < 30%: Optimal zone. High capacity for pre-earnings Vega inflation.</div>`;
+            }
+
+            if (breakevenPct > 8.0) {
+                flagsHtml += `<div class="flag warning">⚠️ Breakeven > 8%: Strangle requires a massive directional move to offset cost.</div>`;
+            }
+
+            flagsContainer.innerHTML = flagsHtml;
+
+            if (fatalFlaw || pir > 1.2) {
+                verdictBox.className = 'verdict-box status-expensive';
+                document.getElementById('verdictTitle').textContent = "TRADE REJECTED";
+                document.getElementById('verdictDesc').textContent = "The structure contains fatal pricing flaws. The expected Vega ramp is already priced in, or IV > HV guarantees statistical loss.";
+            } else if (pir < 0.85) {
+                verdictBox.className = 'verdict-box status-cheap';
+                document.getElementById('verdictTitle').textContent = "APPROVED: HIGH CONVICTION";
+                document.getElementById('verdictDesc').textContent = "Premium is fundamentally cheap, IV is lower than HV, and the Vega runway is clear. Execute the trade.";
+            } else {
+                verdictBox.className = 'verdict-box status-fair';
+                document.getElementById('verdictTitle').textContent = "MARGINAL / FAIR VALUE";
+                document.getElementById('verdictDesc').textContent = "No fatal flaws, but the premium is trading near fair value. Your edge relies entirely on the directional move occurring early.";
+            }
+        }
+    </script>
+</body>
+</html>
