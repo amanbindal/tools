@@ -2,13 +2,13 @@
 <html lang="en">
 
 <head>
-  <title>Straddle: ER Run Up</title>
+  <title>ER Data</title>
   <meta charset="UTF-8">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <div style="display: flex; justify-content: space-between; align-items: center;">
-    <h2>&nbspStraddle Pricing &nbsp<span style="color: #DE3163;">BD</span>, <span style="color: #FFAC1C;">BU</span>,
+    <h2>&nbspER Data &nbsp<span style="color: #DE3163;">BD</span>, <span style="color: #FFAC1C;">BU</span>,
       <span style="color: #6495ED;">TU</span>, <span style="color: #2AAA8A;">TD</span>
     </h2>
     <div style="display: flex; gap: 20px; margin-right: 60px;">
@@ -769,9 +769,38 @@
       return null;
     }
 
+    async function fetchOptionChartsPrice(ticker) {
+      const url = `https://optioncharts.io/async/stock_price_widget?ticker=${ticker}`;
+      const proxies = [
+        { url: 'https://corsproxy.io/?', encode: true },
+        { url: 'https://api.codetabs.com/v1/proxy?quest=', encode: true },
+        { url: 'https://thingproxy.freeboard.io/fetch/', encode: false },
+        { url: 'https://api.allorigins.win/raw?url=', encode: true }
+      ];
+
+      for (const proxy of proxies) {
+        try {
+          const fetchUrl = proxy.url + (proxy.encode ? encodeURIComponent(url) : url);
+          const response = await fetch(fetchUrl);
+          if (response.ok) {
+            const text = await response.text();
+            const match = text.match(/<span[^>]*tw-text-3xl[^>]*>([\d\.]+)<\/span>/);
+            if (match && match[1]) {
+              const price = parseFloat(match[1]);
+              if (!isNaN(price)) return price;
+            }
+          }
+        } catch (err) {
+          continue;
+        }
+      }
+      return null;
+    }
+
     async function fetchEarnings(ticker) {
       try {
         const finvizPricePromise = fetchFinvizPrice(ticker);
+        const optionChartsPricePromise = fetchOptionChartsPrice(ticker);
         const res = await fetch(`https://phx.unusualwhales.com/api/companies_earnings/historic/${ticker}`);
         const resPrice = await fetch(`https://phx.unusualwhales.com/api/ticker/${ticker}/price/`);
         const resPrice2 = await fetch(`https://phx.unusualwhales.com/api/companies/${ticker}/get_historical_prices?limit=1`);
@@ -833,7 +862,8 @@
         const finvizData = await finvizPricePromise;
         const finvizPrice = finvizData ? finvizData.price : null;
         const finvizSma200 = finvizData ? finvizData.sma200 : null;
-        const latestPrice = finvizPrice || parseFloat(jsonPrice.curr) || parseFloat(jsonPrice.prev) || (jsonPrice2.history.length > 0 ? parseFloat(jsonPrice2.history[0].price) || parseFloat(jsonPrice2.history[0].close_price) : 0);
+        const optionChartsPrice = await optionChartsPricePromise;
+        const latestPrice = finvizPrice || optionChartsPrice || parseFloat(jsonPrice.curr) || parseFloat(jsonPrice.prev) || (jsonPrice2.history.length > 0 ? parseFloat(jsonPrice2.history[0].price) || parseFloat(jsonPrice2.history[0].close_price) : 0);
         const priceChange = preErPrice ? ((latestPrice - preErPrice) / preErPrice * 100).toFixed(2) : 0;
         const mcp = preErPrice ? ((latestPrice - preErPrice) / preErPrice * 100).toFixed(2) : 0;
         const reportTime = next.report_time == 'unknown' || next.report_time == '' || !next.report_time ? '-' : next.report_time == 'premarket' ? 'PM' : next.report_time == 'postmarket' ? 'AH' : next.report_time;
