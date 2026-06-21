@@ -459,7 +459,7 @@
       'SLNO', 'SLP', 'SLQT', 'SLVM', 'SM', 'SMBC', 'SMBK', 'SMCI', 'SMG', 'SMMT', 'SMP', 'SMPL',
       'SMR', 'SMRT', 'SMTC', 'SN', 'SNA', 'SNBR', 'SNCY', 'SNDR', 'SNDX', 'SNEX', 'SNOW',
       'SNPS', 'SNV', 'SNX', 'SO', 'SOC', 'SOFI', 'SOLV', 'SON', 'SONO', 'SONY', 'SOUN', 'SOXL',
-      'SOXX', 'SPB', 'SPFI', 'SPG', 'SPGI', 'SPHR', 'SPNS', 'SPNT', 'SPOK', 'SPOT', 'SPR', 'SPRY',
+      'SOXX', 'SPB', 'SPCX', 'SPFI', 'SPG', 'SPGI', 'SPHR', 'SPNS', 'SPNT', 'SPOK', 'SPOT', 'SPR', 'SPRY',
       'SPSC', 'SPT', 'SPTN', 'SPXC', 'SPXL', 'SPY', 'SR', 'SRAD', 'SRCE', 'SRDX', 'SRE', 'SRI',
       'SRPT', 'SRRK', 'SSB', 'SSD', 'SSNC', 'SSP', 'SSRM', 'SSTI', 'SSTK', 'ST', 'STAA', 'STAG',
       'STC', 'STE', 'STEM', 'STEP', 'STGW', 'STHO', 'STKL', 'STLD', 'STNE', 'STNG', 'STOK', 'STR',
@@ -582,15 +582,15 @@
       return recent.reduce((sum, price) => sum + price, 0) / 200;
     }
 
-    async function fetchWithRetry(url, retries = 3, delay = 1000) {
+    async function fetchWithRetry(url, retries = 2, delay = 1000) {
       for (let i = 0; i < retries; i++) {
         try {
           const res = await fetch(url);
-          if (!res.ok) throw new Error('Fetch failed');
-          return await res.json();
+          if (res.status === 429 || res.status >= 500) throw new Error('Rate limit or server error');
+          return await res.json().catch(() => ({}));
         } catch (err) {
-          if (i === retries - 1) throw err;
-          await new Promise(res => setTimeout(res, delay));
+          if (i === retries - 1) return {};
+          await new Promise(res => setTimeout(res, delay + Math.random() * 500));
         }
       }
     }
@@ -710,127 +710,66 @@
       return null;
     }
 
-    async function fetchFinvizPrice(ticker) {
-      const url = `https://finviz.com/stock?t=${ticker}`;
-      const proxies = [
-        { url: 'https://corsproxy.io/?', encode: true },
-        { url: 'https://api.codetabs.com/v1/proxy?quest=', encode: true },
-        { url: 'https://thingproxy.freeboard.io/fetch/', encode: false },
-        { url: 'https://api.allorigins.win/raw?url=', encode: true }
-      ];
+    async function fetchExternalPrice(ticker) {
+      // Race the 3 APIs. Whichever returns a valid price first wins.
+      // If they all hit 429 rate limits, it resolves to null and falls back to UnusualWhales.
+      return new Promise((resolve) => {
+        let resolved = false;
+        let failedCount = 0;
 
-      for (const proxy of proxies) {
-        try {
-          const fetchUrl = proxy.url + (proxy.encode ? encodeURIComponent(url) : url);
-          const response = await fetch(fetchUrl);
-          if (response.ok) {
-            const text = await response.text();
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(text, 'text/html');
-            const tds = Array.from(doc.querySelectorAll('.snapshot-td-label'));
-            
-            let foundPrice = null;
-            let foundSma200 = null;
-            
-            const priceLabel = tds.find(td => td.textContent === 'Price');
-            if (priceLabel) {
-              const valTd = priceLabel.parentElement.nextElementSibling;
-              if (valTd && valTd.querySelector('b')) {
-                const price = parseFloat(valTd.querySelector('b').textContent);
-                if (!isNaN(price)) foundPrice = price;
-              }
-            }
-            
-            const sma200Label = tds.find(td => td.textContent === 'SMA200');
-            if (sma200Label) {
-              const valTd = sma200Label.parentElement.nextElementSibling;
-              if (valTd && valTd.querySelector('b')) {
-                const sma200Str = valTd.querySelector('b').textContent.replace('%', '');
-                const sma200 = parseFloat(sma200Str);
-                if (!isNaN(sma200)) foundSma200 = sma200;
-              }
-            }
-            
-            if (foundPrice !== null) {
-              return { price: foundPrice, sma200: foundSma200 };
-            }
-            
-            // Fallback regex
-            const match = text.match(/data-boxover-html="Current stock price"[^>]*>.*?<b>([^<]+)<\/b>/i);
-            if (match && match[1]) {
-              const price = parseFloat(match[1]);
-              if (!isNaN(price)) return { price: price, sma200: null };
+        const done = (price) => {
+          if (!resolved) {
+            if (price !== null) {
+              resolved = true;
+              resolve(price);
+            } else {
+              failedCount++;
+              if (failedCount === 3) resolve(null); // All 3 failed
             }
           }
-        } catch (err) {
-          continue;
-        }
-      }
-      return null;
-    }
+        };
 
-    async function fetchOptionChartsPrice(ticker) {
-      const url = `https://optioncharts.io/async/stock_price_widget?ticker=${ticker}`;
-      const proxies = [
-        { url: 'https://corsproxy.io/?', encode: true },
-        { url: 'https://api.codetabs.com/v1/proxy?quest=', encode: true },
-        { url: 'https://thingproxy.freeboard.io/fetch/', encode: false },
-        { url: 'https://api.allorigins.win/raw?url=', encode: true }
-      ];
+        // Finnhub (60/min limit)
+        fetchWithRetry(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=d8s2uehr01qlj6ffobtgd8s2uehr01qlj6ffobu0`, 1, 0)
+          .then(res => done(res && res.c ? parseFloat(res.c) : null))
+          .catch(() => done(null));
 
-      for (const proxy of proxies) {
-        try {
-          const fetchUrl = proxy.url + (proxy.encode ? encodeURIComponent(url) : url);
-          const response = await fetch(fetchUrl);
-          if (response.ok) {
-            const text = await response.text();
-            const match = text.match(/<span[^>]*tw-text-3xl[^>]*>([\d\.]+)<\/span>/);
-            if (match && match[1]) {
-              const price = parseFloat(match[1]);
-              if (!isNaN(price)) return price;
-            }
-          }
-        } catch (err) {
-          continue;
-        }
-      }
-      return null;
+        // Polygon (5/min limit)
+        fetchWithRetry(`https://api.polygon.io/v2/aggs/ticker/${ticker}/prev?adjusted=true&apiKey=Nzp_8RgMC1oepb6nZiZqzh6WmRvaJMD5`, 1, 0)
+          .then(res => {
+            if (res && res.results && res.results.length > 0) done(parseFloat(res.results[0].c));
+            else done(null);
+          })
+          .catch(() => done(null));
+
+        // AlphaVantage (25/day limit)
+        fetchWithRetry(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${ticker}&apikey=IVFKI33LPBM3SAG2`, 1, 0)
+          .then(res => {
+            if (res && res['Global Quote'] && res['Global Quote']['05. price']) done(parseFloat(res['Global Quote']['05. price']));
+            else done(null);
+          })
+          .catch(() => done(null));
+      });
     }
 
     async function fetchEarnings(ticker) {
       try {
-        const finvizPricePromise = fetchFinvizPrice(ticker);
-        const optionChartsPricePromise = fetchOptionChartsPrice(ticker);
-        const res = await fetch(`https://phx.unusualwhales.com/api/companies_earnings/historic/${ticker}`);
-        const resPrice = await fetch(`https://phx.unusualwhales.com/api/ticker/${ticker}/price/`);
-        const resPrice2 = await fetch(`https://phx.unusualwhales.com/api/companies/${ticker}/get_historical_prices?limit=1`);
-        const resIvData = await fetch(`https://phx.unusualwhales.com/api/volatility/${ticker}/stats`);
-        const resInfo = await fetch(`https://phx.unusualwhales.com/api/companies/${ticker}/`);
+        const [json, jsonPrice, jsonPrice2, jsonIvData, jsonInfo] = await Promise.all([
+          fetchWithRetry(`https://phx.unusualwhales.com/api/companies_earnings/historic/${ticker}`),
+          fetchWithRetry(`https://phx.unusualwhales.com/api/ticker/${ticker}/price/`),
+          fetchWithRetry(`https://phx.unusualwhales.com/api/companies/${ticker}/get_historical_prices?limit=1`),
+          fetchWithRetry(`https://phx.unusualwhales.com/api/volatility/${ticker}/stats`),
+          fetchWithRetry(`https://phx.unusualwhales.com/api/companies/${ticker}/`)
+        ]);
 
-        const json = await res.json();
-        const jsonPrice = await resPrice.json();
-        const jsonPrice2 = await resPrice2.json();
-        const jsonIvData = await resIvData.json();
-        const jsonInfo = await resInfo.json();
-
-        // EMSE Filter: Market Cap > 1 Billion
-        if (!json.data || json.data.length === 0 || !jsonInfo.company || jsonInfo.company.marketcap < 1000000000 || jsonInfo.company.avg30_volume < 2000000)
+        // EMSE Filter: Market Cap > 1 Billion and 30-Day Volume > 1 Million
+        if (!json.data || json.data.length === 0 || !jsonInfo.company || jsonInfo.company.marketcap < 1000000000 || jsonInfo.company.avg30_volume < 1000000)
           return null;
 
         var latest = json.data[json.data.length - 1];
         var next = latest;
-        // Check if next earnings date is within 14 days
-        const nextDate = new Date(next.report_date);
-        nextDate.setHours(0, 0, 0, 0); // Set to start of day
-        const today = new Date();
-        const twoWeeksFromNow = new Date();
-        twoWeeksFromNow.setHours(0, 0, 0, 0);
-        twoWeeksFromNow.setDate(today.getDate() + 14);
-        today.setDate(today.getDate() - 1); // minus one day
-        today.setHours(0, 0, 0, 0); // Set to start of day
-
-        // Skip if earnings date is not within next 14 days
-        if (nextDate > twoWeeksFromNow || nextDate < today) return null;
+        
+        // Earnings date filter (er check) has been permanently removed as requested.
 
         // ONLY fetch Yahoo Short Interest if it passed the strict filters!
         const resShort = await fetchYahooShortInterest(ticker);
@@ -857,13 +796,15 @@
         const ma200 = parseFloat(jsonInfo.company.day200_moving_avg) || 0;
         const high52w = parseFloat(jsonInfo.company.week52_high) || 0;
         const industry = jsonInfo.company.industry_type || "";
+        const marketcap = jsonInfo.company ? parseFloat(jsonInfo.company.marketcap) || 0 : 0;
         const ivRank = jsonIvData && jsonIvData.data ? parseFloat(jsonIvData.data.iv_rank) || 999 : 999;
+        
+        // Fetch external prices (Finnhub, Polygon, AlphaVantage) concurrently
+        let externalPrice = await fetchExternalPrice(ticker);
+
         const preErPrice = parseFloat(latest.price) || 0;
-        const finvizData = await finvizPricePromise;
-        const finvizPrice = finvizData ? finvizData.price : null;
-        const finvizSma200 = finvizData ? finvizData.sma200 : null;
-        const optionChartsPrice = await optionChartsPricePromise;
-        const latestPrice = finvizPrice || optionChartsPrice || parseFloat(jsonPrice.curr) || parseFloat(jsonPrice.prev) || (jsonPrice2.history.length > 0 ? parseFloat(jsonPrice2.history[0].price) || parseFloat(jsonPrice2.history[0].close_price) : 0);
+        
+        const latestPrice = externalPrice || parseFloat(jsonPrice.curr) || parseFloat(jsonPrice.prev) || (jsonPrice2.history && jsonPrice2.history.length > 0 ? parseFloat(jsonPrice2.history[0].price) || parseFloat(jsonPrice2.history[0].close_price) : 0);
         const priceChange = preErPrice ? ((latestPrice - preErPrice) / preErPrice * 100).toFixed(2) : 0;
         const mcp = preErPrice ? ((latestPrice - preErPrice) / preErPrice * 100).toFixed(2) : 0;
         const reportTime = next.report_time == 'unknown' || next.report_time == '' || !next.report_time ? '-' : next.report_time == 'premarket' ? 'PM' : next.report_time == 'postmarket' ? 'AH' : next.report_time;
@@ -881,7 +822,7 @@
           price: latestPrice || 0,
           priceChange: priceChange || 0,
           mcp: mcp || 0,
-          finvizSma200: finvizSma200,
+          finvizSma200: null,
           er_date: next.report_date || 'N/A',
           report_date: latest.report_date || 'N/A',
           avgHistoricMove: avgHistoricRealizedMove * 100 || 0,
@@ -898,6 +839,7 @@
           ma200: ma200,
           high52w: high52w,
           industry: industry,
+          marketcap: marketcap,
           shortInt: shortInt
         };
       } catch (err) {
@@ -1010,31 +952,11 @@
       const lastDate = new Date(lastDateStr);
       const now = new Date();
 
-      // Check if today is weekend
-      if (now.getDay() === 0 || now.getDay() === 6) return false;
-
-      // Check if last fetch was on a different business day
-      let prevBusinessDay = new Date(now);
-      if (now.getDay() === 1) { // Monday
-        prevBusinessDay.setDate(now.getDate() - 3);
-      } else if (now.getDay() > 1) {
-        prevBusinessDay.setDate(now.getDate() - 1);
-      }
-
-      // If last fetch was not today, it's a new business day
       return (
         lastDate.getFullYear() !== now.getFullYear() ||
         lastDate.getMonth() !== now.getMonth() ||
         lastDate.getDate() !== now.getDate()
       );
-    }
-
-    // Utility to check if over an hour has passed since last fetch
-    function isOverAnHour(lastDateStr) {
-      if (!lastDateStr) return true;
-      const lastDate = new Date(lastDateStr);
-      const now = new Date();
-      return (now - lastDate) > 60 * 60 * 1000;
     }
 
     // Cache helpers
@@ -1057,8 +979,7 @@
 
       if (cached && cached.data && cached.fetchedAt &&
         cached.data.histMove1 !== undefined &&
-        !isNewBusinessDay(cached.fetchedAt) &&
-        !isOverAnHour(cached.fetchedAt)) {
+        !isNewBusinessDay(cached.fetchedAt)) {
         return cached.data;
       }
 
@@ -1082,8 +1003,7 @@
       const cached = getCache(cacheKey);
 
       if (cached && cached.data && cached.data.price && cached.fetchedAt &&
-        !isNewBusinessDay(cached.fetchedAt) &&
-        !isOverAnHour(cached.fetchedAt)) {
+        !isNewBusinessDay(cached.fetchedAt)) {
         return cached.data;
       }
 
@@ -1102,10 +1022,8 @@
     async function fetchTipRanksTargets(ticker) {
       const url = `https://www.tipranks.com/stocks/${ticker}/stock-forecast/payload.json`;
       const proxies = [
-        { url: 'https://corsproxy.io/?', encode: true },
-        { url: 'https://api.codetabs.com/v1/proxy?quest=', encode: true },
-        { url: 'https://thingproxy.freeboard.io/fetch/', encode: false },
-        { url: 'https://api.allorigins.win/raw?url=', encode: true }
+        { url: 'https://api.allorigins.win/raw?url=', encode: true },
+        { url: 'https://thingproxy.freeboard.io/fetch/', encode: false }
       ];
 
       // Stagger requests significantly to avoid blocking the browser's connection pool
@@ -1183,7 +1101,7 @@
       tableBody.innerHTML = '';
 
       // Concurrency limit for network requests
-      const CONCURRENCY_LIMIT = 80;
+      const CONCURRENCY_LIMIT = 10;
       let index = 0;
 
       // Helper to render a row immediately from cached data
@@ -1213,7 +1131,7 @@
                     <td>${data.histMove4 != null ? parseFloat(data.histMove4).toFixed(2) : '-'}</td>
                     <td>${parseFloat(data.post_earnings_move_1d && data.post_earnings_move_1d != 0 && data.post_earnings_move_1d != 'N/A' ? data.post_earnings_move_1d : 0)}</td>
                     <td class="priceChange"><a href="https://robinhood.com/stocks/${ticker}" target="_blank" style="color:inherit;">${parseFloat(data.priceChange)}</a></td>
-                    <td class="mcp">${data.mcp}</td>
+                    <td class="mcp">${data.mcp}%</td>
                     <td class="ma10">-</td>
                     <td class="ma50">-</td>
                     <td class="ma200">-</td>
@@ -1237,8 +1155,7 @@
           priceCache.data &&
           priceCache.price &&
           priceCache.fetchedAt &&
-          !isNewBusinessDay(priceCache.fetchedAt) &&
-          !isOverAnHour(priceCache.fetchedAt)
+          !isNewBusinessDay(priceCache.fetchedAt)
         ) {
           updatePriceCells(ticker, priceCache.data, data);
         } else {
@@ -1254,8 +1171,7 @@
           trCache &&
           trCache.data &&
           trCache.fetchedAt &&
-          !isNewBusinessDay(trCache.fetchedAt) &&
-          !isOverAnHour(trCache.fetchedAt)
+          !isNewBusinessDay(trCache.fetchedAt)
         ) {
           updateTargetCells(ticker, trCache.data);
         } else {
@@ -1280,8 +1196,7 @@
             cached.data &&
             cached.fetchedAt &&
             cached.data.histMove1 !== undefined &&
-            !isNewBusinessDay(cached.fetchedAt) &&
-            !isOverAnHour(cached.fetchedAt)
+            !isNewBusinessDay(cached.fetchedAt)
           ) {
             cachedData.push({ ticker, data: cached.data });
           } else {
@@ -1311,11 +1226,22 @@
 
       // Process all tickers in batches
       try {
+        // Sort tickers by market cap (high to low) based on cached data
+        tickers.sort((a, b) => {
+          const cacheA = getCache(`Straddle_er_${a}`);
+          const mcA = cacheA && cacheA.data && cacheA.data.marketcap ? cacheA.data.marketcap : 0;
+          
+          const cacheB = getCache(`Straddle_er_${b}`);
+          const mcB = cacheB && cacheB.data && cacheB.data.marketcap ? cacheB.data.marketcap : 0;
+          
+          return mcB - mcA;
+        });
+
         while (index < tickers.length) {
           const batch = tickers.slice(index, index + CONCURRENCY_LIMIT);
           await processBatch(batch);
           index += CONCURRENCY_LIMIT;
-          await new Promise(res => setTimeout(res, 200));
+          await new Promise(res => setTimeout(res, 500));
         }
 
         // Automatically sort by report date (column index 5)
@@ -1345,7 +1271,14 @@
           const dateB = Date.parse(valB.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3-$1-$2')) || Date.parse(valB);
           return dateA - dateB;
         } else if (isNumeric) {
-          return parseFloat(valA.replace('%', '')) - parseFloat(valB.replace('%', ''));
+          const numA = parseFloat(valA.replace('%', ''));
+          const numB = parseFloat(valB.replace('%', ''));
+          const aIsNaN = isNaN(numA);
+          const bIsNaN = isNaN(numB);
+          if (aIsNaN && bIsNaN) return 0;
+          if (aIsNaN) return 1; // Put invalid numbers (like '-') at the bottom
+          if (bIsNaN) return -1;
+          return numA - numB;
         } else {
           return valA.localeCompare(valB);
         }
