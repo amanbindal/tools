@@ -667,9 +667,6 @@
         
         // Earnings date filter (er check) has been permanently removed as requested.
 
-        // ONLY fetch Yahoo Short Interest if it passed the strict filters!
-        const resShort = await fetchYahooShortInterest(ticker);
-
         // Fix: Use actual post_earnings_move_1d instead of expected_move_perc for historical realized moves
         const last4Quarters = json.data.slice(-5, -1); // Exclude the next earnings date
 
@@ -728,8 +725,7 @@
           ma50: ma50,
           high52w: high52w,
           industry: industry,
-          marketcap: marketcap,
-          shortInt: shortInt
+          marketcap: marketcap
         };
       } catch (err) {
         console.error(`Error fetching ${ticker}:`, err);
