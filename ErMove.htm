@@ -18,8 +18,9 @@
     </div>
   </div>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Inter', sans-serif;
       margin: 0;
       padding: 0;
       background-color: var(--background-color);
@@ -28,13 +29,23 @@
     }
 
     :root {
-      --background-color: #ffffff;
-      --text-color: #333333;
+      --background-color: #f4f7f6;
+      --text-color: #1a1a1a;
+      --table-bg: #ffffff;
+      --table-border: #e0e0e0;
+      --header-bg: #2c3e50;
+      --header-text: #ffffff;
+      --row-hover: #f1f5f9;
     }
 
     [data-theme="dark"] {
-      --background-color: #333333;
-      --text-color: #ffffff;
+      --background-color: #121212;
+      --text-color: #e0e0e0;
+      --table-bg: #1e1e1e;
+      --table-border: #333333;
+      --header-bg: #1f2937;
+      --header-text: #f9fafb;
+      --row-hover: #2d3748;
     }
 
     .light-theme {
@@ -60,16 +71,27 @@
       display: none;
     }
 
-    th,
-    td {
-      padding: 8px;
+    th, td {
+      padding: 12px 16px;
       text-align: left;
-      border-bottom: 1px solid #ddd;
+      border-bottom: 1px solid var(--table-border);
+      transition: background-color 0.2s;
     }
 
     th {
-      background-color: #333;
-      color: white;
+      background-color: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 600;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--table-bg);
+    }
+    
+    tbody tr:hover {
+      background-color: var(--row-hover);
     }
 
     .light-theme th {
@@ -230,26 +252,26 @@
           <th onclick="sortTable(5)">PM/AH</th>
           <th onclick="sortTable(6)">P</th>
           <th onclick="sortTable(7)">Straddle%</th>
-          <th onclick="sortTable(8)">HistMove1%</th>
+          
           <th onclick="sortTable(9)">HistMove2%</th>
           <th onclick="sortTable(10)">HistMove3%</th>
           <th onclick="sortTable(11)">HistMove4%</th>
-          <th onclick="sortTable(12)">ErMove%</th>
+          <th onclick="sortTable(12)">ER Move%</th>
           <th onclick="sortTable(13)">Change%</th>
           <th onclick="sortTable(14)">McP</th>
           <th onclick="sortTable(15)">MA10D%</th>
           <th onclick="sortTable(16)">MA50%</th>
           <th onclick="sortTable(17)">MA200%</th>
           <th onclick="sortTable(18)">Price</th>
-          <th onclick="sortTable(19)">MA5</th>
-          <th onclick="sortTable(20)">MA13</th>
-          <th onclick="sortTable(21)">Score</th>
-          <th onclick="sortTable(22)">Short%</th>
-          <th onclick="sortTable(23)">GEX</th>
-          <th onclick="sortTable(24)">Tgt1</th>
-          <th onclick="sortTable(25)">Tgt2</th>
-          <th onclick="sortTable(26)">Tgt3</th>
-          <th onclick="sortTable(27)">Tgt4</th>
+          
+          
+          
+          
+          
+          
+          
+          
+          
         </tr>
       </thead>
       <tbody>
@@ -594,12 +616,10 @@
         }
       }
     }
-    async function getPrices3(ticker) {
+    async function getYahooPrices(ticker) {
       try {
         const proxy = 'https://corsproxy.io/?';
-        //const proxy = 'https://thingproxy.freeboard.io/fetch/';
-        //const proxy = 'https://api.allorigins.win/raw?url=';
-        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1y`;
+        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=3mo`;
         const data = await fetchWithRetry(proxy + encodeURIComponent(url));
 
         const result = data.chart.result[0];
@@ -610,147 +630,23 @@
           .filter(item => item.close != null)
           .sort((a, b) => a.date - b.date);
 
-        const recent = paired.slice(-13);
-        const price = recent[recent.length - 1].close;
-        const ma5 = recent.slice(-5).reduce((sum, p) => sum + p.close, 0) / 5;
-        const ma13 = recent.reduce((sum, p) => sum + p.close, 0) / 13;
         const closesArr = paired.map(p => p.close);
         const rsi = calculateRSI(closesArr);
         const ma10 = calculateMA10(closesArr);
-        const ma50 = calculateMA50(closesArr);
-        const ma200 = calculateMA200(closesArr);
 
-        return { price, ma5, ma13, ma10, ma50, ma200, rsi, gex: 0 };
+        return { rsi, ma10 };
       } catch (err) {
         console.error(`Error fetching ${ticker}:`, err);
-        return {};
+        return { rsi: 0, ma10: 0 };
       }
     }
 
-    async function getPrices2(ticker) {
-      try {
-        const proxy = 'https://thingproxy.freeboard.io/fetch/';
-        const url = `https://phx.unusualwhales.com/api/gex/${ticker}?timespan=1y`;
-        const data = await fetchWithRetry(url);
+    
 
-        // Handle new endpoint schema
-        if (data && Array.isArray(data.data)) {
-          // Sort by date ascending
-          const paired = data.data
-            .map(item => ({
-              date: new Date(item.date),
-              close: parseFloat(item.close),
-              total_gex: parseFloat(item.total_gex !== undefined && item.total_gex !== null ? item.total_gex : (parseFloat(item.call_gex || 0) + parseFloat(item.put_gex || 0)))
-            }))
-            .filter(item => !isNaN(item.close))
-            .sort((a, b) => a.date - b.date);
+    
+    
 
-          const recent = paired.slice(-13);
-          const price = recent.length ? recent[recent.length - 1].close : 0;
-          const gex = recent.length ? recent[recent.length - 1].total_gex : 0;
-          const ma5 = recent.length >= 5 ? recent.slice(-5).reduce((sum, p) => sum + p.close, 0) / 5 : 0;
-          const ma13 = recent.length === 13 ? recent.reduce((sum, p) => sum + p.close, 0) / 13 : 0;
-          const closesArr = paired.map(p => p.close);
-          const rsi = calculateRSI(closesArr);
-          const ma10 = calculateMA10(closesArr);
-          const ma50 = calculateMA50(closesArr);
-          const ma200 = calculateMA200(closesArr);
-          const high52w = paired.length > 0 ? Math.max(...closesArr) : 0;
-          const last63 = paired.slice(-63);
-          const high3m = last63.length > 0 ? Math.max(...last63.map(p => p.close)) : 0;
-
-          return { price, ma5, ma13, ma10, ma50, ma200, rsi, high52w, high3m, gex };
-        }
-      } catch (err) {
-        return await getPrices3(ticker);
-      }
-    }
-
-    async function getPrices(ticker) {
-      try {
-        const proxy = 'https://api.allorigins.win/raw?url=';
-        const url = `https://phx.unusualwhales.com/api/gex/${ticker}?timespan=3m`;
-        const data = await fetchWithRetry(url);
-
-        // Handle new endpoint schema
-        if (data && Array.isArray(data.data)) {
-          // Sort by date ascending
-          const paired = data.data
-            .map(item => ({
-              date: new Date(item.date),
-              close: parseFloat(item.close),
-              total_gex: parseFloat(item.total_gex !== undefined && item.total_gex !== null ? item.total_gex : (parseFloat(item.call_gex || 0) + parseFloat(item.put_gex || 0)))
-            }))
-            .filter(item => !isNaN(item.close))
-            .sort((a, b) => a.date - b.date);
-
-          const recent = paired.slice(-13);
-          const price = recent.length ? recent[recent.length - 1].close : 0;
-          const gex = recent.length ? recent[recent.length - 1].total_gex : 0;
-          const ma5 = recent.length >= 5 ? recent.slice(-5).reduce((sum, p) => sum + p.close, 0) / 5 : 0;
-          const ma13 = recent.length === 13 ? recent.reduce((sum, p) => sum + p.close, 0) / 13 : 0;
-          const closesArr = paired.map(p => p.close);
-          const rsi = calculateRSI(closesArr);
-          const ma10 = calculateMA10(closesArr);
-          const ma50 = calculateMA50(closesArr);
-          const ma200 = calculateMA200(closesArr);
-          const last63 = paired.slice(-63);
-          const high3m = last63.length > 0 ? Math.max(...last63.map(p => p.close)) : 0;
-
-          return { price, ma5, ma13, ma10, ma50, ma200, rsi, high3m, gex };
-        }
-      } catch (err) {
-        return await getPrices2(ticker);
-      }
-    }
-    async function fetchYahooShortInterest(ticker) {
-      // Yahoo Finance v10 now strictly requires cookies/crumbs and blocks free proxies (returning 301s or timing out).
-      // Disabling this fetch to prevent console errors and hanging. 
-      // The EMSE score will dynamically adapt and calculate based on the remaining pillars.
-      return null;
-    }
-
-    async function fetchExternalPrice(ticker) {
-      // Race the 3 APIs. Whichever returns a valid price first wins.
-      // If they all hit 429 rate limits, it resolves to null and falls back to UnusualWhales.
-      return new Promise((resolve) => {
-        let resolved = false;
-        let failedCount = 0;
-
-        const done = (price) => {
-          if (!resolved) {
-            if (price !== null) {
-              resolved = true;
-              resolve(price);
-            } else {
-              failedCount++;
-              if (failedCount === 3) resolve(null); // All 3 failed
-            }
-          }
-        };
-
-        // Finnhub (60/min limit)
-        fetchWithRetry(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=d8s2uehr01qlj6ffobtgd8s2uehr01qlj6ffobu0`, 1, 0)
-          .then(res => done(res && res.c ? parseFloat(res.c) : null))
-          .catch(() => done(null));
-
-        // Polygon (5/min limit)
-        fetchWithRetry(`https://api.polygon.io/v2/aggs/ticker/${ticker}/prev?adjusted=true&apiKey=Nzp_8RgMC1oepb6nZiZqzh6WmRvaJMD5`, 1, 0)
-          .then(res => {
-            if (res && res.results && res.results.length > 0) done(parseFloat(res.results[0].c));
-            else done(null);
-          })
-          .catch(() => done(null));
-
-        // AlphaVantage (25/day limit)
-        fetchWithRetry(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${ticker}&apikey=IVFKI33LPBM3SAG2`, 1, 0)
-          .then(res => {
-            if (res && res['Global Quote'] && res['Global Quote']['05. price']) done(parseFloat(res['Global Quote']['05. price']));
-            else done(null);
-          })
-          .catch(() => done(null));
-      });
-    }
+    
 
     async function fetchEarnings(ticker) {
       try {
@@ -800,21 +696,13 @@
         const ivRank = jsonIvData && jsonIvData.data ? parseFloat(jsonIvData.data.iv_rank) || 999 : 999;
         
         // Fetch external prices (Finnhub, Polygon, AlphaVantage) concurrently
-        let externalPrice = await fetchExternalPrice(ticker);
-
+        const latestPrice = parseFloat(jsonPrice.curr) || parseFloat(jsonPrice.prev) || (jsonPrice2.history && jsonPrice2.history.length > 0 ? parseFloat(jsonPrice2.history[0].price) || parseFloat(jsonPrice2.history[0].close_price) : 0);
         const preErPrice = parseFloat(latest.price) || 0;
-        
-        const latestPrice = externalPrice || parseFloat(jsonPrice.curr) || parseFloat(jsonPrice.prev) || (jsonPrice2.history && jsonPrice2.history.length > 0 ? parseFloat(jsonPrice2.history[0].price) || parseFloat(jsonPrice2.history[0].close_price) : 0);
         const priceChange = preErPrice ? ((latestPrice - preErPrice) / preErPrice * 100).toFixed(2) : 0;
         const mcp = preErPrice ? ((latestPrice - preErPrice) / preErPrice * 100).toFixed(2) : 0;
         const reportTime = next.report_time == 'unknown' || next.report_time == '' || !next.report_time ? '-' : next.report_time == 'premarket' ? 'PM' : next.report_time == 'postmarket' ? 'AH' : next.report_time;
-
-        // Extract Short Interest from Yahoo Finance response
-        let shortInt = 0;
-        if (resShort && resShort.quoteSummary && resShort.quoteSummary.result && resShort.quoteSummary.result[0]) {
-          const stats = resShort.quoteSummary.result[0].defaultKeyStatistics;
-          shortInt = stats && stats.shortPercentOfFloat ? (stats.shortPercentOfFloat.raw * 100) : 0;
-        }
+        
+        const ma50 = jsonInfo.company ? parseFloat(jsonInfo.company.day50_moving_avg) || 0 : 0;
 
         return {
           ticker: ticker,
@@ -837,6 +725,7 @@
           iv_rank: ivRank,
           beta: beta,
           ma200: ma200,
+          ma50: ma50,
           high52w: high52w,
           industry: industry,
           marketcap: marketcap,
@@ -850,101 +739,24 @@
 
     function updatePriceCells(ticker, priceData, data) {
       const row = document.getElementById(`row-${ticker}`);
+      if (!row) return;
 
-      // Ensure Finviz price from `data` is used for all calculations if available
-      if (data && data.price) {
-        priceData.price = data.price;
-      }
+      const price = data.price || 0;
+      const ma10Ratio = priceData.ma10 ? ((price - priceData.ma10) / priceData.ma10) * 100 : 0;
+      const ma50Ratio = data.ma50 ? ((price - data.ma50) / data.ma50) * 100 : 0;
+      const ma200Ratio = data.ma200 ? ((price - data.ma200) / data.ma200) * 100 : 0;
 
-      // Calculate ratio between MA5 and MA13
-      const ratioMa5Ma13 = priceData.ma5 / priceData.ma13;
-      const percentDiffMa5Ma13 = Math.abs((ratioMa5Ma13 - 1) * 100);
-      // Determine text color based on conditions
-      let textColor = 'inherit';
-      if (priceData.ma5 >= priceData.ma13) {
-        textColor = 'green';
-      } else if (percentDiffMa5Ma13 <= 1) {
-        textColor = 'red';
-      }
-
-      const postErMove1d = data.post_earnings_move_1d;
-      const ma10Ratio = priceData.ma10 ? ((priceData.price - priceData.ma10) / priceData.ma10) * 100 : 0;
-      const ma50Ratio = priceData.ma50 ? ((priceData.price - priceData.ma50) / priceData.ma50) * 100 : 0;
+      if(row.querySelector('.ma10')) row.querySelector('.ma10').innerHTML = `<span style="color:${ma10Ratio < 0 ? 'red' : 'green'}">${ma10Ratio.toFixed(2)}</span>`;
+      if(row.querySelector('.ma50')) row.querySelector('.ma50').innerHTML = `<span style="color:${ma50Ratio < 0 ? 'red' : 'green'}">${ma50Ratio.toFixed(2)}</span>`;
+      if(row.querySelector('.ma200')) row.querySelector('.ma200').innerHTML = `<a href="https://www.barchart.com/stocks/quotes/${ticker}/overview" target="_blank" style="color:${ma200Ratio < 0 ? 'red' : 'green'}">${ma200Ratio.toFixed(2)}</a>`;
+      if(row.querySelector('.rsi')) row.querySelector('.rsi').textContent = priceData.rsi ? priceData.rsi.toFixed(2) : '-';
       
-      let ma200Ratio = 0;
-      if (data && data.finvizSma200 !== null && data.finvizSma200 !== undefined) {
-        ma200Ratio = data.finvizSma200;
-      } else {
-        const ma200Val = priceData.ma200 || data.ma200;
-        ma200Ratio = ma200Val ? ((priceData.price - ma200Val) / ma200Val) * 100 : 0;
-      }
-
-      row.querySelector('.ma5').innerHTML = `<a href="https://marketchameleon.com/Overview/${ticker}" target="_blank" style="color:${textColor};">${priceData.ma5?.toFixed(2)}</a>`;
-      row.querySelector('.ma13').innerHTML = `<a href="https://www.tipranks.com/stocks/${ticker}/forecast" target="_blank" style="color:inherit;">${priceData.ma13?.toFixed(2)}</a>`;
-      row.querySelector('.ma10').innerHTML = `<span style="color:${ma10Ratio < 0 ? 'red' : 'green'}">${ma10Ratio.toFixed(2)}</span>`;
-      row.querySelector('.ma50').innerHTML = `<span style="color:${ma50Ratio < 0 ? 'red' : 'green'}">${ma50Ratio.toFixed(2)}</span>`;
-      row.querySelector('.ma200').innerHTML = `<a href="https://www.barchart.com/stocks/quotes/${ticker}/overview" target="_blank" style="color:inherit;color:${ma200Ratio < 0 ? 'red' : 'green'}">${ma200Ratio.toFixed(2)}</a>`;
-      row.querySelector('.rsi').textContent = priceData.rsi.toFixed(2);
-      // Add highlights
-      if (postErMove1d < 0 && priceData.ma5 >= priceData.ma13)
-        row.classList.add('highlight-orange'); //BU = true;
-      if (postErMove1d > 0 && priceData.ma5 <= priceData.ma13)
-        row.classList.add('highlight-green'); //TD = true;
-      if (postErMove1d < 0 && priceData.ma5 <= priceData.ma13)
-        row.classList.add('highlight-red'); //BD = true;
-      if (postErMove1d > 0 && priceData.ma5 >= priceData.ma13)
-        row.classList.add('highlight-blue'); //TU = true;
-
-      // Add Score, Short%, GEX
-      const score = calculateConvictionScore(data, priceData);
-      const scoreCell = row.querySelector('.score');
-      scoreCell.textContent = score;
-
-      row.querySelector('.shortInt').textContent = data.shortInt ? data.shortInt.toFixed(2) + '%' : '-';
-      row.querySelector('.gex').textContent = priceData.gex ? (priceData.gex / 1000000).toFixed(0) + 'M' : '-';
-
-      // Highlight Score Cell
-      if (score >= 80) {
-        scoreCell.style.backgroundColor = '#FFD700'; // Gold
-        scoreCell.style.fontWeight = 'bold';
-      } else if (score >= 60) {
-        scoreCell.style.backgroundColor = '#98FB98'; // Pale Green
-      }
+      const postErMove1d = data.post_earnings_move_1d;
+      if (postErMove1d < 0) row.classList.add('highlight-red');
+      if (postErMove1d > 0) row.classList.add('highlight-green');
     }
 
-    function calculateConvictionScore(data, priceData) {
-      let score = 0;
-
-      // 1. VRP Inversion (+40 points max)
-      // Historical Move / Current Straddle
-      const hm = parseFloat(data.avgHistoricMove) || 0;
-      const im = parseFloat(data.straddle) || 1; // avoid division by zero
-      const ratio = hm / im;
-      if (ratio > 1.25) score += 40;
-      else if (ratio > 1.1) score += 20;
-
-      // 2. Momentum/Trend (+20 points)
-      // Price > MA50 and RSI between 45 and 65 (healthy consolidation/trend, not overbought)
-      const rsi = priceData.rsi || 0;
-      const isAboveMa50 = priceData.price > priceData.ma50;
-      if (isAboveMa50 && rsi >= 45 && rsi <= 65) {
-        score += 20;
-      }
-
-      // 3. Short Squeeze Potential (+20 points)
-      // Short Interest > 10%
-      if (data.shortInt && data.shortInt > 10) {
-        score += 20;
-      }
-
-      // 4. Gamma Exposure (+20 points)
-      // Total GEX < 0
-      if (priceData.gex && priceData.gex < 0) {
-        score += 20;
-      }
-
-      return score;
-    }
+    
 
     // Utility to check if today is a new business day compared to cached date
     function isNewBusinessDay(lastDateStr) {
@@ -1002,15 +814,15 @@
       const cacheKey = `Straddle_$_${ticker}`;
       const cached = getCache(cacheKey);
 
-      if (cached && cached.data && cached.data.price && cached.fetchedAt &&
+      if (cached && cached.data && cached.fetchedAt &&
         !isNewBusinessDay(cached.fetchedAt)) {
         return cached.data;
       }
 
       spinner.style.display = 'block';
       try {
-        const data = await getPrices(ticker);
-        if (data && data.price) {
+        const data = await getYahooPrices(ticker);
+        if (data) {
           setCache(cacheKey, { data, fetchedAt: new Date().toISOString() });
         }
         return data;
@@ -1019,103 +831,34 @@
       }
     }
 
-    async function fetchTipRanksTargets(ticker) {
-      const url = `https://www.tipranks.com/stocks/${ticker}/stock-forecast/payload.json`;
-      const proxies = [
-        { url: 'https://api.allorigins.win/raw?url=', encode: true },
-        { url: 'https://thingproxy.freeboard.io/fetch/', encode: false }
-      ];
+    
 
-      // Stagger requests significantly to avoid blocking the browser's connection pool
-      await new Promise(res => setTimeout(res, Math.random() * 15000));
+    
 
-      let data = null;
-      for (const proxy of proxies) {
-        try {
-          const fetchUrl = proxy.url + (proxy.encode ? encodeURIComponent(url) : url);
-          const response = await fetch(fetchUrl);
-          if (response.ok) {
-            data = await response.json();
-            break; // Success!
-          }
-        } catch (err) {
-          // Silent catch to try the next proxy in the list
-          continue;
-        }
-      }
+    
 
-      if (data && data.models && data.models.ratings) {
-        const validRatings = data.models.ratings
-          .filter(r => r.priceTarget && typeof r.priceTarget.value === 'number')
-          .sort((a, b) => new Date(b.date) - new Date(a.date));
-
-        const targets = validRatings.slice(0, 4).map(r => r.priceTarget.value);
-        while (targets.length < 4) {
-          targets.push('-');
-        }
-        return targets;
-      }
-
-      return ['-', '-', '-', '-'];
-    }
-
-    async function fetchTipRanksTargetsCached(ticker) {
-      const cacheKey = `Straddle_tr_${ticker}`;
-      const cached = getCache(cacheKey);
-
-      // 24 hour cache expiry
-      if (cached && cached.data && cached.fetchedAt) {
-        const fetchTime = new Date(cached.fetchedAt).getTime();
-        const now = new Date().getTime();
-        if (now - fetchTime < 24 * 60 * 60 * 1000) {
-          return cached.data;
-        }
-      }
-
-      try {
-        const data = await fetchTipRanksTargets(ticker);
-        if (data && data.length === 4) {
-          setCache(cacheKey, { data, fetchedAt: new Date().toISOString() });
-        }
-        return data;
-      } catch (err) {
-        return ['-', '-', '-', '-'];
-      }
-    }
-
-    function updateTargetCells(ticker, targets) {
-      const row = document.getElementById(`row-${ticker}`);
-      if (!row) return;
-      row.querySelector('.tgt1').textContent = targets[0] !== '-' ? targets[0].toFixed(2) : '-';
-      row.querySelector('.tgt2').textContent = targets[1] !== '-' ? targets[1].toFixed(2) : '-';
-      row.querySelector('.tgt3').textContent = targets[2] !== '-' ? targets[2].toFixed(2) : '-';
-      row.querySelector('.tgt4').textContent = targets[3] !== '-' ? targets[3].toFixed(2) : '-';
-    }
-
-    // Update renderTable to use cached fetchers in parallel with concurrency control
+    
     async function renderTable() {
       const spinner = document.getElementById('loadingSpinner');
-      spinner.style.display = 'block'; // Show spinner
+      spinner.style.display = 'block';
 
       const tableBody = document.querySelector('#earningsTable tbody');
       tableBody.innerHTML = '';
 
-      // Concurrency limit for network requests
       const CONCURRENCY_LIMIT = 10;
       let index = 0;
 
-      // Helper to render a row immediately from cached data
       function renderRowFromCache(ticker, data) {
         if (!data || !data.expected_move_perc || data.expected_move_perc == null) return;
 
-        var calcPostErMove1d = Math.abs(data.post_earnings_move_1d);
-        var straddleCalulated = parseFloat(data.straddle && data.straddle != "N/A" && data.straddle != 0 ? toDecimal(parseFloat(data.straddle) + parseFloat(data.straddle) * 0.15) : 0);
-        var expMoveCalulated = parseFloat(data.expected_move_perc && data.expected_move_perc != 0 && data.expected_move_perc != 'N/A' ? toDecimal(parseFloat(data.expected_move_perc) + parseFloat(data.expected_move_perc) * 0.15) : 0);
+        var straddleCalulated = parseFloat(data.straddle && data.straddle != "N/A" && data.straddle != 0 ? (parseFloat(data.straddle) + parseFloat(data.straddle) * 0.15).toFixed(2) : 0);
+        var expMoveCalulated = parseFloat(data.expected_move_perc && data.expected_move_perc != 0 && data.expected_move_perc != 'N/A' ? (parseFloat(data.expected_move_perc) + parseFloat(data.expected_move_perc) * 0.15).toFixed(2) : 0);
         if (!data || !straddleCalulated)
           return;
-        //<td>${data.avgHistoricMove?.toFixed(2)}</td>
+        
         expMoveCalulated = parseFloat(expMoveCalulated && expMoveCalulated != "N/A" && expMoveCalulated != 0 ? expMoveCalulated : data.avgHistoricMove);
         var p = parseFloat((expMoveCalulated && straddleCalulated && expMoveCalulated > 0 && straddleCalulated > 0 ? parseFloat(((straddleCalulated - expMoveCalulated) / expMoveCalulated) * 100) : 999).toFixed(2));
+        
         const row = `<tr id="row-${ticker}">
                     <td>${ticker}</td>
                     <td>${data.er_date}</td>
@@ -1125,7 +868,6 @@
                     <td>${data.report_time}</td>
                     <td>${p}</td>
                     <td style="${straddleCalulated > 0 && expMoveCalulated >= straddleCalulated ? 'color:green;' : 'color:red'}"><a href="https://unusualwhales.com/stock/${ticker}/earnings" target="_blank" style="color:inherit;">${straddleCalulated}</a></td>
-                    <td>${data.histMove1 != null ? parseFloat(data.histMove1).toFixed(2) : '-'}</td>
                     <td>${data.histMove2 != null ? parseFloat(data.histMove2).toFixed(2) : '-'}</td>
                     <td>${data.histMove3 != null ? parseFloat(data.histMove3).toFixed(2) : '-'}</td>
                     <td>${data.histMove4 != null ? parseFloat(data.histMove4).toFixed(2) : '-'}</td>
@@ -1136,55 +878,26 @@
                     <td class="ma50">-</td>
                     <td class="ma200">-</td>
                     <td class="price"><a href="https://finviz.com/quote.ashx?t=${ticker}" target="_blank" style="color:inherit;}">${parseFloat(data.price?.toFixed(2))}</a></td>
-                    <td class="ma5">-</td>
-                    <td class="ma13">-</td>
-                    <td class="score">-</td>
-                    <td class="shortInt">-</td>
-                    <td class="gex">-</td>
-                    <td class="tgt1">-</td>
-                    <td class="tgt2">-</td>
-                    <td class="tgt3">-</td>
-                    <td class="tgt4">-</td>
                   </tr>`;
         tableBody.innerHTML += row;
-        enableRowHighlighting();
-        // Try to get price data from cache and update cells immediately if available
+        if (typeof enableRowHighlighting === "function") enableRowHighlighting();
+
         const priceCache = getCache(`Straddle_$_${ticker}`);
         if (
           priceCache &&
           priceCache.data &&
-          priceCache.price &&
           priceCache.fetchedAt &&
           !isNewBusinessDay(priceCache.fetchedAt)
         ) {
           updatePriceCells(ticker, priceCache.data, data);
         } else {
-          // Otherwise, fetch price data in background
           getPricesCached(ticker)
             .then(priceData => updatePriceCells(ticker, priceData, data))
             .catch(err => console.error(`Price error for ${ticker}:`, err));
         }
-
-        // Try to get TipRanks targets from cache and update cells immediately if available
-        const trCache = getCache(`Straddle_tr_${ticker}`);
-        if (
-          trCache &&
-          trCache.data &&
-          trCache.fetchedAt &&
-          !isNewBusinessDay(trCache.fetchedAt)
-        ) {
-          updateTargetCells(ticker, trCache.data);
-        } else {
-          // Otherwise, fetch TipRanks targets in background
-          fetchTipRanksTargetsCached(ticker)
-            .then(targets => updateTargetCells(ticker, targets))
-            .catch(err => console.error(`TipRanks error for ${ticker}:`, err));
-        }
       }
 
-      // Helper to process a batch of tickers (fetching only those not cached/expired)
       async function processBatch(batch) {
-        // For each ticker, check if earnings cache is valid
         const uncachedTickers = [];
         const cachedData = [];
 
@@ -1195,7 +908,7 @@
             cached &&
             cached.data &&
             cached.fetchedAt &&
-            cached.data.histMove1 !== undefined &&
+            cached.data.histMove2 !== undefined &&
             !isNewBusinessDay(cached.fetchedAt)
           ) {
             cachedData.push({ ticker, data: cached.data });
@@ -1204,12 +917,10 @@
           }
         }
 
-        // Render cached rows immediately
         for (const { ticker, data } of cachedData) {
           renderRowFromCache(ticker, data);
         }
 
-        // Fetch uncached earnings in parallel (with concurrency limit)
         for (let i = 0; i < uncachedTickers.length; i += CONCURRENCY_LIMIT) {
           const subBatch = uncachedTickers.slice(i, i + CONCURRENCY_LIMIT);
           const earningsResults = await Promise.all(
@@ -1224,9 +935,7 @@
         }
       }
 
-      // Process all tickers in batches
       try {
-        // Sort tickers by market cap (high to low) based on cached data
         tickers.sort((a, b) => {
           const cacheA = getCache(`Straddle_er_${a}`);
           const mcA = cacheA && cacheA.data && cacheA.data.marketcap ? cacheA.data.marketcap : 0;
@@ -1244,11 +953,9 @@
           await new Promise(res => setTimeout(res, 500));
         }
 
-        // Automatically sort by report date (column index 5)
-        sortTable(2);
-        enableRowHighlighting();
+        sortTable(1);
       } finally {
-        spinner.style.display = 'none'; // Hide spinner when done or on error
+        spinner.style.display = 'none';
       }
     }
 
