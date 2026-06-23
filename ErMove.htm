@@ -259,10 +259,14 @@
           <th onclick="sortTable(11)">ER Move%</th>
           <th onclick="sortTable(12)">Change%</th>
           <th onclick="sortTable(13)">McP</th>
-          <th onclick="sortTable(14)">MA10D%</th>
-          <th onclick="sortTable(15)">MA50%</th>
-          <th onclick="sortTable(16)">MA200%</th>
-          <th onclick="sortTable(17)">Price</th>
+          <th onclick="sortTable(14)">UCP</th>
+          <th onclick="sortTable(15)">UCPa</th>
+          <th onclick="sortTable(16)">LCPa</th>
+          <th onclick="sortTable(17)">LCP</th>
+          <th onclick="sortTable(18)">MA10D%</th>
+          <th onclick="sortTable(19)">MA50%</th>
+          <th onclick="sortTable(20)">MA200%</th>
+          <th onclick="sortTable(21)">Price</th>
           
           
           
@@ -697,6 +701,20 @@
         const preErPrice = parseFloat(latest.price) || 0;
         const priceChange = preErPrice ? ((latestPrice - preErPrice) / preErPrice * 100).toFixed(2) : 0;
         const mcp = preErPrice ? ((latestPrice - preErPrice) / preErPrice * 100).toFixed(2) : 0;
+        
+        const mcpAbs = latestPrice - preErPrice;
+        const lastImpliedMoveAbs = preErPrice * parseFloat(latest.expected_move_perc || 0);
+
+        const ucpAbs = preErPrice + 2 * lastImpliedMoveAbs;
+        const ucpaAbs = preErPrice + lastImpliedMoveAbs;
+        const lcpaAbs = preErPrice - lastImpliedMoveAbs;
+        const lcpAbs = preErPrice - 2 * lastImpliedMoveAbs;
+
+        const ucp = latestPrice ? ((ucpAbs - latestPrice) / latestPrice * 100).toFixed(2) : 0;
+        const ucpa = latestPrice ? ((ucpaAbs - latestPrice) / latestPrice * 100).toFixed(2) : 0;
+        const lcpa = latestPrice ? ((lcpaAbs - latestPrice) / latestPrice * 100).toFixed(2) : 0;
+        const lcp = latestPrice ? ((lcpAbs - latestPrice) / latestPrice * 100).toFixed(2) : 0;
+
         const reportTime = next.report_time == 'unknown' || next.report_time == '' || !next.report_time ? '-' : next.report_time == 'premarket' ? 'PM' : next.report_time == 'postmarket' ? 'AH' : next.report_time;
         
         const ma50 = jsonInfo.company ? parseFloat(jsonInfo.company.day50_moving_avg) || 0 : 0;
@@ -707,6 +725,10 @@
           price: latestPrice || 0,
           priceChange: priceChange || 0,
           mcp: mcp || 0,
+          ucp: ucp,
+          ucpa: ucpa,
+          lcpa: lcpa,
+          lcp: lcp,
           finvizSma200: null,
           er_date: next.report_date || 'N/A',
           report_date: latest.report_date || 'N/A',
@@ -870,6 +892,10 @@
                     <td>${parseFloat(data.post_earnings_move_1d && data.post_earnings_move_1d != 0 && data.post_earnings_move_1d != 'N/A' ? data.post_earnings_move_1d : 0)}</td>
                     <td class="priceChange"><a href="https://robinhood.com/stocks/${ticker}" target="_blank" style="color:inherit;">${parseFloat(data.priceChange)}</a></td>
                     <td class="mcp">${data.mcp}%</td>
+                    <td class="ucp">${data.ucp}%</td>
+                    <td class="ucpa">${data.ucpa}%</td>
+                    <td class="lcpa">${data.lcpa}%</td>
+                    <td class="lcp">${data.lcp}%</td>
                     <td class="ma10">-</td>
                     <td class="ma50">-</td>
                     <td class="ma200">-</td>
@@ -962,7 +988,7 @@
 
       // Detect column type
       const isDate = columnIndex === 1; // ErDate(Nxt)
-      const isNumeric = columnIndex !== 0 && columnIndex !== 1;
+      const isNumeric = columnIndex !== 0 && columnIndex !== 1 && columnIndex !== 5;
 
       const sortedRows = rows.sort((a, b) => {
         const valA = a.cells[columnIndex].textContent.trim();
