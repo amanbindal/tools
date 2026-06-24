@@ -521,29 +521,46 @@
         }
       }
     }
+
     async function getYahooPrices(ticker) {
-      try {
-        const proxy = 'https://corsproxy.org/?';
-        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=3mo`;
-        const data = await fetchWithRetry(proxy + encodeURIComponent(url));
+      const proxies = [
+        'https://api.allorigins.win/raw?url=',
+        'https://corsproxy.io/?',
+        'https://corsproxy.org/?',
+        'https://thingproxy.freeboard.io/fetch/'
+      ];
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=3mo`;
+      
+      for (let proxy of proxies) {
+        try {
+          const res = await fetch(proxy + encodeURIComponent(url));
+          if (!res.ok) continue;
+          
+          const data = await res.json();
+          if (!data || !data.chart || !data.chart.result || !data.chart.result[0]) continue;
+          
+          const result = data.chart.result[0];
+          const timestamps = result.timestamp || [];
+          const closes = result.indicators.quote[0].close || [];
 
-        const result = data.chart.result[0];
-        const timestamps = result.timestamp || [];
-        const closes = result.indicators.quote[0].close || [];
+          const paired = timestamps.map((ts, i) => ({ date: new Date(ts * 1000), close: closes[i] }))
+            .filter(item => item.close != null)
+            .sort((a, b) => a.date - b.date);
 
-        const paired = timestamps.map((ts, i) => ({ date: new Date(ts * 1000), close: closes[i] }))
-          .filter(item => item.close != null)
-          .sort((a, b) => a.date - b.date);
+          const closesArr = paired.map(p => p.close);
+          
+          // Using our calculateRSI method as requested to get the final RSI value
+          const rsi = calculateRSI(closesArr);
+          const ma10 = calculateMA10(closesArr);
 
-        const closesArr = paired.map(p => p.close);
-        const rsi = calculateRSI(closesArr);
-        const ma10 = calculateMA10(closesArr);
-
-        return { rsi, ma10 };
-      } catch (err) {
-        console.error(`Error fetching ${ticker}:`, err);
-        return { rsi: 0, ma10: 0 };
+          return { rsi, ma10 };
+        } catch (err) {
+          console.error(`Proxy ${proxy} failed for ${ticker}`);
+        }
       }
+      
+      console.error(`All proxies failed for ${ticker}`);
+      return { rsi: 0, ma10: 0 };
     }
 
     
@@ -563,8 +580,8 @@
           fetchWithRetry(`https://phx.unusualwhales.com/api/companies/${ticker}/`)
         ]);
 
-        // EMSE Filter: Market Cap > 1 Billion and 30-Day Volume > 1 Million
-        if (!json.data || json.data.length === 0 || !jsonInfo.company || jsonInfo.company.marketcap < 1000000000 || jsonInfo.company.avg30_volume < 1000000)
+        // EMSE Filter: Market Cap > 1 Billion and 30-Day Volume > 1 Million (Commented out as tickers are pre-filtered)
+        if (!json.data || json.data.length === 0) // || !jsonInfo.company || jsonInfo.company.marketcap < 1000000000 || jsonInfo.company.avg30_volume < 1000000)
           return null;
 
         var latest = json.data[json.data.length - 1];
