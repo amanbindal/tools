@@ -11,7 +11,8 @@
     <h2>&nbspER Data &nbsp<span style="color: #DE3163;">BD</span>, <span style="color: #FFAC1C;">BU</span>,
       <span style="color: #6495ED;">TU</span>, <span style="color: #2AAA8A;">TD</span>
     </h2>
-    <div style="display: flex; gap: 20px; margin-right: 60px;">
+    <div style="display: flex; gap: 20px; align-items: center; margin-right: 60px;">
+      <input type="text" id="searchInput" placeholder="Search Ticker..." style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--table-border); background: var(--table-bg); color: var(--text-color); outline: none;">
       <button id="themeToggle" class="theme-toggle" style="display: none;">🌙&nbsp☀️</button>
       <a href="ErMove.htm" target="_blank" style="text-decoration: none; color: #FFAC1C;">GT_100</a>
       <a href="ErMove100.htm" target="_blank" style="text-decoration: none; color: #6495ED;">LT_100</a>
@@ -73,7 +74,7 @@
 
     th, td {
       padding: 12px 16px;
-      text-align: left;
+      text-align: right;
       border-bottom: 1px solid var(--table-border);
       transition: background-color 0.2s;
     }
@@ -82,6 +83,33 @@
       background-color: var(--header-bg);
       color: var(--header-text);
       font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* Sticky Ticker Column */
+    th:nth-child(1), td:nth-child(1) {
+      text-align: left;
+      position: sticky;
+      left: 0;
+      background-color: var(--table-bg);
+      z-index: 1;
+      border-right: 2px solid var(--table-border);
+      box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+      font-weight: 600;
+    }
+
+    thead th:nth-child(1) {
+      z-index: 3;
+      background-color: var(--header-bg);
+    }
+    
+    .light-theme th:nth-child(1) {
+      background-color: #eee;
+    }
+
+    /* Left align Date */
+    th:nth-child(2), td:nth-child(2) {
+      text-align: left;
     }
 
     table {
@@ -138,6 +166,19 @@
       z-index: 2;
       background-color: #333;
       color: white;
+    }
+
+    /* Column Grouping Dividers */
+    .col-group-divider {
+      border-right: 2px solid #555 !important;
+    }
+
+    .light-theme .col-group-divider {
+      border-right: 2px solid #ccc !important;
+    }
+    
+    td.col-group-divider {
+      border-right: 2px solid var(--table-border) !important;
     }
 
     .light-theme thead th {
@@ -245,28 +286,27 @@
       <thead>
         <tr>
           <th onclick="sortTable(0)">Ticker</th>
-          <th onclick="sortTable(1)">ErDate(Nxt)</th>
-          <th onclick="sortTable(2)">Rsi</th>
-          <th onclick="sortTable(3)">IvRank</th>
-          <th onclick="sortTable(4)">Beta</th>
-          <th onclick="sortTable(5)">PM/AH</th>
-          <th onclick="sortTable(6)">P</th>
-          <th onclick="sortTable(7)">Straddle%</th>
-          
-          <th onclick="sortTable(8)">HistMove2%</th>
-          <th onclick="sortTable(9)">HistMove3%</th>
-          <th onclick="sortTable(10)">HistMove4%</th>
-          <th onclick="sortTable(11)">ER Move%</th>
-          <th onclick="sortTable(12)">Change%</th>
-          <th onclick="sortTable(13)">McP</th>
-          <th onclick="sortTable(14)">UCP</th>
-          <th onclick="sortTable(15)">UCPa</th>
-          <th onclick="sortTable(16)">LCPa</th>
-          <th onclick="sortTable(17)">LCP</th>
-          <th onclick="sortTable(18)">MA10D%</th>
-          <th onclick="sortTable(19)">MA50%</th>
-          <th onclick="sortTable(20)">MA200%</th>
-          <th onclick="sortTable(21)">Price</th>
+          <th onclick="sortTable(1)" title="Next Earnings Date">ErDate(Nxt)</th>
+          <th class="col-group-divider" onclick="sortTable(2)" title="Relative Strength Index">Rsi</th>
+          <th onclick="sortTable(3)" title="Implied Volatility Rank">IvRank</th>
+          <th onclick="sortTable(4)" title="Beta (Stock Volatility vs Market)">Beta</th>
+          <th onclick="sortTable(5)" title="Premarket or After Hours">PM/AH</th>
+          <th class="col-group-divider" onclick="sortTable(6)" title="Straddle Price vs Expected Move Ratio">P</th>
+          <th onclick="sortTable(7)" title="Expected Move % (Straddle Price + 15%)">Straddle%</th>
+          <th onclick="sortTable(8)" title="Historical Move 2 Quarters Ago">HistMove2%</th>
+          <th onclick="sortTable(9)" title="Historical Move 3 Quarters Ago">HistMove3%</th>
+          <th onclick="sortTable(10)" title="Historical Move 4 Quarters Ago">HistMove4%</th>
+          <th class="col-group-divider" onclick="sortTable(11)" title="Last Earnings Move %">ER Move%</th>
+          <th onclick="sortTable(12)" title="% Change since last earnings report">Change%</th>
+          <th class="col-group-divider" onclick="sortTable(13)" title="Market Chart Price: Current price vs Pre-Earnings price">McP%</th>
+          <th onclick="sortTable(14)" title="Upper Chart Price (+2x Implied Move)">UCP%</th>
+          <th onclick="sortTable(15)" title="Upper Chart Price (+1x Implied Move)">UCPa%</th>
+          <th onclick="sortTable(16)" title="Lower Chart Price (-1x Implied Move)">LCPa%</th>
+          <th class="col-group-divider" onclick="sortTable(17)" title="Lower Chart Price (-2x Implied Move)">LCP%</th>
+          <th onclick="sortTable(18)" title="10-Day Moving Average Distance">MA10D%</th>
+          <th onclick="sortTable(19)" title="50-Day Moving Average Distance">MA50%</th>
+          <th class="col-group-divider" onclick="sortTable(20)" title="200-Day Moving Average Distance">MA200%</th>
+          <th onclick="sortTable(21)" title="Latest Price">Price</th>
           
           
           
@@ -880,25 +920,25 @@
         const row = `<tr id="row-${ticker}">
                     <td>${ticker}</td>
                     <td>${data.er_date}</td>
-                    <td class="rsi">0</td>
+                    <td class="rsi col-group-divider">0</td>
                     <td>${parseFloat(data.iv_rank?.toFixed(2))}</td>
                     <td style="${data.beta && data.beta > 1.29 ? 'color:green;' : 'color:inherit;'}">${data.beta ? parseFloat(data.beta.toFixed(2)) : 0}</td>
                     <td>${data.report_time}</td>
-                    <td>${p}</td>
+                    <td class="col-group-divider">${p}</td>
                     <td style="${straddleCalulated > 0 && expMoveCalulated >= straddleCalulated ? 'color:green;' : 'color:red'}"><a href="https://unusualwhales.com/stock/${ticker}/earnings" target="_blank" style="color:inherit;">${straddleCalulated}</a></td>
                     <td>${data.histMove2 != null ? parseFloat(data.histMove2).toFixed(2) : '-'}</td>
                     <td>${data.histMove3 != null ? parseFloat(data.histMove3).toFixed(2) : '-'}</td>
                     <td>${data.histMove4 != null ? parseFloat(data.histMove4).toFixed(2) : '-'}</td>
-                    <td>${parseFloat(data.post_earnings_move_1d && data.post_earnings_move_1d != 0 && data.post_earnings_move_1d != 'N/A' ? data.post_earnings_move_1d : 0)}</td>
+                    <td class="col-group-divider">${parseFloat(data.post_earnings_move_1d && data.post_earnings_move_1d != 0 && data.post_earnings_move_1d != 'N/A' ? data.post_earnings_move_1d : 0)}</td>
                     <td class="priceChange"><a href="https://robinhood.com/stocks/${ticker}" target="_blank" style="color:inherit;">${parseFloat(data.priceChange)}</a></td>
-                    <td class="mcp">${data.mcp}%</td>
-                    <td class="ucp">${data.ucp}%</td>
-                    <td class="ucpa">${data.ucpa}%</td>
-                    <td class="lcpa">${data.lcpa}%</td>
-                    <td class="lcp">${data.lcp}%</td>
+                    <td class="mcp col-group-divider">${data.mcp}</td>
+                    <td class="ucp">${data.ucp}</td>
+                    <td class="ucpa">${data.ucpa}</td>
+                    <td class="lcpa">${data.lcpa}</td>
+                    <td class="lcp col-group-divider">${data.lcp}</td>
                     <td class="ma10">-</td>
                     <td class="ma50">-</td>
-                    <td class="ma200">-</td>
+                    <td class="ma200 col-group-divider">-</td>
                     <td class="price"><a href="https://finviz.com/quote.ashx?t=${ticker}" target="_blank" style="color:inherit;}">${parseFloat(data.price?.toFixed(2))}</a></td>
                   </tr>`;
         tableBody.innerHTML += row;
@@ -1023,6 +1063,19 @@
       tbody.innerHTML = '';
       sortedRows.forEach(row => tbody.appendChild(row));
     }
+
+    // Search Filtering
+    document.getElementById('searchInput').addEventListener('input', function(e) {
+      const term = e.target.value.toLowerCase();
+      const rows = document.querySelectorAll('#earningsTable tbody tr');
+      rows.forEach(row => {
+        const tickerCell = row.cells[0];
+        if (tickerCell) {
+          const ticker = tickerCell.textContent.toLowerCase();
+          row.style.display = ticker.includes(term) ? '' : 'none';
+        }
+      });
+    });
 
     renderTable();
 
