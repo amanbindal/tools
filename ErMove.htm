@@ -617,7 +617,9 @@
         // Fetch external prices (Finnhub, Polygon, AlphaVantage) concurrently
         const latestPrice = parseFloat(jsonPrice.curr) || parseFloat(jsonPrice.prev) || (jsonPrice2.history && jsonPrice2.history.length > 0 ? parseFloat(jsonPrice2.history[0].price) || parseFloat(jsonPrice2.history[0].close_price) : 0);
         const preErPrice = parseFloat(latest.price) || 0;
-        const priceChange = preErPrice ? ((latestPrice - preErPrice) / preErPrice * 100).toFixed(2) : 0;
+        const postErMove1dRatio = parseFloat(latest.post_earnings_move_1d) || 0;
+        const postErPrice = preErPrice * (1 + postErMove1dRatio);
+        const priceChange = postErPrice ? ((latestPrice - postErPrice) / postErPrice * 100).toFixed(2) : 0;
         const mcp = preErPrice ? ((latestPrice - preErPrice) / preErPrice * 100).toFixed(2) : 0;
         
         const mcpAbs = latestPrice - preErPrice;
