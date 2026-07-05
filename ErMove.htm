@@ -209,6 +209,16 @@
       background-color: #cefcfd !important;
     }
 
+    .highlight-sky-blue {
+      background-color: #87CEEB !important;
+      color: #000 !important;
+    }
+
+    .highlight-light-green {
+      background-color: #90EE90 !important;
+      color: #000 !important;
+    }
+
     a,
     a label,
     a:link,
@@ -294,10 +304,11 @@
           <th onclick="sortTable(5)" title="Expected Move % (Straddle Price + 15%)">Straddle%</th>
           <th onclick="sortTable(6)" title="Historical Move 2 Quarters Ago">HistMove2%</th>
           <th onclick="sortTable(7)" title="Historical Move 3 Quarters Ago">HistMove3%</th>
-          <th onclick="sortTable(8)" title="Historical Move 4 Quarters Ago">HistMove4%</th>
+          <!-- <th onclick="sortTable(8)" title="Historical Move 4 Quarters Ago">HistMove4%</th> -->
           <th class="col-group-divider" onclick="sortTable(9)" title="Last Earnings Move %">ER Move%</th>
           <th onclick="sortTable(10)" title="% Change since last earnings report">Change%</th>
-          <th class="col-group-divider" onclick="sortTable(11)" title="Market Chart Price: Current price vs Pre-Earnings price">McP%</th>
+          <th onclick="sortTable(11)" title="Market Chart Price 2Q: Current price vs Pre-Earnings price of last to last quarter">McP2Q%</th>
+          <th class="col-group-divider" onclick="sortTable(12)" title="Market Chart Price: Current price vs Pre-Earnings price">McP%</th>
           <th onclick="sortTable(12)" title="Upper Chart Price (+2x Implied Move)">UCP%</th>
           <th onclick="sortTable(13)" title="Upper Chart Price (+1x Implied Move)">UCPa%</th>
           <th onclick="sortTable(14)" title="Lower Chart Price (-1x Implied Move)">LCPa%</th>
@@ -364,7 +375,7 @@
   'HPQ', 'HQY', 'HSY', 'HTZ', 'HUM', 'HUT',
 
   // --- I ---
-  'IBM', 'IBN', 'IBRX', 'INFY', 'INSM', 'INTC', 'INTU', 'IONQ', 'IOT', 
+  'IBM', 'IBN', 'IBRX', 'ILMN', 'INFY', 'INSM', 'INTC', 'INTU', 'IONQ', 'IOT', 
   'IOVA', 'IREN',
 
   // --- J ---
@@ -374,7 +385,7 @@
   'KEY', 'KEYS', 'KMX', 'KO', 'KOS', 'KSS', 'KVUE',
 
   // --- L ---
-  'LAD', 'LEN', 'LEU', 'LII', 'LITE', 'LLY', 'LOW', 'LQDA', 'LRCX', 'LULU', 
+  'LAD', 'LEN', 'LEU', 'LII', 'LITE', 'LLY', 'LMND', 'LOW', 'LQDA', 'LRCX', 'LULU', 
   'LUNR', 'LW', 'LYFT', 'LYG',
 
   // --- M ---
@@ -398,7 +409,7 @@
 
   // --- R ---
   'RBLX', 'RBRK', 'RCAT', 'RCL', 'RDDT', 'RDW', 'RELY', 'RGTI', 'RH', 'RIG', 
-  'RIOT', 'RIVN', 'RKLB', 'RKT', 'RL', 'ROK', 'ROKU', 'ROST', 'RTX', 'RUN', 'RXRX', 'RXT',
+  'RIOT', 'RIVN', 'RKLB', 'RKT', 'RL', 'ROK', 'ROKU', 'ROOT', 'ROST', 'RTX', 'RUN', 'RXRX', 'RXT',
 
   // --- S ---
   'S', 'SAIL', 'SAM', 'SAN', 'SBUX', 'SCHW', 'SE', 'SEDG', 'SHOP', 'SIG', 
@@ -606,6 +617,10 @@
 
         if (!latest.post_earnings_move_3d && json.data.length > 1)
           latest = json.data[json.data.length - 2];
+          
+        let latestIndex = json.data.indexOf(latest);
+        let lastToLast = latestIndex > 0 ? json.data[latestIndex - 1] : null;
+        let mcp2qPreErPrice = lastToLast ? parseFloat(lastToLast.price) || 0 : 0;
 
         const beta = jsonInfo.company ? parseFloat(jsonInfo.company.beta) || 0 : 0;
         const ma200 = parseFloat(jsonInfo.company.day200_moving_avg) || 0;
@@ -621,6 +636,7 @@
         const postErPrice = preErPrice * (1 + postErMove1dRatio);
         const priceChange = postErPrice ? ((latestPrice - postErPrice) / postErPrice * 100).toFixed(2) : 0;
         const mcp = preErPrice ? ((latestPrice - preErPrice) / preErPrice * 100).toFixed(2) : 0;
+        const mcp2q = mcp2qPreErPrice ? ((latestPrice - mcp2qPreErPrice) / mcp2qPreErPrice * 100).toFixed(2) : 0;
         
         const mcpAbs = latestPrice - preErPrice;
         const lastImpliedMoveAbs = preErPrice * parseFloat(latest.expected_move_perc || 0);
@@ -653,6 +669,7 @@
           price: latestPrice || 0,
           priceChange: priceChange || 0,
           mcp: mcp || 0,
+          mcp2q: mcp2q || 0,
           ucp: ucp,
           ucpa: ucpa,
           lcpa: lcpa,
@@ -805,7 +822,19 @@
         expMoveCalulated = parseFloat(expMoveCalulated && expMoveCalulated != "N/A" && expMoveCalulated != 0 ? expMoveCalulated : data.avgHistoricMove);
         var p = parseFloat((expMoveCalulated && straddleCalulated && expMoveCalulated > 0 && straddleCalulated > 0 ? parseFloat(((straddleCalulated - expMoveCalulated) / expMoveCalulated) * 100) : 999).toFixed(2));
         
-        const row = `<tr id="row-${ticker}">
+        let rowClass = "";
+        const valMcp = parseFloat(data.mcp) || 0;
+        const valMcp2q = parseFloat(data.mcp2q) || 0;
+        const valUcp = parseFloat(data.ucp) || 0;
+        const valUcpa = parseFloat(data.ucpa) || 0;
+
+        if (valMcp > 0 && valMcp2q > 0 && valUcp > 0 && valUcpa > 0) {
+            rowClass = "highlight-sky-blue";
+        } else if (valMcp2q > 0 && valUcp < 0) {
+            rowClass = "highlight-light-green";
+        }
+        
+        const row = `<tr id="row-${ticker}" class="${rowClass}">
                     <td>${ticker}</td>
                     <td>${data.er_date}</td>
                     <td class="rsi col-group-divider">0</td>
@@ -814,9 +843,10 @@
                     <td style="${straddleCalulated > 0 && expMoveCalulated >= straddleCalulated ? 'color:green;' : 'color:red'}"><a href="https://unusualwhales.com/stock/${ticker}/earnings" target="_blank" style="color:inherit;">${straddleCalulated}</a></td>
                     <td>${data.histMove2 != null ? parseFloat(data.histMove2).toFixed(2) : '-'}</td>
                     <td>${data.histMove3 != null ? parseFloat(data.histMove3).toFixed(2) : '-'}</td>
-                    <td>${data.histMove4 != null ? parseFloat(data.histMove4).toFixed(2) : '-'}</td>
+                    <!-- <td>${data.histMove4 != null ? parseFloat(data.histMove4).toFixed(2) : '-'}</td> -->
                     <td class="col-group-divider">${parseFloat(data.post_earnings_move_1d && data.post_earnings_move_1d != 0 && data.post_earnings_move_1d != 'N/A' ? data.post_earnings_move_1d : 0)}</td>
                     <td class="priceChange"><a href="https://robinhood.com/stocks/${ticker}" target="_blank" style="color:inherit;">${parseFloat(data.priceChange)}</a></td>
+                    <td class="mcp2q">${data.mcp2q}</td>
                     <td class="mcp col-group-divider">${data.mcp}</td>
                     <td class="ucp">${data.ucp}</td>
                     <td class="ucpa">${data.ucpa}</td>
