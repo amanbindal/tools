@@ -890,11 +890,11 @@
             rowClass = "highlight-dark-green";
         } else if (valErMove > 0 && valMcp2q > 0 && valMcp < 0) {
             rowClass = "highlight-light-green";
-        } else if (valErMove < 0 && valUcp > 0) {
+        } else if (valErMove < 0 && valMcp > 0 && valUcp > 0) {
             rowClass = "highlight-orange";
         } else if (valErMove < 0 && valMcp > 0 && valUcp < 0) {
             rowClass = "highlight-yellow";
-        } else if (valErMove < 0) {
+        } else if (valErMove < 0 && valMcp < 0) {
             rowClass = "highlight-red";
         }
         
