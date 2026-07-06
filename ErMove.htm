@@ -313,8 +313,7 @@
           <th class="col-group-divider" onclick="sortTable(4)" title="Straddle Price vs Expected Move Ratio">P</th>
           <th onclick="sortTable(5)" title="Expected Move % (Straddle Price + 15%)">Straddle%</th>
           <th onclick="sortTable(6)" title="Historical Move 2 Quarters Ago">HistMove2%</th>
-          <th onclick="sortTable(7)" title="Historical Move 3 Quarters Ago">HistMove3%</th>
-          <!-- <th onclick="sortTable(8)" title="Historical Move 4 Quarters Ago">HistMove4%</th> -->
+          <th onclick="sortTable(7)" title="Price to Sales Ratio">P/S</th>
           <th class="col-group-divider" onclick="sortTable(8)" title="Last Earnings Move %">ER Move%</th>
           <th onclick="sortTable(9)" title="% Change since last earnings report">Change%</th>
           <th onclick="sortTable(10)" title="Market Chart Price 2Q: Current price vs Pre-Earnings price of last to last quarter">McP2Q%</th>
@@ -639,6 +638,10 @@
         const marketcap = jsonInfo.company ? parseFloat(jsonInfo.company.marketcap) || 0 : 0;
         const ivRank = jsonIvData && jsonIvData.data ? parseFloat(jsonIvData.data.iv_rank) || 999 : 999;
         
+        const financials = await getFinancialsCached(ticker);
+        const total_revenue = financials.total_revenue || 0;
+        const ps_ratio = (marketcap > 0 && total_revenue > 0) ? (marketcap / total_revenue) : 0;
+        
         // Use strictly the curr property from unusual whales price endpoint as requested
         const latestPrice = parseFloat(jsonPrice.curr) || 0;
         const preErPrice = parseFloat(latest.price) || 0;
@@ -704,6 +707,7 @@
           high52w: high52w,
           industry: industry,
           marketcap: marketcap,
+          ps_ratio: ps_ratio,
           calculatedRsi: calculatedRsi
         };
       } catch (err) {
@@ -726,10 +730,6 @@
       if(row.querySelector('.ma200')) row.querySelector('.ma200').innerHTML = `<a href="https://www.barchart.com/stocks/quotes/${ticker}/overview" target="_blank" style="color:${ma200Ratio < 0 ? 'red' : 'green'}">${ma200Ratio.toFixed(2)}</a>`;
       const finalRsi = (priceData && priceData.rsi) ? priceData.rsi : data.calculatedRsi;
       if(row.querySelector('.rsi')) row.querySelector('.rsi').textContent = finalRsi ? finalRsi.toFixed(2) : '-';
-      
-      const postErMove1d = data.post_earnings_move_1d;
-      if (postErMove1d < 0) row.classList.add('highlight-red');
-      if (postErMove1d > 0) row.classList.add('highlight-green');
     }
 
     
@@ -757,6 +757,27 @@
     }
     function setCache(key, value) {
       localStorage.setItem(key, JSON.stringify(value));
+    }
+
+    async function getFinancialsCached(ticker) {
+      const cacheKey = `Straddle_fin_${ticker}`;
+      const cached = getCache(cacheKey);
+      if (cached && cached.total_revenue) {
+        return cached;
+      }
+      try {
+        const res = await fetchWithRetry(`https://phx.unusualwhales.com/api/stock/${ticker}/av/financials`);
+        if (res && res.data && res.data.income_statements) {
+          const annual = res.data.income_statements.find(r => r.report_type === 'annual');
+          const ttm = annual ? parseFloat(annual.total_revenue) : 0;
+          if (ttm > 0) {
+             const data = { total_revenue: ttm };
+             setCache(cacheKey, data);
+             return data;
+          }
+        }
+      } catch(e) {}
+      return { total_revenue: 0 };
     }
 
     // Wrap fetchEarnings with caching
@@ -899,14 +920,15 @@
         }
         
         const row = `<tr id="row-${ticker}" class="${rowClass}">
-                    <td>${ticker}</td>
+                    <td style="color: black !important;">${ticker}</td>
                     <td>${data.er_date}</td>
                     <td class="rsi col-group-divider">0</td>
                     <td>${data.report_time}</td>
                     <td class="col-group-divider">${p}</td>
                     <td style="${straddleCalulated > 0 && expMoveCalulated >= straddleCalulated ? 'color:green;' : 'color:red'}"><a href="https://unusualwhales.com/stock/${ticker}/earnings" target="_blank" style="color:inherit;">${straddleCalulated}</a></td>
                     <td>${data.histMove2 != null ? parseFloat(data.histMove2).toFixed(2) : '-'}</td>
-                    <td>${data.histMove3 != null ? parseFloat(data.histMove3).toFixed(2) : '-'}</td>
+                    <!-- <td>${data.histMove3 != null ? parseFloat(data.histMove3).toFixed(2) : '-'}</td> -->
+                    <td>${data.ps_ratio > 0 ? data.ps_ratio.toFixed(2) : '-'}</td>
                     <!-- <td>${data.histMove4 != null ? parseFloat(data.histMove4).toFixed(2) : '-'}</td> -->
                     <td class="col-group-divider">${parseFloat(data.post_earnings_move_1d && data.post_earnings_move_1d != 0 && data.post_earnings_move_1d != 'N/A' ? data.post_earnings_move_1d : 0)}</td>
                     <td class="priceChange"><a href="https://robinhood.com/stocks/${ticker}" target="_blank" style="color:inherit;">${parseFloat(data.priceChange)}</a></td>
