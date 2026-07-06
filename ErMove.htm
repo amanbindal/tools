@@ -214,8 +214,18 @@
       color: #000 !important;
     }
 
+    .highlight-dark-green {
+      background-color: #228B22 !important;
+      color: #fff !important;
+    }
+
     .highlight-light-green {
       background-color: #90EE90 !important;
+      color: #000 !important;
+    }
+    
+    .highlight-yellow {
+      background-color: #FFFFE0 !important;
       color: #000 !important;
     }
 
@@ -305,10 +315,10 @@
           <th onclick="sortTable(6)" title="Historical Move 2 Quarters Ago">HistMove2%</th>
           <th onclick="sortTable(7)" title="Historical Move 3 Quarters Ago">HistMove3%</th>
           <!-- <th onclick="sortTable(8)" title="Historical Move 4 Quarters Ago">HistMove4%</th> -->
-          <th class="col-group-divider" onclick="sortTable(9)" title="Last Earnings Move %">ER Move%</th>
-          <th onclick="sortTable(10)" title="% Change since last earnings report">Change%</th>
-          <th onclick="sortTable(11)" title="Market Chart Price 2Q: Current price vs Pre-Earnings price of last to last quarter">McP2Q%</th>
-          <th class="col-group-divider" onclick="sortTable(12)" title="Market Chart Price: Current price vs Pre-Earnings price">McP%</th>
+          <th class="col-group-divider" onclick="sortTable(8)" title="Last Earnings Move %">ER Move%</th>
+          <th onclick="sortTable(9)" title="% Change since last earnings report">Change%</th>
+          <th onclick="sortTable(10)" title="Market Chart Price 2Q: Current price vs Pre-Earnings price of last to last quarter">McP2Q%</th>
+          <th class="col-group-divider" onclick="sortTable(11)" title="Market Chart Price: Current price vs Pre-Earnings price">McP%</th>
           <th onclick="sortTable(12)" title="Upper Chart Price (+2x Implied Move)">UCP%</th>
           <th onclick="sortTable(13)" title="Upper Chart Price (+1x Implied Move)">UCPa%</th>
           <th onclick="sortTable(14)" title="Lower Chart Price (-1x Implied Move)">LCPa%</th>
@@ -629,8 +639,8 @@
         const marketcap = jsonInfo.company ? parseFloat(jsonInfo.company.marketcap) || 0 : 0;
         const ivRank = jsonIvData && jsonIvData.data ? parseFloat(jsonIvData.data.iv_rank) || 999 : 999;
         
-        // Fetch external prices (Finnhub, Polygon, AlphaVantage) concurrently
-        const latestPrice = parseFloat(jsonPrice.curr) || parseFloat(jsonPrice.prev) || (jsonPrice2.history && jsonPrice2.history.length > 0 ? parseFloat(jsonPrice2.history[0].price) || parseFloat(jsonPrice2.history[0].close_price) : 0);
+        // Use strictly the curr property from unusual whales price endpoint as requested
+        const latestPrice = parseFloat(jsonPrice.curr) || 0;
         const preErPrice = parseFloat(latest.price) || 0;
         const postErMove1dRatio = parseFloat(latest.post_earnings_move_1d) || 0;
         const postErPrice = preErPrice * (1 + postErMove1dRatio);
@@ -666,6 +676,7 @@
         return {
           ticker: ticker,
           preErPrice: preErPrice || 0,
+          mcp2qPreErPrice: mcp2qPreErPrice || 0,
           price: latestPrice || 0,
           priceChange: priceChange || 0,
           mcp: mcp || 0,
@@ -757,6 +768,51 @@
       if (cached && cached.data && cached.fetchedAt &&
         cached.data.histMove1 !== undefined &&
         !isNewBusinessDay(cached.fetchedAt)) {
+        
+        const fetchedTime = new Date(cached.fetchedAt);
+        const now = new Date();
+        const diffHours = (now - fetchedTime) / (1000 * 60 * 60);
+
+        if (diffHours >= 1) {
+            try {
+                const res = await fetch(`https://phx.unusualwhales.com/api/ticker/${ticker}/price/`);
+                if (res.ok) {
+                    const jsonPrice = await res.json();
+                    const latestPrice = parseFloat(jsonPrice.curr) || 0;
+                    if (latestPrice > 0) {
+                        cached.data.price = latestPrice;
+                        
+                        const preErPrice = cached.data.preErPrice || 0;
+                        const postErMove1dRatio = parseFloat(cached.data.post_earnings_move_1d) / 100 || 0;
+                        const postErPrice = preErPrice * (1 + postErMove1dRatio);
+                        cached.data.priceChange = postErPrice ? ((latestPrice - postErPrice) / postErPrice * 100).toFixed(2) : 0;
+                        cached.data.mcp = preErPrice ? ((latestPrice - preErPrice) / preErPrice * 100).toFixed(2) : 0;
+                        
+                        const mcp2qPreErPrice = cached.data.mcp2qPreErPrice || 0; 
+                        cached.data.mcp2q = mcp2qPreErPrice ? ((latestPrice - mcp2qPreErPrice) / mcp2qPreErPrice * 100).toFixed(2) : cached.data.mcp2q;
+                        
+                        const expectedMoveRatio = parseFloat(cached.data.expected_move_perc) / 100 || 0;
+                        const lastImpliedMoveAbs = preErPrice * expectedMoveRatio;
+                        
+                        const ucpAbs = preErPrice + 2 * lastImpliedMoveAbs;
+                        const ucpaAbs = preErPrice + lastImpliedMoveAbs;
+                        const lcpaAbs = preErPrice - lastImpliedMoveAbs;
+                        const lcpAbs = preErPrice - 2 * lastImpliedMoveAbs;
+
+                        cached.data.ucp = latestPrice ? ((latestPrice - ucpAbs) / latestPrice * 100).toFixed(2) : 0;
+                        cached.data.ucpa = latestPrice ? ((latestPrice - ucpaAbs) / latestPrice * 100).toFixed(2) : 0;
+                        cached.data.lcpa = latestPrice ? ((latestPrice - lcpaAbs) / latestPrice * 100).toFixed(2) : 0;
+                        cached.data.lcp = latestPrice ? ((latestPrice - lcpAbs) / latestPrice * 100).toFixed(2) : 0;
+                        
+                        cached.fetchedAt = new Date().toISOString();
+                        setCache(cacheKey, cached);
+                    }
+                }
+            } catch (err) {
+                console.error(`Price refresh failed for ${ticker}:`, err);
+            }
+        }
+        
         return cached.data;
       }
 
@@ -823,15 +879,23 @@
         var p = parseFloat((expMoveCalulated && straddleCalulated && expMoveCalulated > 0 && straddleCalulated > 0 ? parseFloat(((straddleCalulated - expMoveCalulated) / expMoveCalulated) * 100) : 999).toFixed(2));
         
         let rowClass = "";
+        const valErMove = parseFloat(data.post_earnings_move_1d) || 0;
         const valMcp = parseFloat(data.mcp) || 0;
         const valMcp2q = parseFloat(data.mcp2q) || 0;
         const valUcp = parseFloat(data.ucp) || 0;
-        const valUcpa = parseFloat(data.ucpa) || 0;
 
-        if (valMcp > 0 && valMcp2q > 0 && valUcp > 0 && valUcpa > 0) {
+        if (valErMove > 0 && valMcp2q > 0 && valUcp > 0) {
             rowClass = "highlight-sky-blue";
-        } else if (valMcp2q > 0 && valUcp < 0) {
+        } else if (valErMove > 0 && valMcp2q > 0 && valMcp > 0 && valUcp < 0) {
+            rowClass = "highlight-dark-green";
+        } else if (valErMove > 0 && valMcp2q > 0 && valMcp < 0) {
             rowClass = "highlight-light-green";
+        } else if (valErMove < 0 && valUcp > 0) {
+            rowClass = "highlight-orange";
+        } else if (valErMove < 0 && valMcp > 0 && valUcp < 0) {
+            rowClass = "highlight-yellow";
+        } else if (valErMove < 0) {
+            rowClass = "highlight-red";
         }
         
         const row = `<tr id="row-${ticker}" class="${rowClass}">
@@ -856,7 +920,7 @@
                     <td class="ma50">-</td>
                     <td class="ma200 col-group-divider">-</td>
                     <td class="price"><a href="https://finviz.com/quote.ashx?t=${ticker}" target="_blank" style="color:inherit;}">${parseFloat(data.price?.toFixed(2))}</a></td>
-                    <td>${parseFloat(data.iv_rank?.toFixed(2))}</td>
+                    <td><a href="https://marketchameleon.com/Overview/${ticker}" target="_blank" style="color:inherit;}">${parseFloat(data.iv_rank?.toFixed(2))}</a></td>
                     <td style="${data.beta && data.beta > 1.29 ? 'color:green;' : 'color:inherit;'}">${data.beta ? parseFloat(data.beta.toFixed(2)) : 0}</td>
                   </tr>`;
         tableBody.innerHTML += row;
