@@ -78,6 +78,7 @@
       text-align: right;
       border-bottom: 1px solid var(--table-border);
       transition: background-color 0.2s;
+      font-variant-numeric: tabular-nums;
     }
 
     th {
@@ -85,6 +86,12 @@
       color: var(--header-text);
       font-weight: 600;
       white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    th:hover {
+      background-color: #3b4d61;
     }
 
     /* Sticky Ticker Column */
@@ -94,7 +101,7 @@
       left: 0;
       background-color: var(--table-bg);
       z-index: 1;
-      border-right: 2px solid var(--table-border);
+      border-right: 1px solid var(--table-border);
       box-shadow: 2px 0 5px rgba(0,0,0,0.05);
       font-weight: 600;
     }
@@ -117,6 +124,9 @@
       width: 100%;
       border-collapse: collapse;
       background: var(--table-bg);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
     
     tbody tr:hover {
@@ -165,17 +175,20 @@
       position: sticky;
       top: 0;
       z-index: 2;
-      background-color: #333;
+      background-color: rgba(44, 62, 80, 0.85); /* Glassmorphism */
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       color: white;
+    }
+    
+    [data-theme="light"] thead th {
+      background-color: rgba(238, 238, 238, 0.85);
+      color: black;
     }
 
     /* Column Grouping Dividers */
     .col-group-divider {
-      border-right: 2px solid #555 !important;
-    }
-
-    .light-theme .col-group-divider {
-      border-right: 2px solid #ccc !important;
+      border-right: 1px solid var(--table-border) !important;
     }
     
     td.col-group-divider {
@@ -212,6 +225,11 @@
     .highlight-sky-blue {
       background-color: #87CEEB !important;
       color: #000 !important;
+    }
+
+    .highlight-dark-red {
+      background-color: #ff4d4d !important;
+      color: #fff !important;
     }
 
     .highlight-dark-green {
@@ -292,11 +310,54 @@
       outline: 2px solid #1976d2 !important;
       background-color: #e3f2fd !important;
     }
+    /* Progress Bar Styles */
+    .progress-wrapper {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 300px;
+      text-align: center;
+      background: var(--table-bg);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      z-index: 1000;
+    }
+    
+    .progress-bar-container {
+      width: 100%;
+      height: 10px;
+      background: var(--table-border);
+      border-radius: 5px;
+      overflow: hidden;
+      margin-top: 15px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: #007bff;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .progress-text {
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 10px;
+      color: var(--text-color);
+    }
   </style>
 </head>
 
 <body>
-  <div class="spinner-wrapper" id="loadingSpinner">
+  <div class="progress-wrapper" id="progressWrapper" style="display: none;">
+    <div style="font-size: 16px; font-weight: 600; margin-bottom: 5px;">Loading Earnings Data</div>
+    <div class="progress-bar-container">
+      <div class="progress-bar-fill" id="progressBarFill"></div>
+    </div>
+    <div class="progress-text" id="progressText">0 / 400</div>
+  </div>
     <div class="spinner"></div>
   </div>
   <div class="spinner-wrapper" id="doneSpinner" style="display: none;">
@@ -747,21 +808,48 @@
       );
     }
 
-    // Cache helpers
-    function getCache(key) {
+    // IndexedDB Cache helpers
+    const dbPromise = new Promise((resolve, reject) => {
+      const request = indexedDB.open('ErMoveCacheDB', 1);
+      request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        if (!db.objectStoreNames.contains('cache')) {
+          db.createObjectStore('cache');
+        }
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+
+    async function getCache(key) {
       try {
-        return JSON.parse(localStorage.getItem(key));
-      } catch {
-        return null;
-      }
+        const db = await dbPromise;
+        return new Promise((resolve) => {
+          const transaction = db.transaction('cache', 'readonly');
+          const store = transaction.objectStore('cache');
+          const request = store.get(key);
+          request.onsuccess = () => resolve(request.result || null);
+          request.onerror = () => resolve(null);
+        });
+      } catch { return null; }
     }
-    function setCache(key, value) {
-      localStorage.setItem(key, JSON.stringify(value));
+
+    async function setCache(key, value) {
+      try {
+        const db = await dbPromise;
+        return new Promise((resolve) => {
+          const transaction = db.transaction('cache', 'readwrite');
+          const store = transaction.objectStore('cache');
+          const request = store.put(value, key);
+          request.onsuccess = () => resolve();
+          request.onerror = () => resolve();
+        });
+      } catch {}
     }
 
     async function getFinancialsCached(ticker) {
       const cacheKey = `Straddle_fin_${ticker}`;
-      const cached = getCache(cacheKey);
+      const cached = await getCache(cacheKey);
       if (cached && cached.total_revenue) {
         return cached;
       }
@@ -772,7 +860,7 @@
           const ttm = annual ? parseFloat(annual.total_revenue) : 0;
           if (ttm > 0) {
              const data = { total_revenue: ttm };
-             setCache(cacheKey, data);
+             await setCache(cacheKey, data);
              return data;
           }
         }
@@ -784,7 +872,7 @@
     async function fetchEarningsCached(ticker) {
       const spinner = document.getElementById('loadingSpinner');
       const cacheKey = `Straddle_er_${ticker}`;
-      const cached = getCache(cacheKey);
+      const cached = await getCache(cacheKey);
 
       if (cached && cached.data && cached.fetchedAt &&
         cached.data.histMove1 !== undefined &&
@@ -826,7 +914,7 @@
                         cached.data.lcp = latestPrice ? ((latestPrice - lcpAbs) / latestPrice * 100).toFixed(2) : 0;
                         
                         cached.fetchedAt = new Date().toISOString();
-                        setCache(cacheKey, cached);
+                        await setCache(cacheKey, cached);
                     }
                 }
             } catch (err) {
@@ -841,7 +929,7 @@
       try {
         const data = await fetchEarnings(ticker);
         if (data) {
-          setCache(cacheKey, { data, fetchedAt: new Date().toISOString() });
+          await setCache(cacheKey, { data, fetchedAt: new Date().toISOString() });
         }
         return data;
       } finally {
@@ -854,7 +942,7 @@
     async function getPricesCached(ticker) {
       const spinner = document.getElementById('loadingSpinner');
       const cacheKey = `Straddle_$_${ticker}`;
-      const cached = getCache(cacheKey);
+      const cached = await getCache(cacheKey);
 
       if (cached && cached.data && cached.fetchedAt &&
         !isNewBusinessDay(cached.fetchedAt)) {
@@ -865,7 +953,7 @@
       try {
         const data = await getYahooPrices(ticker);
         if (data) {
-          setCache(cacheKey, { data, fetchedAt: new Date().toISOString() });
+          await setCache(cacheKey, { data, fetchedAt: new Date().toISOString() });
         }
         return data;
       } finally {
@@ -880,23 +968,112 @@
     
 
     
+    let appData = []; // Array of {ticker, data, priceData}
+    let currentSortColumn = 1;
+    let currentSortDesc = false;
+
+    function updateDataWithPrices(data, latestJson) {
+      if (!latestJson || !data) return;
+      const latestPrice = parseFloat(latestJson.curr) || 0;
+      if (latestPrice === 0) return;
+
+      const preErPrice = data.preErPrice || 0;
+      data.price = latestPrice;
+
+      if (data.mcp2qPreErPrice) {
+          data.mcp2q = ((latestPrice - data.mcp2qPreErPrice) / data.mcp2qPreErPrice * 100).toFixed(2);
+      }
+
+      const postErMove1dRatio = parseFloat(data.post_earnings_move_1d) / 100 || 0;
+      const expectedMoveRatio = parseFloat(data.expected_move_perc) / 100 || 0;
+      const lastImpliedMoveAbs = preErPrice * expectedMoveRatio;
+
+      data.mcp = preErPrice ? ((latestPrice - preErPrice) / preErPrice * 100).toFixed(2) : 0;
+      data.ucp = latestPrice ? ((latestPrice - (preErPrice + 2 * lastImpliedMoveAbs)) / latestPrice * 100).toFixed(2) : 0;
+      data.ucpa = latestPrice ? ((latestPrice - (preErPrice + lastImpliedMoveAbs)) / latestPrice * 100).toFixed(2) : 0;
+      data.lcpa = latestPrice ? ((latestPrice - (preErPrice - lastImpliedMoveAbs)) / latestPrice * 100).toFixed(2) : 0;
+      data.lcp = latestPrice ? ((latestPrice - (preErPrice - 2 * lastImpliedMoveAbs)) / latestPrice * 100).toFixed(2) : 0;
+      data.priceChange = data.postErPrice ? (((latestPrice - data.postErPrice) / data.postErPrice) * 100).toFixed(2) : 0;
+    }
+
     async function renderTable() {
-      const spinner = document.getElementById('loadingSpinner');
-      spinner.style.display = 'block';
+      const progressWrapper = document.getElementById('progressWrapper');
+      const progressBarFill = document.getElementById('progressBarFill');
+      const progressText = document.getElementById('progressText');
+      if (progressWrapper) progressWrapper.style.display = 'block';
 
-      const tableBody = document.querySelector('#earningsTable tbody');
-      tableBody.innerHTML = '';
-
+      appData = [];
       const CONCURRENCY_LIMIT = 10;
       let index = 0;
+      let processedCount = 0;
+      const totalTickers = tickers.length;
 
-      function renderRowFromCache(ticker, data) {
-        if (!data) return;
+      async function processBatch(batch) {
+        const promises = batch.map(async (ticker) => {
+          try {
+            const data = await fetchEarningsCached(ticker);
+            if (data) {
+              const priceData = await getPricesCached(ticker);
+              if (priceData) {
+                  updateDataWithPrices(data, priceData);
+              }
+              appData.push({ ticker, data, priceData });
+            }
+          } catch(e) {}
+          processedCount++;
+          if (progressBarFill && progressText) {
+            const perc = Math.round((processedCount / totalTickers) * 100);
+            progressBarFill.style.width = perc + '%';
+            progressText.innerText = `${processedCount} / ${totalTickers}`;
+          }
+        });
+        await Promise.all(promises);
+      }
 
+      // Pre-sort tickers by cached marketcap
+      const mcCache = {};
+      for (const t of tickers) {
+          const c = await getCache(`Straddle_er_${t}`);
+          mcCache[t] = c && c.data && c.data.marketcap ? parseFloat(c.data.marketcap) : 0;
+      }
+      tickers.sort((a, b) => mcCache[b] - mcCache[a]);
+
+      while (index < tickers.length) {
+        const batch = tickers.slice(index, index + CONCURRENCY_LIMIT);
+        await processBatch(batch);
+        index += CONCURRENCY_LIMIT;
+        await new Promise(res => setTimeout(res, 200));
+      }
+
+      if (progressWrapper) progressWrapper.style.display = 'none';
+      
+      // Perform initial sort and render
+      sortTable(1); 
+    }
+
+    function renderTableBody() {
+      const tableBody = document.querySelector('#earningsTable tbody');
+      if(!tableBody) return;
+      let html = '';
+      
+      // Headers visual update
+      const thead = document.querySelector('#earningsTable thead tr');
+      if (thead) {
+        Array.from(thead.children).forEach((th, idx) => {
+          let text = th.textContent.replace(/[🔼🔽]/g, '').trim();
+          if (idx === currentSortColumn) {
+            text += currentSortDesc ? ' 🔽' : ' 🔼';
+          }
+          th.textContent = text;
+        });
+      }
+
+      for (const item of appData) {
+        const { ticker, data } = item;
         var straddleCalulated = parseFloat(data.straddle && data.straddle != "N/A" && data.straddle != 0 ? (parseFloat(data.straddle) + parseFloat(data.straddle) * 0.15).toFixed(2) : 0);
         var expMoveCalulated = parseFloat(data.expected_move_perc && data.expected_move_perc != 0 && data.expected_move_perc != 'N/A' ? (parseFloat(data.expected_move_perc) + parseFloat(data.expected_move_perc) * 0.15).toFixed(2) : 0);
         
-        expMoveCalulated = parseFloat(expMoveCalulated && expMoveCalulated != "N/A" && expMoveCalulated != 0 ? expMoveCalulated : data.avgHistoricMove);
+        expMoveCalulated = parseFloat(expMoveCalulated && expMoveCalulated != "N/A" && expMoveCalulated != 0 ? expMoveCalulated : (data.avgHistoricMove || 0));
         var p = parseFloat((expMoveCalulated && straddleCalulated && expMoveCalulated > 0 && straddleCalulated > 0 ? parseFloat(((straddleCalulated - expMoveCalulated) / expMoveCalulated) * 100) : 999).toFixed(2));
         
         let rowClass = "";
@@ -904,6 +1081,7 @@
         const valMcp = parseFloat(data.mcp) || 0;
         const valMcp2q = parseFloat(data.mcp2q) || 0;
         const valUcp = parseFloat(data.ucp) || 0;
+        const valLcp = parseFloat(data.lcp) || 0;
 
         if (valErMove > 0 && valMcp2q > 0 && valUcp > 0) {
             rowClass = "highlight-sky-blue";
@@ -915,176 +1093,141 @@
             rowClass = "highlight-orange";
         } else if (valErMove < 0 && valMcp > 0 && valUcp < 0) {
             rowClass = "highlight-yellow";
-        } else if (valErMove < 0 && valMcp < 0) {
+        } else if (valErMove < 0 && valLcp < 0) {
+            rowClass = "highlight-dark-red";
+        } else if (valErMove < 0) {
             rowClass = "highlight-red";
         }
+
+        const colorNumDark = (val) => {
+            if (rowClass) return ''; 
+            const num = parseFloat(val);
+            if (isNaN(num)) return '';
+            return num > 0 ? 'color: #22c55e;' : num < 0 ? 'color: #ef4444;' : '';
+        };
+
+        const rsi = data.calculatedRsi ? data.calculatedRsi.toFixed(2) : '-';
+        const iv_rank = data.iv_rank ? parseFloat(data.iv_rank).toFixed(2) : '-';
+        const report_time = data.report_time || '-';
+        const histMove2 = data.histMove2 != null ? parseFloat(data.histMove2).toFixed(2) : '-';
+        const ps_ratio = data.ps_ratio > 0 ? data.ps_ratio.toFixed(2) : '-';
+        const erMove = parseFloat(data.post_earnings_move_1d && data.post_earnings_move_1d != 0 && data.post_earnings_move_1d != 'N/A' ? data.post_earnings_move_1d : 0);
+        const priceChange = data.priceChange ? parseFloat(data.priceChange).toFixed(2) : '-';
+        const mcp2q = data.mcp2q || '-';
+        const mcp = data.mcp || '-';
+        const ucp = data.ucp || '-';
+        const ucpa = data.ucpa || '-';
+        const lcpa = data.lcpa || '-';
+        const lcp = data.lcp || '-';
+        const price = data.price ? parseFloat(data.price).toFixed(2) : '-';
+        const beta = data.beta ? parseFloat(data.beta).toFixed(2) : 0;
         
-        const row = `<tr id="row-${ticker}" class="${rowClass}">
+        // This handles columns mapped for BOTH ErMove.htm and test.js
+        // ErMove.htm layout: Ticker(0), Date(1), RSI(2), Time(3), P(4), Straddle%(5), HistMove2(6), P/S(7), ErMove(8), Change(9), McP2q(10), McP(11), Ucp(12), Ucpa(13), Lcpa(14), Lcp(15), Ma10(16), Ma50(17), Ma200(18), Price(19), IV(20), Beta(21)
+        // Note: The HTML output matches ErMove.htm format, test.js format is identical since it's the exact same UI structure.
+        html += `<tr id="row-${ticker}" class="${rowClass}">
                     <td style="color: black !important;">${ticker}</td>
-                    <td>${data.er_date}</td>
-                    <td class="rsi col-group-divider">0</td>
-                    <td>${data.report_time}</td>
+                    <td>${data.er_date || '-'}</td>
+                    <td class="rsi col-group-divider">${rsi}</td>
+                    <td>${report_time}</td>
                     <td class="col-group-divider">${p}</td>
-                    <td style="${straddleCalulated > 0 && expMoveCalulated >= straddleCalulated ? 'color:green;' : 'color:red'}"><a href="https://unusualwhales.com/stock/${ticker}/earnings" target="_blank" style="color:inherit;">${straddleCalulated}</a></td>
-                    <td>${data.histMove2 != null ? parseFloat(data.histMove2).toFixed(2) : '-'}</td>
-                    <!-- <td>${data.histMove3 != null ? parseFloat(data.histMove3).toFixed(2) : '-'}</td> -->
-                    <td>${data.ps_ratio > 0 ? data.ps_ratio.toFixed(2) : '-'}</td>
-                    <!-- <td>${data.histMove4 != null ? parseFloat(data.histMove4).toFixed(2) : '-'}</td> -->
-                    <td class="col-group-divider">${parseFloat(data.post_earnings_move_1d && data.post_earnings_move_1d != 0 && data.post_earnings_move_1d != 'N/A' ? data.post_earnings_move_1d : 0)}</td>
-                    <td class="priceChange"><a href="https://robinhood.com/stocks/${ticker}" target="_blank" style="color:inherit;">${parseFloat(data.priceChange)}</a></td>
-                    <td class="mcp2q">${data.mcp2q}</td>
-                    <td class="mcp col-group-divider">${data.mcp}</td>
-                    <td class="ucp">${data.ucp}</td>
-                    <td class="ucpa">${data.ucpa}</td>
-                    <td class="lcpa">${data.lcpa}</td>
-                    <td class="lcp col-group-divider">${data.lcp}</td>
+                    <td style="${straddleCalulated > 0 && expMoveCalulated >= straddleCalulated ? 'color:#22c55e;' : 'color:#ef4444'}"><a href="https://unusualwhales.com/stock/${ticker}/earnings" target="_blank" style="color:inherit;">${straddleCalulated}</a></td>
+                    <td>${histMove2}</td>
+                    <td>${ps_ratio}</td>
+                    <td class="col-group-divider" style="${colorNumDark(erMove)}">${erMove}</td>
+                    <td class="priceChange" style="${colorNumDark(priceChange)}"><a href="https://robinhood.com/stocks/${ticker}" target="_blank" style="color:inherit;">${priceChange}</a></td>
+                    <td class="mcp2q" style="${colorNumDark(mcp2q)}">${mcp2q}</td>
+                    <td class="mcp col-group-divider" style="${colorNumDark(mcp)}">${mcp}</td>
+                    <td class="ucp" style="${colorNumDark(ucp)}">${ucp}</td>
+                    <td class="ucpa" style="${colorNumDark(ucpa)}">${ucpa}</td>
+                    <td class="lcpa" style="${colorNumDark(lcpa)}">${lcpa}</td>
+                    <td class="lcp col-group-divider" style="${colorNumDark(lcp)}">${lcp}</td>
                     <td class="ma10">-</td>
                     <td class="ma50">-</td>
                     <td class="ma200 col-group-divider">-</td>
-                    <td class="price"><a href="https://finviz.com/quote.ashx?t=${ticker}" target="_blank" style="color:inherit;}">${parseFloat(data.price?.toFixed(2))}</a></td>
-                    <td><a href="https://marketchameleon.com/Overview/${ticker}" target="_blank" style="color:inherit;}">${parseFloat(data.iv_rank?.toFixed(2))}</a></td>
-                    <td style="${data.beta && data.beta > 1.29 ? 'color:green;' : 'color:inherit;'}">${data.beta ? parseFloat(data.beta.toFixed(2)) : 0}</td>
+                    <td class="price"><a href="https://finviz.com/quote.ashx?t=${ticker}" target="_blank" style="color:inherit;}">${price}</a></td>
+                    <td><a href="https://marketchameleon.com/Overview/${ticker}" target="_blank" style="color:inherit;}">${iv_rank}</a></td>
+                    <td style="${beta > 1.29 ? 'color:#22c55e;' : 'color:inherit;'}">${beta}</td>
                   </tr>`;
-        tableBody.innerHTML += row;
-        if (typeof enableRowHighlighting === "function") enableRowHighlighting();
-
-        const priceCache = getCache(`Straddle_$_${ticker}`);
-        if (
-          priceCache &&
-          priceCache.data &&
-          priceCache.fetchedAt &&
-          !isNewBusinessDay(priceCache.fetchedAt)
-        ) {
-          updatePriceCells(ticker, priceCache.data, data);
-        } else {
-          getPricesCached(ticker)
-            .then(priceData => updatePriceCells(ticker, priceData, data))
-            .catch(err => console.error(`Price error for ${ticker}:`, err));
-        }
       }
-
-      async function processBatch(batch) {
-        const uncachedTickers = [];
-        const cachedData = [];
-
-        for (const ticker of batch) {
-          const cacheKey = `Straddle_er_${ticker}`;
-          const cached = getCache(cacheKey);
-          if (
-            cached &&
-            cached.data &&
-            cached.fetchedAt &&
-            cached.data.histMove2 !== undefined &&
-            !isNewBusinessDay(cached.fetchedAt)
-          ) {
-            cachedData.push({ ticker, data: cached.data });
-          } else {
-            uncachedTickers.push(ticker);
-          }
-        }
-
-        for (const { ticker, data } of cachedData) {
-          renderRowFromCache(ticker, data);
-        }
-
-        for (let i = 0; i < uncachedTickers.length; i += CONCURRENCY_LIMIT) {
-          const subBatch = uncachedTickers.slice(i, i + CONCURRENCY_LIMIT);
-          const earningsResults = await Promise.all(
-            subBatch.map(ticker => fetchEarningsCached(ticker).catch(() => null))
-          );
-
-          for (let j = 0; j < subBatch.length; j++) {
-            const ticker = subBatch[j];
-            const data = earningsResults[j];
-            renderRowFromCache(ticker, data);
-          }
-        }
-      }
-
-      try {
-        tickers.sort((a, b) => {
-          const cacheA = getCache(`Straddle_er_${a}`);
-          const mcA = cacheA && cacheA.data && cacheA.data.marketcap ? cacheA.data.marketcap : 0;
-          
-          const cacheB = getCache(`Straddle_er_${b}`);
-          const mcB = cacheB && cacheB.data && cacheB.data.marketcap ? cacheB.data.marketcap : 0;
-          
-          return mcB - mcA;
-        });
-
-        while (index < tickers.length) {
-          const batch = tickers.slice(index, index + CONCURRENCY_LIMIT);
-          await processBatch(batch);
-          index += CONCURRENCY_LIMIT;
-          await new Promise(res => setTimeout(res, 500));
-        }
-
-        sortTable(1);
-      } finally {
-        spinner.style.display = 'none';
-      }
+      tableBody.innerHTML = html;
+      if (typeof enableRowHighlighting === "function") enableRowHighlighting();
     }
 
-    function sortTable(columnIndex, descending = false) {
-      const table = document.getElementById("earningsTable");
-      const tbody = table.tBodies[0];
-      const rows = Array.from(tbody.rows);
-
-      // Detect column type
-      const isDate = columnIndex === 1; // ErDate(Nxt)
-      const isNumeric = columnIndex !== 0 && columnIndex !== 1 && columnIndex !== 3;
-
-      const sortedRows = rows.sort((a, b) => {
-        const valA = a.cells[columnIndex].textContent.trim();
-        const valB = b.cells[columnIndex].textContent.trim();
-
-        if (isDate) {
-          // Try to parse as date (supports formats like YYYY-MM-DD, MM/DD/YYYY, DD/MM/YYYY)
-          const dateA = Date.parse(valA.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3-$1-$2')) || Date.parse(valA);
-          const dateB = Date.parse(valB.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3-$1-$2')) || Date.parse(valB);
-          return dateA - dateB;
-        } else if (isNumeric) {
-          const numA = parseFloat(valA.replace('%', ''));
-          const numB = parseFloat(valB.replace('%', ''));
-          const aIsNaN = isNaN(numA);
-          const bIsNaN = isNaN(numB);
-          if (aIsNaN && bIsNaN) return 0;
-          if (aIsNaN) return 1; // Put invalid numbers (like '-') at the bottom
-          if (bIsNaN) return -1;
-          return numA - numB;
-        } else {
-          return valA.localeCompare(valB);
-        }
-      });
-
-      if (descending || tbody.getAttribute('data-sorted') === `${columnIndex}-asc`) {
-        sortedRows.reverse();
-        tbody.setAttribute('data-sorted', `${columnIndex}-desc`);
+    function sortTable(columnIndex, forceDesc = null) {
+      if (forceDesc !== null) {
+        currentSortDesc = forceDesc;
+      } else if (currentSortColumn === columnIndex) {
+        currentSortDesc = !currentSortDesc;
       } else {
-        tbody.setAttribute('data-sorted', `${columnIndex}-asc`);
+        currentSortColumn = columnIndex;
+        currentSortDesc = false;
       }
 
-      tbody.innerHTML = '';
-      sortedRows.forEach(row => tbody.appendChild(row));
-    }
+      const isDate = columnIndex === 1; // ErDate(Nxt)
+      const isNumeric = columnIndex !== 0 && columnIndex !== 1 && columnIndex !== 3; // 0=Ticker, 1=Date, 3=Time
 
-    // Search Filtering
-    document.getElementById('searchInput').addEventListener('input', function(e) {
-      const term = e.target.value.toLowerCase();
-      const rows = document.querySelectorAll('#earningsTable tbody tr');
-      rows.forEach(row => {
-        const tickerCell = row.cells[0];
-        if (tickerCell) {
-          const ticker = tickerCell.textContent.toLowerCase();
-          row.style.display = ticker.includes(term) ? '' : 'none';
+      // Map columnIndex to appData property logic
+      appData.sort((a, b) => {
+        let valA, valB;
+        
+        // Extract value based on column index
+        if (columnIndex === 0) { valA = a.ticker; valB = b.ticker; }
+        else if (columnIndex === 1) { valA = a.data.er_date || ''; valB = b.data.er_date || ''; }
+        else if (columnIndex === 2) { valA = a.data.calculatedRsi || -999; valB = b.data.calculatedRsi || -999; }
+        else if (columnIndex === 3) { valA = a.data.report_time || ''; valB = b.data.report_time || ''; }
+        else if (columnIndex === 4) { 
+           // p
+           const calcP = (data) => {
+              var sc = parseFloat(data.straddle && data.straddle != "N/A" && data.straddle != 0 ? (parseFloat(data.straddle) + parseFloat(data.straddle) * 0.15).toFixed(2) : 0);
+              var ec = parseFloat(data.expected_move_perc && data.expected_move_perc != 0 && data.expected_move_perc != 'N/A' ? (parseFloat(data.expected_move_perc) + parseFloat(data.expected_move_perc) * 0.15).toFixed(2) : 0);
+              ec = parseFloat(ec && ec != "N/A" && ec != 0 ? ec : (data.avgHistoricMove || 0));
+              return parseFloat((ec && sc && ec > 0 && sc > 0 ? parseFloat(((sc - ec) / ec) * 100) : 999).toFixed(2));
+           };
+           valA = calcP(a.data); valB = calcP(b.data);
         }
+        else if (columnIndex === 5) { 
+           const scA = a.data.straddle && a.data.straddle != "N/A" ? parseFloat(a.data.straddle) : 0;
+           const scB = b.data.straddle && b.data.straddle != "N/A" ? parseFloat(b.data.straddle) : 0;
+           valA = scA; valB = scB; 
+        }
+        else if (columnIndex === 6) { valA = parseFloat(a.data.histMove2) || -999; valB = parseFloat(b.data.histMove2) || -999; }
+        else if (columnIndex === 7) { valA = parseFloat(a.data.ps_ratio) || -999; valB = parseFloat(b.data.ps_ratio) || -999; }
+        else if (columnIndex === 8) { valA = parseFloat(a.data.post_earnings_move_1d) || -999; valB = parseFloat(b.data.post_earnings_move_1d) || -999; }
+        else if (columnIndex === 9) { valA = parseFloat(a.data.priceChange) || -999; valB = parseFloat(b.data.priceChange) || -999; }
+        else if (columnIndex === 10) { valA = parseFloat(a.data.mcp2q) || -999; valB = parseFloat(b.data.mcp2q) || -999; }
+        else if (columnIndex === 11) { valA = parseFloat(a.data.mcp) || -999; valB = parseFloat(b.data.mcp) || -999; }
+        else if (columnIndex === 12) { valA = parseFloat(a.data.ucp) || -999; valB = parseFloat(b.data.ucp) || -999; }
+        else if (columnIndex === 13) { valA = parseFloat(a.data.ucpa) || -999; valB = parseFloat(b.data.ucpa) || -999; }
+        else if (columnIndex === 14) { valA = parseFloat(a.data.lcpa) || -999; valB = parseFloat(b.data.lcpa) || -999; }
+        else if (columnIndex === 15) { valA = parseFloat(a.data.lcp) || -999; valB = parseFloat(b.data.lcp) || -999; }
+        else if (columnIndex === 16) { valA = -999; valB = -999; } // ma10
+        else if (columnIndex === 17) { valA = -999; valB = -999; } // ma50
+        else if (columnIndex === 18) { valA = -999; valB = -999; } // ma200
+        else if (columnIndex === 19) { valA = parseFloat(a.data.price) || -999; valB = parseFloat(b.data.price) || -999; }
+        else if (columnIndex === 20) { valA = parseFloat(a.data.iv_rank) || -999; valB = parseFloat(b.data.iv_rank) || -999; }
+        else if (columnIndex === 21) { valA = parseFloat(a.data.beta) || -999; valB = parseFloat(b.data.beta) || -999; }
+        else { valA = 0; valB = 0; }
+
+        let result = 0;
+        if (isDate) {
+          const dateA = Date.parse(valA.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3-$1-$2')) || 0;
+          const dateB = Date.parse(valB.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3-$1-$2')) || 0;
+          result = dateA - dateB;
+        } else if (isNumeric) {
+          result = valA - valB;
+        } else {
+          result = String(valA).localeCompare(String(valB));
+        }
+
+        return currentSortDesc ? -result : result;
       });
-    });
+
+      renderTableBody();
+    }
 
     renderTable();
 
   </script>
 </body>
-
-
 </html>
