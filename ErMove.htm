@@ -925,7 +925,7 @@
         return cached.data;
       }
 
-      spinner.style.display = 'block';
+      if (spinner) spinner.style.display = 'block';
       try {
         const data = await fetchEarnings(ticker);
         if (data) {
@@ -933,9 +933,9 @@
         }
         return data;
       } finally {
-        spinner.style.display = 'none';
+        if (spinner) spinner.style.display = 'none';
         const spinnerDone = document.getElementById('doneSpinner');
-        spinner.style.display = 'block';
+        if (spinner) spinner.style.display = 'block';
       }
     }
 
@@ -949,7 +949,7 @@
         return cached.data;
       }
 
-      spinner.style.display = 'block';
+      if (spinner) spinner.style.display = 'block';
       try {
         const data = await getYahooPrices(ticker);
         if (data) {
@@ -957,7 +957,7 @@
         }
         return data;
       } finally {
-        spinner.style.display = 'none';
+        if (spinner) spinner.style.display = 'none';
       }
     }
 
