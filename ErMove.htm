@@ -333,24 +333,24 @@
         <tr>
           <th onclick="sortTable(0)">Ticker</th>
           <th onclick="sortTable(1)" title="Next Earnings Date">ErDate(Nxt)</th>
-          <th class="col-group-divider" onclick="sortTable(2)" title="Relative Strength Index">Rsi</th>
-          <th onclick="sortTable(3)" title="Premarket or After Hours">PM/AH</th>
-          <th class="col-group-divider" onclick="sortTable(4)" title="Straddle Price vs Expected Move Ratio">P</th>
-          <th onclick="sortTable(5)" title="Expected Move % (Straddle Price + 15%)">Straddle%</th>
-          <th onclick="sortTable(6)" title="Historical Move 2 Quarters Ago">HistMove2%</th>
-          <th onclick="sortTable(7)" title="Price to Sales Ratio">P/S</th>
-          <th class="col-group-divider" onclick="sortTable(8)" title="Last Earnings Move %">ER Move%</th>
-          <th onclick="sortTable(9)" title="% Change since last earnings report">Change%</th>
-          <th onclick="sortTable(10)" title="Market Chart Price 2Q: Current price vs Pre-Earnings price of last to last quarter">McP2Q%</th>
-          <th class="col-group-divider" onclick="sortTable(11)" title="Market Chart Price: Current price vs Pre-Earnings price">McP%</th>
-          <th onclick="sortTable(12)" title="Upper Chart Price (+2x Implied Move)">UCP%</th>
-          <th onclick="sortTable(13)" title="Upper Chart Price (+1x Implied Move)">UCPa%</th>
-          <th onclick="sortTable(14)" title="Lower Chart Price (-1x Implied Move)">LCPa%</th>
-          <th class="col-group-divider" onclick="sortTable(15)" title="Lower Chart Price (-2x Implied Move)">LCP%</th>
-          <th onclick="sortTable(16)" title="10-Day Moving Average Distance">MA10D%</th>
-          <th onclick="sortTable(17)" title="50-Day Moving Average Distance">MA50%</th>
-          <th class="col-group-divider" onclick="sortTable(18)" title="200-Day Moving Average Distance">MA200%</th>
-          <th onclick="sortTable(19)" title="Latest Price">Price</th>
+                    <th onclick="sortTable(2)" title="Premarket or After Hours">PM/AH</th>
+          <th class="col-group-divider" onclick="sortTable(3)" title="Straddle Price vs Expected Move Ratio">P</th>
+          <th onclick="sortTable(4)" title="Expected Move % (Straddle Price + 15%)">Straddle%</th>
+          <th onclick="sortTable(5)" title="Historical Move 2 Quarters Ago">HistMove2%</th>
+          <th onclick="sortTable(6)" title="Price to Sales Ratio">P/S</th>
+          <th class="col-group-divider" onclick="sortTable(7)" title="Last Earnings Move %">ER Move%</th>
+          <th onclick="sortTable(8)" title="% Change since last earnings report">Change%</th>
+          <th onclick="sortTable(9)" title="Market Chart Price 2Q: Current price vs Pre-Earnings price of last to last quarter">McP2Q%</th>
+          <th class="col-group-divider" onclick="sortTable(10)" title="Market Chart Price: Current price vs Pre-Earnings price">McP%</th>
+          <th onclick="sortTable(11)" title="Upper Chart Price (+2x Implied Move)">UCP%</th>
+          <th onclick="sortTable(12)" title="Upper Chart Price (+1x Implied Move)">UCPa%</th>
+          <th onclick="sortTable(13)" title="Lower Chart Price (-1x Implied Move)">LCPa%</th>
+          <th class="col-group-divider" onclick="sortTable(14)" title="Lower Chart Price (-2x Implied Move)">LCP%</th>
+          <th onclick="sortTable(15)" title="10-Day Moving Average Distance">MA10D%</th>
+          <th onclick="sortTable(16)" title="50-Day Moving Average Distance">MA50%</th>
+          <th class="col-group-divider" onclick="sortTable(17)" title="200-Day Moving Average Distance">MA200%</th>
+          <th onclick="sortTable(18)" title="Latest Price">Price</th>
+          <th class="col-group-divider" onclick="sortTable(19)" title="Relative Strength Index">Rsi</th>
           <th onclick="sortTable(20)" title="Implied Volatility Rank">IvRank</th>
           <th onclick="sortTable(21)" title="Beta (Stock Volatility vs Market)">Beta</th>
           
@@ -958,6 +958,11 @@
       data.lcpa = latestPrice ? ((latestPrice - (preErPrice - lastImpliedMoveAbs)) / latestPrice * 100).toFixed(2) : 0;
       data.lcp = latestPrice ? ((latestPrice - (preErPrice - 2 * lastImpliedMoveAbs)) / latestPrice * 100).toFixed(2) : 0;
       data.priceChange = data.postErPrice ? (((latestPrice - data.postErPrice) / data.postErPrice) * 100).toFixed(2) : 0;
+      
+      data.ma10Ratio = latestJson.ma10 ? ((latestPrice - latestJson.ma10) / latestJson.ma10) * 100 : 0;
+      data.ma50Ratio = data.ma50 ? ((latestPrice - data.ma50) / data.ma50) * 100 : 0;
+      data.ma200Ratio = data.ma200 ? ((latestPrice - data.ma200) / data.ma200) * 100 : 0;
+      data.finalRsi = latestJson.rsi ? latestJson.rsi : data.calculatedRsi;
     }
 
     async function renderTable() {
@@ -1070,7 +1075,7 @@
             return num > 0 ? 'color: #22c55e;' : num < 0 ? 'color: #ef4444;' : '';
         };
 
-        const rsi = data.calculatedRsi ? data.calculatedRsi.toFixed(2) : '-';
+        const rsi = data.finalRsi ? data.finalRsi.toFixed(2) : (data.calculatedRsi ? data.calculatedRsi.toFixed(2) : '-');
         const iv_rank = data.iv_rank ? parseFloat(data.iv_rank).toFixed(2) : '-';
         const report_time = data.report_time || '-';
         const histMove2 = data.histMove2 != null ? parseFloat(data.histMove2).toFixed(2) : '-';
@@ -1083,6 +1088,9 @@
         const ucpa = data.ucpa || '-';
         const lcpa = data.lcpa || '-';
         const lcp = data.lcp || '-';
+        const ma10 = data.ma10Ratio ? data.ma10Ratio.toFixed(2) : '-';
+        const ma50 = data.ma50Ratio ? data.ma50Ratio.toFixed(2) : '-';
+        const ma200 = data.ma200Ratio ? data.ma200Ratio.toFixed(2) : '-';
         const price = data.price ? parseFloat(data.price).toFixed(2) : '-';
         const beta = data.beta ? parseFloat(data.beta).toFixed(2) : 0;
         
@@ -1092,7 +1100,6 @@
         html += `<tr id="row-${ticker}" class="${rowClass}">
                     <td style="color: black !important;">${ticker}</td>
                     <td>${data.er_date || '-'}</td>
-                    <td class="rsi col-group-divider">${rsi}</td>
                     <td>${report_time}</td>
                     <td class="col-group-divider">${p}</td>
                     <td style="${straddleCalulated > 0 && expMoveCalulated >= straddleCalulated ? 'color:#22c55e;' : 'color:#ef4444'}"><a href="https://unusualwhales.com/stock/${ticker}/earnings" target="_blank" style="color:inherit;">${straddleCalulated}</a></td>
@@ -1106,10 +1113,11 @@
                     <td class="ucpa" style="${colorNumDark(ucpa)}">${ucpa}</td>
                     <td class="lcpa" style="${colorNumDark(lcpa)}">${lcpa}</td>
                     <td class="lcp col-group-divider" style="${colorNumDark(lcp)}">${lcp}</td>
-                    <td class="ma10">-</td>
-                    <td class="ma50">-</td>
-                    <td class="ma200 col-group-divider">-</td>
+                    <td class="ma10" style="${colorNumDark(ma10)}">${ma10}</td>
+                    <td class="ma50" style="${colorNumDark(ma50)}">${ma50}</td>
+                    <td class="ma200 col-group-divider" style="${colorNumDark(ma200)}"><a href="https://www.barchart.com/stocks/quotes/${ticker}/overview" target="_blank" style="color:inherit;">${ma200}</a></td>
                     <td class="price"><a href="https://finviz.com/quote.ashx?t=${ticker}" target="_blank" style="color:inherit;}">${price}</a></td>
+                    <td class="rsi col-group-divider">${rsi}</td>
                     <td><a href="https://marketchameleon.com/Overview/${ticker}" target="_blank" style="color:inherit;}">${iv_rank}</a></td>
                     <td style="${beta > 1.29 ? 'color:#22c55e;' : 'color:inherit;'}">${beta}</td>
                   </tr>`;
@@ -1129,7 +1137,7 @@
       }
 
       const isDate = columnIndex === 1; // ErDate(Nxt)
-      const isNumeric = columnIndex !== 0 && columnIndex !== 1 && columnIndex !== 3; // 0=Ticker, 1=Date, 3=Time
+      const isNumeric = columnIndex !== 0 && columnIndex !== 1 && columnIndex !== 2; // 0=Ticker, 1=Date, 2=Time
 
       // Map columnIndex to appData property logic
       appData.sort((a, b) => {
@@ -1138,9 +1146,8 @@
         // Extract value based on column index
         if (columnIndex === 0) { valA = a.ticker; valB = b.ticker; }
         else if (columnIndex === 1) { valA = a.data.er_date || ''; valB = b.data.er_date || ''; }
-        else if (columnIndex === 2) { valA = a.data.calculatedRsi || -999; valB = b.data.calculatedRsi || -999; }
-        else if (columnIndex === 3) { valA = a.data.report_time || ''; valB = b.data.report_time || ''; }
-        else if (columnIndex === 4) { 
+        else if (columnIndex === 2) { valA = a.data.report_time || ''; valB = b.data.report_time || ''; }
+        else if (columnIndex === 3) { 
            // p
            const calcP = (data) => {
               var sc = parseFloat(data.straddle && data.straddle != "N/A" && data.straddle != 0 ? (parseFloat(data.straddle) + parseFloat(data.straddle) * 0.15).toFixed(2) : 0);
@@ -1150,25 +1157,26 @@
            };
            valA = calcP(a.data); valB = calcP(b.data);
         }
-        else if (columnIndex === 5) { 
+        else if (columnIndex === 4) { 
            const scA = a.data.straddle && a.data.straddle != "N/A" ? parseFloat(a.data.straddle) : 0;
            const scB = b.data.straddle && b.data.straddle != "N/A" ? parseFloat(b.data.straddle) : 0;
            valA = scA; valB = scB; 
         }
-        else if (columnIndex === 6) { valA = parseFloat(a.data.histMove2) || -999; valB = parseFloat(b.data.histMove2) || -999; }
-        else if (columnIndex === 7) { valA = parseFloat(a.data.ps_ratio) || -999; valB = parseFloat(b.data.ps_ratio) || -999; }
-        else if (columnIndex === 8) { valA = parseFloat(a.data.post_earnings_move_1d) || -999; valB = parseFloat(b.data.post_earnings_move_1d) || -999; }
-        else if (columnIndex === 9) { valA = parseFloat(a.data.priceChange) || -999; valB = parseFloat(b.data.priceChange) || -999; }
-        else if (columnIndex === 10) { valA = parseFloat(a.data.mcp2q) || -999; valB = parseFloat(b.data.mcp2q) || -999; }
-        else if (columnIndex === 11) { valA = parseFloat(a.data.mcp) || -999; valB = parseFloat(b.data.mcp) || -999; }
-        else if (columnIndex === 12) { valA = parseFloat(a.data.ucp) || -999; valB = parseFloat(b.data.ucp) || -999; }
-        else if (columnIndex === 13) { valA = parseFloat(a.data.ucpa) || -999; valB = parseFloat(b.data.ucpa) || -999; }
-        else if (columnIndex === 14) { valA = parseFloat(a.data.lcpa) || -999; valB = parseFloat(b.data.lcpa) || -999; }
-        else if (columnIndex === 15) { valA = parseFloat(a.data.lcp) || -999; valB = parseFloat(b.data.lcp) || -999; }
-        else if (columnIndex === 16) { valA = -999; valB = -999; } // ma10
-        else if (columnIndex === 17) { valA = -999; valB = -999; } // ma50
-        else if (columnIndex === 18) { valA = -999; valB = -999; } // ma200
-        else if (columnIndex === 19) { valA = parseFloat(a.data.price) || -999; valB = parseFloat(b.data.price) || -999; }
+        else if (columnIndex === 5) { valA = parseFloat(a.data.histMove2) || -999; valB = parseFloat(b.data.histMove2) || -999; }
+        else if (columnIndex === 6) { valA = parseFloat(a.data.ps_ratio) || -999; valB = parseFloat(b.data.ps_ratio) || -999; }
+        else if (columnIndex === 7) { valA = parseFloat(a.data.post_earnings_move_1d) || -999; valB = parseFloat(b.data.post_earnings_move_1d) || -999; }
+        else if (columnIndex === 8) { valA = parseFloat(a.data.priceChange) || -999; valB = parseFloat(b.data.priceChange) || -999; }
+        else if (columnIndex === 9) { valA = parseFloat(a.data.mcp2q) || -999; valB = parseFloat(b.data.mcp2q) || -999; }
+        else if (columnIndex === 10) { valA = parseFloat(a.data.mcp) || -999; valB = parseFloat(b.data.mcp) || -999; }
+        else if (columnIndex === 11) { valA = parseFloat(a.data.ucp) || -999; valB = parseFloat(b.data.ucp) || -999; }
+        else if (columnIndex === 12) { valA = parseFloat(a.data.ucpa) || -999; valB = parseFloat(b.data.ucpa) || -999; }
+        else if (columnIndex === 13) { valA = parseFloat(a.data.lcpa) || -999; valB = parseFloat(b.data.lcpa) || -999; }
+        else if (columnIndex === 14) { valA = parseFloat(a.data.lcp) || -999; valB = parseFloat(b.data.lcp) || -999; }
+        else if (columnIndex === 15) { valA = parseFloat(a.data.ma10Ratio) || -999; valB = parseFloat(b.data.ma10Ratio) || -999; } // ma10
+        else if (columnIndex === 16) { valA = parseFloat(a.data.ma50Ratio) || -999; valB = parseFloat(b.data.ma50Ratio) || -999; } // ma50
+        else if (columnIndex === 17) { valA = parseFloat(a.data.ma200Ratio) || -999; valB = parseFloat(b.data.ma200Ratio) || -999; } // ma200
+        else if (columnIndex === 18) { valA = parseFloat(a.data.price) || -999; valB = parseFloat(b.data.price) || -999; }
+        else if (columnIndex === 19) { valA = a.data.finalRsi || a.data.calculatedRsi || -999; valB = b.data.finalRsi || b.data.calculatedRsi || -999; }
         else if (columnIndex === 20) { valA = parseFloat(a.data.iv_rank) || -999; valB = parseFloat(b.data.iv_rank) || -999; }
         else if (columnIndex === 21) { valA = parseFloat(a.data.beta) || -999; valB = parseFloat(b.data.beta) || -999; }
         else { valA = 0; valB = 0; }
