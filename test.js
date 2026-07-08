@@ -1,477 +1,245 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-  <title>ER Data</title>
-  <meta charset="UTF-8">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
-  <div style="display: flex; justify-content: space-between; align-items: center;">
-    <h2>&nbspER Data &nbsp<span style="color: #DE3163;">BD</span>, <span style="color: #FFAC1C;">BU</span>,
-      <span style="color: #6495ED;">TU</span>, <span style="color: #2AAA8A;">TD</span>
-    </h2>
-    <div style="display: flex; gap: 20px; align-items: center; margin-right: 60px;">
-      <input type="text" id="searchInput" placeholder="Search Ticker..." style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--table-border); background: var(--table-bg); color: var(--text-color); outline: none;">
-      <button id="themeToggle" class="theme-toggle" style="display: none;">🌙&nbsp☀️</button>
-      <a href="ErMove.htm" target="_blank" style="text-decoration: none; color: #FFAC1C;">GT_100</a>
-      <a href="ErMove100.htm" target="_blank" style="text-decoration: none; color: #6495ED;">LT_100</a>
-    </div>
-  </div>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    body {
-      font-family: 'Inter', sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: var(--background-color);
-      color: var(--text-color);
-      transition: all 0.3s ease;
-    }
-
-    :root {
-      --background-color: #f4f7f6;
-      --text-color: #1a1a1a;
-      --table-bg: #ffffff;
-      --table-border: #e0e0e0;
-      --header-bg: #2c3e50;
-      --header-text: #ffffff;
-      --row-hover: #f1f5f9;
-    }
-
-    [data-theme="dark"] {
-      --background-color: #121212;
-      --text-color: #e0e0e0;
-      --table-bg: #1e1e1e;
-      --table-border: #333333;
-      --header-bg: #1f2937;
-      --header-text: #f9fafb;
-      --row-hover: #2d3748;
-    }
-
-    .light-theme {
-      background-color: #ffffff;
-      color: #000000;
-    }
-
-    .theme-toggle {
-      position: fixed;
-      margin-right: 8px;
-      padding: 8px 8px;
-      border-radius: 50%;
-      border: none;
-      cursor: pointer;
-      background: transparent;
-    }
-
-    [data-theme="dark"] .theme-toggle span:first-child {
-      display: none;
-    }
-
-    [data-theme="light"] .theme-toggle span:last-child {
-      display: none;
-    }
-
-    th, td {
-      padding: 8px 10px;
-      font-size: 13px;
-      text-align: right;
-      border-bottom: 1px solid var(--table-border);
-      transition: background-color 0.2s;
-      font-variant-numeric: tabular-nums;
-    }
-
-    th {
-      background-color: var(--header-bg);
-      color: var(--header-text);
-      font-weight: 600;
-      white-space: nowrap;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    th:hover {
-      background-color: #3b4d61;
-    }
-
-    /* Sticky Ticker Column */
-    th:nth-child(1), td:nth-child(1) {
-      text-align: left;
-      position: sticky;
-      left: 0;
-      background-color: var(--table-bg);
-      z-index: 1;
-      border-right: 1px solid var(--table-border);
-      box-shadow: 2px 0 5px rgba(0,0,0,0.05);
-      font-weight: 600;
-    }
-
-    thead th:nth-child(1) {
-      z-index: 3;
-      background-color: var(--header-bg);
-    }
-    
-    .light-theme th:nth-child(1) {
-      background-color: #eee;
-    }
-
-    /* Left align Date */
-    th:nth-child(2), td:nth-child(2) {
-      text-align: left;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: var(--table-bg);
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    }
-    
-    tbody tr:hover {
-      background-color: var(--row-hover);
-    }
-
-    .light-theme th {
-      background-color: #eee;
-      color: black;
-    }
-
-    .toggle-btn {
-      padding: 10px;
-      margin: 10px;
-      cursor: pointer;
-      border: none;
-      background-color: #444;
-      color: white;
-    }
-
-    .light-theme .toggle-btn {
-      background-color: #ccc;
-      color: black;
-    }
-
-    /* Use GPU acceleration for animations */
-    .animated {
-      transform: translateZ(0);
-      will-change: transform;
-    }
-
-    /* Optimize table rendering */
-    #table-wrapper {
-      contain: content;
-      height: 90vh;
-      overflow-y: auto;
-    }
-
-    /* Prevent layout shifts */
-    table {
-      table-layout: fixed;
-      width: 100%;
-    }
-
-    thead th {
-      position: sticky;
-      top: 0;
-      z-index: 2;
-      background-color: rgba(44, 62, 80, 0.85); /* Glassmorphism */
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      color: white;
-    }
-    
-    [data-theme="light"] thead th {
-      background-color: rgba(238, 238, 238, 0.85);
-      color: black;
-    }
-
-    /* Column Grouping Dividers */
-    .col-group-divider {
-      border-right: 1px solid var(--table-border) !important;
-    }
-    
-    td.col-group-divider {
-      border-right: 2px solid var(--table-border) !important;
-    }
-
-    .light-theme thead th {
-      background-color: #eee;
-      color: black;
-    }
-
-    #earningsTable {
-      max-height: 80vh;
-      overflow-y: auto;
-      width: 100%;
-    }
-
-    .highlight-green {
-      background-color: #d6fbb1 !important;
-    }
-
-    .highlight-orange {
-      background-color: #FFECB3 !important;
-    }
-
-    .highlight-red {
-      background-color: #FFEBEE !important;
-    }
-
-    .highlight-blue {
-      background-color: #cefcfd !important;
-    }
-
-    .highlight-sky-blue {
-      background-color: #87CEEB !important;
-      color: #000 !important;
-    }
-
-    .highlight-dark-red {
-      background-color: #ff4d4d !important;
-      color: #fff !important;
-    }
-
-    .highlight-dark-green {
-      background-color: #228B22 !important;
-      color: #fff !important;
-    }
-
-    .highlight-light-green {
-      background-color: #90EE90 !important;
-      color: #000 !important;
-    }
-    
-    .highlight-yellow {
-      background-color: #FFFFE0 !important;
-      color: #000 !important;
-    }
-
-    a,
-    a label,
-    a:link,
-    a:visited,
-    a:hover,
-    a:active {
-      cursor: pointer !important;
-      text-decoration: none;
-      color: inherit;
-    }
-
-    a:hover {
-      text-decoration: underline !important;
-    }
-
-    td a,
-    td a:link,
-    td a:visited,
-    td a:hover,
-    td a:active {
-      cursor: pointer !important;
-    }
-
-    .row-selected {
-      outline: 2px solid #1976d2 !important;
-      background-color: #e3f2fd !important;
-      color: black !important;
-    }
-    .row-selected td, .row-selected a, .row-selected td a {
-      color: black !important;
-    }
-    /* Progress Bar Styles */
-    .progress-wrapper {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      width: 300px;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(5px);
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-      z-index: 1000;
-      text-align: center;
-    }
-    
-    .progress-bar-container {
-      width: 100%;
-      height: 10px;
-      background: var(--table-border);
-      border-radius: 5px;
-      overflow: hidden;
-      margin-top: 15px;
-    }
-
-    .progress-bar-fill {
-      height: 100%;
-      background: #007bff;
-      width: 0%;
-      transition: width 0.3s ease;
-    }
-
-    .progress-text {
-      font-size: 14px;
-      font-weight: 600;
-      margin-top: 10px;
-      color: var(--text-color);
-    }
-  </style>
-</head>
-
-<body>
-  <div class="progress-wrapper" id="progressWrapper" style="display: none;">
-    <div style="font-size: 16px; font-weight: 600; margin-bottom: 5px;">Loading Earnings Data</div>
-    <div class="progress-bar-container">
-      <div class="progress-bar-fill" id="progressBarFill"></div>
-    </div>
-    <div class="progress-text" id="progressText">0 / 400</div>
-  </div>
-
-  <div id="table-wrapper">
-    <table id="earningsTable">
-      <thead>
-        <tr>
-          <th onclick="sortTable(0)">Ticker</th>
-          <th onclick="sortTable(1)" title="Next Earnings Date">ErDate(Nxt)</th>
-                    <th onclick="sortTable(2)" title="Premarket or After Hours">PM/AH</th>
-          <th class="col-group-divider" onclick="sortTable(3)" title="Straddle Price vs Expected Move Ratio">P</th>
-          <th onclick="sortTable(4)" title="Expected Move % (Straddle Price + 15%)">Straddle%</th>
-          <th onclick="sortTable(5)" title="Historical Move 2 Quarters Ago">HistMove2%</th>
-          <th onclick="sortTable(6)" title="Price to Sales Ratio">P/S</th>
-          <th class="col-group-divider" onclick="sortTable(7)" title="Last Earnings Move %">ER Move%</th>
-          <th onclick="sortTable(8)" title="% Change since last earnings report">Change%</th>
-          <th onclick="sortTable(9)" title="Market Chart Price 2Q: Current price vs Pre-Earnings price of last to last quarter">McP2Q%</th>
-          <th class="col-group-divider" onclick="sortTable(10)" title="Market Chart Price: Current price vs Pre-Earnings price">McP%</th>
-          <th onclick="sortTable(11)" title="Upper Chart Price (+2x Implied Move)">UCP%</th>
-          <th onclick="sortTable(12)" title="Upper Chart Price (+1x Implied Move)">UCPa%</th>
-          <th onclick="sortTable(13)" title="Lower Chart Price (-1x Implied Move)">LCPa%</th>
-          <th class="col-group-divider" onclick="sortTable(14)" title="Lower Chart Price (-2x Implied Move)">LCP%</th>
-          <th onclick="sortTable(15)" title="10-Day Moving Average Distance">MA10D%</th>
-          <th onclick="sortTable(16)" title="50-Day Moving Average Distance">MA50%</th>
-          <th class="col-group-divider" onclick="sortTable(17)" title="200-Day Moving Average Distance">MA200%</th>
-          <th onclick="sortTable(18)" title="Latest Price">Price</th>
-          <th class="col-group-divider" onclick="sortTable(19)" title="Relative Strength Index">Rsi</th>
-          <th onclick="sortTable(20)" title="Implied Volatility Rank">IvRank</th>
-          <th onclick="sortTable(21)" title="Beta (Stock Volatility vs Market)">Beta</th>
-          
-          
-          
-          
-          
-          
-          
-          
-          
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Data will be injected here -->
-      </tbody>
-    </table>
-  </div>
-  <script>
     const tickers = [
-      // --- A ---
-  'A', 'AAL', 'AAP', 'AAPL', 'ABBV', 'ABEV', 'ACHR', 'ACN', 'ADEA', 'ADI', 
-  'ADSK', 'ADBE', 'AEO', 'AEHR', 'AEM', 'AFL', 'AG', 'AGNC', 'AI', 'AKAM', 
-  'ALAB', 'AMAT', 'AMBA', 'AMD', 'AMR', 'AMZN', 'AN', 'ANF', 'ANET', 'APLD', 
-  'APP', 'APPN', 'APH', 'ARM', 'ASAN', 'ASML', 'ATEN', 'AUR', 'AVGO', 'AXP', 'AZO',
-
-  // --- B ---
-  'BA', 'BABA', 'BAC', 'BAND', 'BBAI', 'BB', 'BBD', 'BBWI', 'BBBY', 'BCE', 
-  'BDX', 'BIDU', 'BILL', 'BJ', 'BLK', 'BMNR', 'BOX', 'BRZE', 'BTG', 'BTE', 
-  'BTBT', 'BULL', 'BURL', 'BW',
-
-  // --- C ---
-  'C', 'CARR', 'CAT', 'CAVA', 'CB', 'CBRS', 'CCJ', 'CCL', 'CDNS', 'CELH', 
-  'CHKP', 'CHTR', 'CHWY', 'CIFR', 'CL', 'CLF', 'CLSK', 'CLCOV', 'CLOV', 'CMCSA', 
-  'CMG', 'COCO', 'COIN', 'CORZ', 'COUR', 'COTY', 'CPNG', 'CPRI', 'CRCL', 'CRH', 
-  'CRM', 'CRWD', 'CRWV', 'CSCO', 'CSIQ', 'CVS', 'CVLT', 'CVNA', 'CX', 'CXM', 'CYTK',
-
-  // --- D ---
-  'DAL', 'DASH', 'DDOG', 'DE', 'DECK', 'DELL', 'DG', 'DGX', 'DHR', 'DIS', 
-  'DJT', 'DLO', 'DLR', 'DLTR', 'DKNG', 'DKS', 'DNN', 'DOCS', 'DOCU', 'DOW', 
-  'DT', 'DUK', 'DUOL', 'DVA', 'DVN', 'DXCM',
-
-  // --- E ---
-  'EDIT', 'EDU', 'EL', 'ELF', 'ENPH', 'EOSE', 'EQIX', 'ERIC', 'ESTC', 'ETN', 'ETSY',
-
-  // --- F ---
-  'F', 'FAST', 'FCEL', 'FCX', 'FDX', 'FICO', 'FIG', 'FIVN', 'FLUT', 'FMS', 
-  'FND', 'FRSH', 'FSLY', 'FTNT', 'FUTU',
-
-  // --- G ---
-  'GAP', 'GE', 'GEN', 'GGB', 'GME', 'GO', 'GOOG', 'GOOGL', 'GPC', 'GRAB', 
-  'GS', 'GTLB', 'GWW',
-
-  // --- H ---
-  'HAL', 'HCA', 'HD', 'HDB', 'HIMS', 'HL', 'HLT', 'HMC', 'HON', 'HOOD', 
-  'HPQ', 'HQY', 'HSY', 'HTZ', 'HUM', 'HUT',
-
-  // --- I ---
-  'IBM', 'IBN', 'IBRX', 'ILMN', 'INFY', 'INSM', 'INTC', 'INTU', 'IONQ', 'IOT', 
-  'IOVA', 'IREN',
-
-  // --- J ---
-  'JBHT', 'JBL', 'JD', 'JEF', 'JNJ', 'JOBY', 'JPM', 'JKS',
-
-  // --- K ---
-  'KEY', 'KEYS', 'KMX', 'KO', 'KOS', 'KSS', 'KVUE',
-
-  // --- L ---
-  'LAD', 'LEN', 'LEU', 'LEVI', 'LII', 'LITE', 'LLY', 'LMND', 'LOW', 'LQDA', 'LRCX', 'LULU', 
-  'LUNR', 'LW', 'LYFT', 'LYG',
-
-  // --- M ---
-  'M', 'MA', 'MANH', 'MAR', 'MARA', 'MCD', 'MCHP', 'MDLZ', 'MDT', 'MDB', 
-  'MELI', 'META', 'MET', 'MFC', 'MLKN', 'MNDY', 'MRNA', 'MRVL', 'MS', 'MSFT', 'MSTR', 'MU',
-
-  // --- N ---
-  'NAVN', 'NBIS', 'NCLH', 'NCNO', 'NEE', 'NEM', 'NET', 'NFLX', 'NIO', 'NKE', 
-  'NOK', 'NOW', 'NTAP', 'NTNX', 'NU', 'NUE', 'NVDA', 'NVTS', 'NVO', 'NXPI',
-
-  // --- O ---
-  'ODFL', 'OKTA', 'OMC', 'ON', 'ONDS', 'ONON', 'OPEN', 'ORCL', 'ORLY', 'OXY',
-
-  // --- P ---
-  'PAGS', 'PANW', 'PATH', 'PAYX', 'PBR', 'PCG', 'PDD', 'PEGA', 'PENG', 'PENN', 
-  'PEP', 'PFE', 'PG', 'PINS', 'PL', 'PLNT', 'PLTR', 'PLUG', 'PONY', 'PRU', 
-  'PSKY', 'PTC', 'PTON', 'PVH', 'PYPL',
-
-  // --- Q ---
-  'QBTS', 'QCOM', 'QS', 'QSR',
-
-  // --- R ---
-  'RBLX', 'RBRK', 'RCAT', 'RCL', 'RDDT', 'RDW', 'RELY', 'RGTI', 'RH', 'RIG', 
-  'RIOT', 'RIVN', 'RKLB', 'RKT', 'RL', 'ROK', 'ROKU', 'ROOT', 'ROST', 'RTX', 'RUN', 'RXRX', 'RXT',
-
-  // --- S ---
-  'S', 'SAIL', 'SAM', 'SAN', 'SBUX', 'SCHW', 'SE', 'SEDG', 'SHOP', 'SIG', 
-  'SLB', 'SMCI', 'SMTC', 'SNAP', 'SNDK', 'SNOW', 'SNPS', 'SO', 'SOFI', 'SONY', 
-  'SOUN', 'SPCX', 'SPOT', 'STLA', 'STLD', 'STZ', 'SWKS', 'SYM', 'SYY',
-
-  // --- T ---
-  'T', 'TAL', 'TDC', 'TEAM', 'TER', 'TGT', 'TGTX', 'THC', 'TJX', 
-  'TM', 'TMO', 'TMUS', 'TOST', 'TPR', 'TRV', 'TSLA', 'TSM', 'TT', 'TTD', 'TWLO', 'TXN',
-
-  // --- U ---
-  'U', 'UAL', 'UBER', 'UL', 'ULTA', 'UMC', 'UNFI', 'UNH', 'UNP', 'UPS', 
-  'UPST', 'URI', 'USFD', 'USO',
-
-  // --- V ---
-  'V', 'VAC', 'VALE', 'VFC', 'VG', 'VRNS', 'VRT', 'VRTX', 'VSXY', 'VZ',
-
-  // --- W ---
-  'W', 'WBD', 'WDC', 'WDAY', 'WFC', 'WFG', 'WHR', 'WIX', 'WMT', 'WOLF', 'WULF',
-
-  // --- X ---
-  'XOM',
-
-  // --- Y ---
-  'YOU',
-
-  // --- Z ---
-  'ZETA', 'ZM', 'ZTO', 'ZTS', 'ZS', 'XYZ'
+      'A', 'AA', 'AAL', 'AAOI', 'AAON', 'AAP', 'AAPL', 'AAT', 'ABBV', 'ABCB', 'ABCL',
+      'ABCM', 'ABEO', 'ABG', 'ABM', 'ABNB', 'ABOS', 'ABR', 'ABSI', 'ABT', 'ABUS', 'ACA', 'ACAD',
+      'ACCO', 'ACDC', 'ACEL', 'ACGL', 'ACHC', 'ACHR', 'ACI', 'ACIC', 'ACIW', 'ACLS', 'ACLX', 'ACM',
+      'ACMR', 'ACN', 'ACNB', 'ACRE', 'ACT', 'ACTG', 'ACU', 'ACVA', 'ADAP', 'ADBE', 'ADC', 'ADCT',
+      'ADEA', 'ADI', 'ADM', 'ADMA', 'ADMP', 'ADN', 'ADNT', 'ADP', 'ADPT', 'ADSK',
+      'ADT', 'ADTN', 'ADUS', 'ADV', 'ADVM', 'ADXN', 'AE', 'AEE', 'AEHR', 'AEIS',
+      'AEM', 'AEO', 'AEP', 'AES', 'AESI', 'AEVA', 'AEY', 'AFCG', 'AFG', 'AFL', 'AFRM',
+      'AFYA', 'AG', 'AGCO', 'AGEN', 'AGI', 'AGIO', 'AGL', 'AGLE', 'AGM', 'AGNC', 'AGO', 'AGR',
+      'AGRI', 'AGRO', 'AGS', 'AGTI', 'AGX', 'AGYS', 'AHCO', 'AHG', 'AHH', 'AHI', 'AI', 'AIG',
+      'AIHS', 'AIN', 'AINC', 'AIO', 'AIP', 'AIR', 'AIRE', 'AIRG', 'AIRI', 'AIRR', 'AIRT', 'AIT',
+      'AIV', 'AIZ', 'AJG', 'AKAM', 'AKBA', 'AKRO', 'AKTS', 'AL', 'ALAB', 'ALB', 'ALBO', 'ALC',
+      'ALCO', 'ALDX', 'ALE', 'ALEC', 'ALEX', 'ALG', 'ALGM', 'ALGN', 'ALGS', 'ALGT', 'ALHC', 'ALIT',
+      'ALK', 'ALKS', 'ALKT', 'ALL', 'ALLE', 'ALLO', 'ALLY', 'ALMS', 'ALNT', 'ALNY', 'ALPN', 'ALR',
+      'ALRM', 'ALRS', 'ALSN', 'ALTG', 'ALTR', 'ALTU', 'ALV', 'ALVR', 'ALX', 'ALXO',
+      'AM', 'AMAL', 'AMAT', 'AMBA', 'AMBC', 'AMBP', 'AMC', 'AMCR', 'AMCX', 'AMD', 'AME', 'AMED',
+      'AMG', 'AMGN', 'AMH', 'AMK', 'AMKR', 'AMLP', 'AMN', 'AMP', 'AMPH', 'AMPL', 'AMPS',
+      'AMR', 'AMRC', 'AMRK', 'AMRX', 'AMS', 'AMSC', 'AMSF', 'AMT', 'AMTB', 'AMTM', 'AMWD', 'AMX',
+      'AMZN', 'AN', 'ANAB', 'ANDE', 'ANET', 'ANF', 'ANGI', 'ANGO', 'ANIK', 'ANIP',
+      'ANNX', 'ANSS', 'AON', 'AORT', 'AOS', 'AOSL', 'APA', 'APAM', 'APD', 'APG',
+      'APGE', 'APH', 'APLD', 'APLE', 'APLS', 'APLT', 'APO', 'APOG', 'APP', 'APPF', 'APPH', 'APPN',
+      'APPS', 'APTV', 'AQST', 'AR', 'ARAY', 'ARCC', 'ARCB', 'ARCT', 'ARCO', 'ARDT', 'ARDX', 'ARE',
+      'ARES', 'ARGD', 'ARGX', 'ARI', 'ARIS', 'ARKO', 'ARLO', 'ARLP', 'ARM', 'ARMK', 'ARNC', 'AROC',
+      'AROW', 'ARQT', 'ARR', 'ARRY', 'ARVN', 'ARW', 'ARWR', 'AS', 'ASAI', 'ASAN', 'ASB', 'ASC',
+      'ASGN', 'ASH', 'ASIX', 'ASLE', 'ASMB', 'ASML', 'ASO', 'ASPN', 'ASPS', 'ASR', 'ASTC', 'ASTH',
+      'ASTL', 'ASTS', 'ASUR', 'ATAT', 'ATEC', 'ATEN', 'ATEX', 'ATGE', 'ATI', 'ATKR', 'ATLC', 'ATMU',
+      'ATNI', 'ATO', 'ATR', 'ATRA', 'ATRC', 'ATRO', 'ATSG', 'ATUS', 'ATXS', 'ATYR', 'AU', 'AUB',
+      'AUPH', 'AUR', 'AURA', 'AVA', 'AVAV', 'AVB', 'AVBP', 'AVD', 'AVDL', 'AVDX', 'AVGO', 'AVIR',
+      'AVNS', 'AVNT', 'AVNW', 'AVO', 'AVPT', 'AVT', 'AVTR', 'AVXL', 'AVY', 'AWF', 'AWK', 'AWI',
+      'AWR', 'AX', 'AXGN', 'AXL', 'AXON', 'AXP', 'AXS', 'AXSM', 'AXTA', 'AY', 'AYI', 'AZO',
+      'AZTA', 'AZZ', 'B', 'BA', 'BABA', 'BAC', 'BAH', 'BALL', 'BAM', 'BANC', 'BAND', 'BANF',
+      'BANR', 'BASE', 'BAX', 'BBAI', 'BBIO', 'BBSI', 'BBW', 'BBWI', 'BBY', 'BC',
+      'BCAX', 'BCBP', 'BCC', 'BCML', 'BCO', 'BCPC', 'BCRX', 'BDC', 'BDN', 'BDX', 'BE', 'BEAM',
+      'BEKE', 'BEN', 'BEPC', 'BFAM', 'BFH', 'BFS', 'BFST', 'BG', 'BGC',
+      'BGS', 'BHB', 'BHE', 'BHF', 'BHR', 'BHVN', 'BIGC', 'BIIB', 'BILI', 'BILL', 'BIO', 'BIPC',
+      'BIRK', 'BJ', 'BJRI', 'BK', 'BKD', 'BKE', 'BKH', 'BKNG', 'BKR', 'BKU', 'BL', 'BLBD',
+      'BLD', 'BLDE', 'BLDR', 'BLFS', 'BLFY', 'BLK', 'BLKB', 'BLMN', 'BLND', 'BLNK', 'BLPH', 'BLRX',
+      'BLU', 'BMBL', 'BMEA', 'BMI', 'BMRC', 'BMRN', 'BMY', 'BNL', 'BNS', 'BOC', 'BOH',
+      'BOKF', 'BOOM', 'BOOT', 'BORR', 'BOX', 'BPMC', 'BPOP', 'BR', 'BRBR', 'BRCC', 'BRC',
+      'BRFS', 'BRKL', 'BRKR', 'BRO', 'BROS', 'BRSP', 'BRX', 'BRY', 'BRZE', 'BSRR', 'BSX',
+      'BSY', 'BTBT', 'BTDR', 'BTSG', 'BTU', 'BUR', 'BURL', 'BUSE', 'BV', 'BVS', 'BWA', 'BWB',
+      'BWIN', 'BWMN', 'BWXT', 'BX', 'BXC', 'BXMT', 'BXP', 'BY', 'BYD', 'BYND', 'BYON', 'BYRN',
+      'BZH', 'C', 'CABA', 'CAC', 'CACC', 'CACI', 'CADE', 'CAG', 'CAH', 'CAKE', 'CAL', 'CALM',
+      'CALX', 'CAMT', 'CAPR', 'CAR', 'CARE', 'CARG', 'CARR', 'CARS', 'CART', 'CASH', 'CASS', 'CASY',
+      'CAT', 'CATX', 'CATY', 'CAVA', 'CB', 'CBAN', 'CBL', 'CBLL', 'CBAY', 'CBOE', 'CBRE',
+      'CBRL', 'CBSH', 'CBT', 'CBU', 'CBZ', 'CC', 'CCB', 'CCBG', 'CCCC', 'CCCS', 'CCI', 'CCJ',
+      'CCK', 'CCL', 'CCNE', 'CCO', 'CCOI', 'CCRN', 'CDAY', 'CDE', 'CDLX', 'CDNA',
+      'CDNS', 'CDP', 'CDRE', 'CDTX', 'CDW', 'CDXS', 'CE', 'CECO', 'CEG', 'CELC', 'CELH', 'CENT',
+      'CENX', 'CERS', 'CERT', 'CEVA', 'CF', 'CFFN', 'CFG', 'CFLT', 'CFR', 'CG', 'CGEM',
+      'CGNX', 'CGON', 'CHCI', 'CHCO', 'CHCT', 'CHD', 'CHDN', 'CHEF', 'CHE', 'CHGG', 'CHH', 'CHKP',
+      'CHRD', 'CHRS', 'CHRW', 'CHS', 'CHTR', 'CHWY', 'CHX', 'CI', 'CIEN', 'CIFR', 'CIM', 'CINF',
+      'CIO', 'CIVB', 'CIVI', 'CIX', 'CL', 'CLAR', 'CLBT', 'CLDT', 'CLDX', 'CLEU', 'CLF',
+      'CLFD', 'CLH', 'CLMT', 'CLNE', 'CLOV', 'CLPR', 'CLS', 'CLSK', 'CLVT', 'CLW', 'CLX', 'CM',
+      'CMA', 'CMBM', 'CMCL', 'CMCO', 'CMCSA', 'CME', 'CMI', 'CMG', 'CMPO', 'CMPR', 'CMPX', 'CMRE',
+      'CMS', 'CMTG', 'CNA', 'CNC', 'CNDT', 'CNF', 'CNH', 'CNI', 'CNK', 'CNM', 'CNMD',
+      'CNNE', 'CNO', 'CNOB', 'CNP', 'CNQ', 'CNR', 'CNS', 'CNTA', 'CNX', 'CNXC', 'CNXN', 'COCO',
+      'COF', 'COGT', 'COHR', 'COHU', 'COIN', 'COKE', 'COLB', 'COLD', 'COLL', 'COLM', 'COMM', 'COMP',
+      'CON', 'COO', 'COOP', 'COP', 'COR', 'CORT', 'CORZ', 'COST', 'COTY', 'COUR', 'CPAY', 'CPB',
+      'CPF', 'CPK', 'CPNG', 'CPRI', 'CPRT', 'CPRX', 'CPS', 'CPT', 'CR', 'CRBP', 'CRBU', 'CRC',
+      'CRCT', 'CRDO', 'CRGX', 'CRGY', 'CRH', 'CRI', 'CRK', 'CRM', 'CRMD', 'CRNC', 'CRNX', 'CROX',
+      'CRS', 'CRSP', 'CRSR', 'CRUS', 'CRVL', 'CRWD', 'CRWV', 'CSCO', 'CSGP', 'CSGS', 'CSL',
+      'CSQ', 'CSTE', 'CSV', 'CSW', 'CSWI', 'CSX', 'CTAS', 'CTBI',
+      'CTKB', 'CTLP', 'CTO', 'CTOS', 'CTRA', 'CTRE', 'CTRI', 'CTS', 'CTSH', 'CTVA', 'CTXR', 'CUBE',
+      'CUBI', 'CUK', 'CUZ', 'CVAC', 'CVBF', 'CVCO', 'CVGW', 'CVI', 'CVLG', 'CVLT', 'CVNA', 'CVRX',
+      'CVS', 'CVX', 'CW', 'CWAN', 'CWBC', 'CWCO', 'CWEN', 'CWH', 'CWK', 'CWST', 'CWT',
+      'CXM', 'CXT', 'CXW', 'CYBR', 'CYH', 'CYRX', 'CYTK', 'CZNC', 'CZR', 'D', 'DAKT',
+      'DAL', 'DAN', 'DAR', 'DASH', 'DAVE', 'DAWN', 'DAY', 'DBD', 'DBI', 'DBRG', 'DBX', 'DCGO',
+      'DCI', 'DCO', 'DCOM', 'DD', 'DDD', 'DDOG', 'DE', 'DEA', 'DECK', 'DEI', 'DELL', 'DEMZ',
+      'DENN', 'DFH', 'DFIN', 'DG', 'DGII', 'DGX', 'DH', 'DHC', 'DHI', 'DHR', 'DHT',
+      'DIA', 'DIN', 'DINO', 'DIOD', 'DIS', 'DJT', 'DK', 'DKL', 'DKNG', 'DKS', 'DLA',
+      'DLB', 'DLR', 'DLTR', 'DLX', 'DM', 'DMRC', 'DMLP', 'DNB', 'DNLI', 'DNOW', 'DNN',
+      'DNUT', 'DO', 'DOC', 'DOCN', 'DOCS', 'DOCU', 'DOLE', 'DOMA', 'DOMO', 'DOOR', 'DORM', 'DOV',
+      'DOW', 'DOX', 'DPZ', 'DRD', 'DRH', 'DRI', 'DRS', 'DRVN', 'DSGN', 'DSGR', 'DSGX', 'DSP',
+      'DT', 'DTE', 'DTM', 'DTRE', 'DUK', 'DUOL', 'DV', 'DVA', 'DVAX', 'DVN', 'DX', 'DXC',
+      'DXCM', 'DXPE', 'DY', 'DYN', 'EA', 'EAF', 'EAT', 'EB', 'EBAY', 'EBC', 'ECL',
+      'ECPG', 'ECVT', 'ED', 'EDIT', 'EDU', 'EE', 'EEFT', 'EFC', 'EFSC', 'EFX', 'EG', 'EGBN',
+      'EGHT', 'EGP', 'EGY', 'EH', 'EHAB', 'EHC', 'EHTH', 'EIG', 'EIX', 'EL', 'ELAN', 'ELF',
+      'ELME', 'ELS', 'ELV', 'ELVN', 'EMBC', 'EME', 'EMN', 'EMR', 'ENB', 'ENFN', 'ENPH', 'ENR',
+      'ENS', 'ENSG', 'ENTA', 'ENTG', 'ENVA', 'ENVX', 'EOG', 'EOLS', 'EOSE', 'EPAC', 'EPAM', 'EPC',
+      'EPM', 'EPR', 'EPRT', 'EQBK', 'EQH', 'EQIX', 'EQNR', 'EQR', 'EQT', 'ERAS', 'ERIC', 'ERIE',
+      'ERJ', 'ES', 'ESAB', 'ESE', 'ESGR', 'ESI', 'ESNT', 'ESPR', 'ESRT', 'ESS', 'ESTC', 'ET',
+      'ETH', 'ETHA', 'ETHE', 'ETN', 'ETNB', 'ETOR', 'ETR', 'ETSY', 'ETWO', 'EU', 'EUFN', 'EVBG',
+      'EVC', 'EVCM', 'EVER', 'EVGO', 'EVH', 'EVLV', 'EVR', 'EVRG', 'EVTC', 'EW', 'EWBC', 'EWC',
+      'EWCZ', 'EWG', 'EWJ', 'EWU', 'EWW', 'EWY', 'EWZ', 'EXAS', 'EXC', 'EXE', 'EXEL', 'EXLS',
+      'EXP', 'EXPD', 'EXPE', 'EXPI', 'EXPO', 'EXR', 'EXTR', 'EYE', 'EYPT', 'EZU', 'F', 'FA',
+      'FAF', 'FAMI', 'FANG', 'FARO', 'FAST', 'FATE', 'FBIN', 'FBK', 'FBNC', 'FBP', 'FBRT', 'FC',
+      'FCBC', 'FCF', 'FCFS', 'FCN', 'FCNCA', 'FCPT', 'FCX', 'FDMT', 'FDP', 'FDS', 'FDX', 'FE',
+      'FELE', 'FERG', 'FET', 'FEZ', 'FFBC', 'FFIC', 'FFIN', 'FFIV', 'FFWM', 'FG', 'FHB',
+      'FHN', 'FI', 'FIBK', 'FICO', 'FIGS', 'FINV', 'FIP', 'FIS', 'FISI', 'FITB', 'FIVE', 'FIVN',
+      'FIX', 'FIZZ', 'FL', 'FLG', 'FLGT', 'FLNC', 'FLNG', 'FLO', 'FLR', 'FLS', 'FLUT', 'FLWS',
+      'FLYW', 'FMAO', 'FMBH', 'FMC', 'FMNB', 'FN', 'FNB', 'FND', 'FNF', 'FNGR', 'FNKO',
+      'FNLC', 'FOCS', 'FOLD', 'FOR', 'FORM', 'FORR', 'FOUR', 'FOX', 'FOXA', 'FOXF', 'FPI', 'FR',
+      'FRBA', 'FRGE', 'FRHC', 'FRPT', 'FRSH', 'FRST', 'FRT', 'FSBC', 'FSLR', 'FSLY', 'FSS', 'FTAI',
+      'FTDR', 'FTI', 'FTNT', 'FTRE', 'FTV', 'FUBO', 'FUL', 'FULC', 'FULT', 'FUN', 'FUTU', 'FVRR',
+      'FWRD', 'FWRG', 'FXI', 'FYBR', 'G', 'GAB', 'GABC', 'GAIA', 'GAL', 'GALT',
+      'GAN', 'GAP', 'GATX', 'GBCI', 'GBDC', 'GBIO', 'GBNY', 'GBTG', 'GBTC', 'GBX',
+      'GCBC', 'GCI', 'GCMG', 'GCO', 'GCT', 'GD', 'GDDY', 'GDEN', 'GDOT', 'GDYN', 'GE', 'GEF',
+      'GEHC', 'GEL', 'GEN', 'GENI', 'GEO', 'GERN', 'GETY', 'GEV', 'GFF', 'GFS', 'GGG', 'GH',
+      'GHM', 'GIC', 'GIII', 'GILD', 'GIS', 'GKOS', 'GL', 'GLBE', 'GLDD', 'GLNG', 'GLOB', 'GLPI',
+      'GLRE', 'GLUE', 'GLW', 'GM', 'GMAB', 'GME', 'GMED', 'GMRE', 'GMS', 'GNE', 'GNK', 'GNL',
+      'GNRC', 'GNTX', 'GNTY', 'GNW', 'GO', 'GOGL', 'GOGO', 'GOLF', 'GOOD', 'GOOG', 'GOOGL', 'GOOS',
+      'GPK', 'GPN', 'GPOR', 'GPRE', 'GPRO', 'GRAB', 'GRAL', 'GRBK', 'GRC', 'GRFS', 'GRMN', 'GRND',
+      'GRNT', 'GRPN', 'GRWG', 'GS', 'GSAT', 'GSBC', 'GSHD', 'GT', 'GTES', 'GTLB', 'GTLS', 'GTM',
+      'GTN', 'GTX', 'GTY', 'GVA', 'GWRE', 'GWW', 'GXO', 'H', 'HAE', 'HAFC', 'HAIN', 'HAL',
+      'HALO', 'HAS', 'HASI', 'HAYW', 'HBAN', 'HBCP', 'HBI', 'HBNC', 'HBT', 'HCA', 'HCAT', 'HCC',
+      'HCI', 'HCKT', 'HCSG', 'HD', 'HDB', 'HDSN', 'HE', 'HEI', 'HELE', 'HES', 'HESM', 'HEXO',
+      'HFWA', 'HG', 'HGV', 'HHH', 'HI', 'HIG', 'HII', 'HIMS', 'HIPO', 'HIW', 'HL', 'HLF',
+      'HLI', 'HLIO', 'HLIT', 'HLMN', 'HLNE', 'HLT', 'HLX', 'HMN', 'HMST', 'HNI', 'HNRG', 'HNST',
+      'HOFT', 'HOG', 'HOLX', 'HOMB', 'HON', 'HONE', 'HOOD', 'HOPE', 'HOUS', 'HP', 'HPE', 'HPQ',
+      'HPP', 'HQY', 'HR', 'HRB', 'HRI', 'HRL', 'HRMY', 'HSBC', 'HSC', 'HSIC', 'HSII',
+      'HST', 'HSTM', 'HSY', 'HTBK', 'HTH', 'HTLD', 'HTO', 'HTZ', 'HUBB', 'HUBG', 'HUBS',
+      'HUM', 'HUMA', 'HUN', 'HURN', 'HUT', 'HVT', 'HWM', 'HXL', 'HY', 'HYLN', 'HZO', 'IAC',
+      'IART', 'IAS', 'IBCP', 'IBKR', 'IBM', 'IBN', 'IBOC', 'IBP', 'IBRX', 'IBTA', 'ICE',
+      'ICFI', 'ICHR', 'ICL', 'ICLN', 'ICLR', 'ICUI', 'IDA', 'IDCC', 'IDT', 'IDYA', 'IDXX', 'IE',
+      'IESC', 'IEX', 'IFF', 'IGMS', 'IGT', 'IGV', 'IHI', 'IHS', 'IIIN', 'IIIV', 'IIPR', 'ILMN',
+      'ILPT', 'IMAX', 'IMCR', 'IMGN', 'IMKTA', 'IMNM', 'IMO', 'IMVT', 'IMXI', 'INBK', 'INBX', 'INCY',
+      'INDA', 'INDI', 'INDV', 'INFA', 'INFY', 'INGM', 'INGN', 'INGR', 'INMD', 'INN', 'INO', 'INOD', 'INSE',
+      'INSM', 'INSP', 'INSW', 'INTA', 'INTC', 'INTU', 'INVA', 'INVH', 'INVX', 'IONQ', 'IONS', 'IOSP',
+      'IOT', 'IOVA', 'IP', 'IPAR', 'IPG', 'IPGP', 'IPI', 'IPSC', 'IQ', 'IQV', 'IR', 'IRDM',
+      'IREN', 'IRM', 'IRMD', 'IRON', 'IRT', 'IRTC', 'IRWD', 'ISPC', 'ISRG', 'IT', 'ITA',
+      'ITB', 'ITCI', 'ITGR', 'ITOS', 'ITRI', 'ITT', 'ITW', 'IVT', 'IVV', 'IVZ', 'IWM', 'IWO',
+      'IXUS', 'IYR', 'IYT', 'IYW', 'J', 'JACK', 'JAKK', 'JAMF', 'JANX', 'JAZZ', 'JBL', 'JBLU',
+      'JBGS', 'JBHT', 'JBI', 'JBIO', 'JBSS', 'JBTM', 'JCI', 'JD', 'JEF', 'JELD', 'JHG', 'JJSF',
+      'JKHY', 'JLL', 'JMSB', 'JNJ', 'JNK', 'JNPR', 'JOBY', 'JOE', 'JPM', 'JRVR', 'JXN', 'K',
+      'KAI', 'KALU', 'KALV', 'KAR', 'KBH', 'KBR', 'KC', 'KD', 'KDP', 'KE', 'KEX',
+      'KEY', 'KEYS', 'KFRC', 'KFY', 'KGC', 'KHC', 'KIDS', 'KIM', 'KIND', 'KKR', 'KLAC',
+      'KLC', 'KLG', 'KLIC', 'KMB', 'KMI', 'KMPR', 'KMT', 'KMX', 'KN', 'KNF', 'KNSA', 'KNSL',
+      'KNTK', 'KNX', 'KO', 'KOD', 'KODK', 'KOP', 'KOS', 'KR', 'KRC', 'KREF', 'KRG', 'KROS',
+      'KRYS', 'KSS', 'KTB', 'KTOS', 'KURA', 'KVUE', 'KVYO', 'KW', 'KWR', 'KYMR', 'L', 'LAB',
+      'LAD', 'LADR', 'LAMR', 'LAND', 'LASR', 'LAUR', 'LAW', 'LAZ', 'LAZR', 'LBRT',
+      'LC', 'LCAP', 'LCII', 'LCID', 'LCNB', 'LDOS', 'LEA', 'LECO', 'LEG', 'LEGN',
+      'LEN', 'LENZ', 'LESL', 'LEU', 'LFST', 'LFUS', 'LGIH', 'LGND', 'LH', 'LHX', 'LI', 'LII',
+      'LIN', 'LINC', 'LIND', 'LINE', 'LION', 'LITE', 'LIVN', 'LKFN', 'LKQ', 'LLY',
+      'LMAT', 'LMB', 'LMND', 'LMNR', 'LMT', 'LNC', 'LNG', 'LNN', 'LNT', 'LNTH',
+      'LNW', 'LOB', 'LOCO', 'LOGI', 'LOAR', 'LOPE', 'LOVE', 'LOW', 'LPL', 'LPLA', 'LPG', 'LPRO',
+      'LPX', 'LQDA', 'LQDT', 'LRCX', 'LRMR', 'LRN', 'LSCC', 'LSPD', 'LSTR', 'LTC', 'LTH', 'LU',
+      'LULU', 'LUMN', 'LUNG', 'LUNR', 'LUV', 'LVS', 'LVWR', 'LW', 'LWLG', 'LX', 'LXFR', 'LXP',
+      'LXU', 'LYB', 'LYFT', 'LYG', 'LYTS', 'LYV', 'LZ', 'LZB', 'M', 'MA', 'MAA', 'MAC',
+      'MAG', 'MAN', 'MANH', 'MANU', 'MAR', 'MARA', 'MAS', 'MASI', 'MASS', 'MAT', 'MATV', 'MATW',
+      'MATX', 'MAX', 'MAXN', 'MBB', 'MBIN', 'MBLY', 'MC', 'MCB', 'MCBS', 'MCD', 'MCFT', 'MCHP',
+      'MCK', 'MCO', 'MCRI', 'MCS', 'MCW', 'MCY', 'MD', 'MDB', 'MDGL', 'MDLZ', 'MDT', 'MDU',
+      'MDXG', 'MDY', 'MED', 'MEDP', 'MEG', 'MEI', 'MELI', 'MEOH', 'MESO', 'MET', 'META', 'MFG',
+      'MGA', 'MGEE', 'MGM', 'MGNI', 'MGNX', 'MGPI', 'MGTX', 'MGY', 'MHO', 'MHK', 'MIDD',
+      'MIR', 'MIRM', 'MITK', 'MKC', 'MKL', 'MKSI', 'MKTX', 'MLI', 'MLKN', 'MLM', 'MLNK', 'MLR',
+      'MLYS', 'MMC', 'MMM', 'MMS', 'MMSI', 'MNKD', 'MNMD', 'MNRO', 'MNST', 'MNTK', 'MO', 'MOD',
+      'MODG', 'MODV', 'MOFG', 'MOH', 'MOMO', 'MORN', 'MOS', 'MOV', 'MP', 'MPB', 'MPC',
+      'MPLX', 'MPW', 'MPWR', 'MQ', 'MRC', 'MRCY', 'MRK', 'MRNA', 'MRSN', 'MRTN', 'MRVI', 'MRVL',
+      'MRX', 'MS', 'MSA', 'MSBI', 'MSCI', 'MSEX', 'MSFT', 'MSGE', 'MSGS', 'MSI', 'MSM', 'MSTR',
+      'MT', 'MTB', 'MTCH', 'MTD', 'MTDR', 'MTG', 'MTH', 'MTN', 'MTRN', 'MTSI', 'MTSR', 'MTUM',
+      'MTW', 'MTX', 'MTZ', 'MU', 'MUB', 'MUR', 'MUSA', 'MVBF', 'MVIS', 'MVST', 'MWA', 'MXCT',
+      'MXL', 'MYE', 'MYGN', 'MYPS', 'MYRG', 'NABL', 'NAAS', 'NAT', 'NATL', 'NAVI', 'NBBK', 'NBHC',
+      'NBIX', 'NBR', 'NBTB', 'NCLH', 'NCMI', 'NCNO', 'NDAQ', 'NDSN', 'NE', 'NECB', 'NEE', 'NEM',
+      'NEO', 'NEOG', 'NET', 'NEU', 'NEWT', 'NEXT', 'NFBK', 'NFE', 'NFG', 'NFLX', 'NG', 'NGNE',
+      'NGVC', 'NGVT', 'NHC', 'NHI', 'NI', 'NIC', 'NJR', 'NKE', 'NKTX', 'NLOP', 'NLY', 'NMIH',
+      'NMRA', 'NMRK', 'NN', 'NNE', 'NNI', 'NNN', 'NNOX', 'NOC', 'NOG', 'NOK', 'NOV', 'NOVT',
+      'NOW', 'NPKI', 'NPO', 'NRC', 'NRDS', 'NRG', 'NRGV', 'NRIX', 'NSA', 'NSC', 'NSIT', 'NSP',
+      'NSSC', 'NTAP', 'NTB', 'NTCT', 'NTGR', 'NTLA', 'NTNX', 'NTR', 'NTRA', 'NTRS', 'NTST', 'NU',
+      'NUE', 'NUS', 'NUVB', 'NUVL', 'NVAX', 'NVCR', 'NVDA', 'NVEE', 'NVGS', 'NVMI', 'NVO', 'NVS',
+      'NVST', 'NVT', 'NVTS', 'NWBI', 'NWE', 'NWL', 'NWN', 'NWPX', 'NWS', 'NWSA', 'NX', 'NXE',
+      'NXPI', 'NXRT', 'NXST', 'NXT', 'NYMT', 'NYT', 'O', 'OABI', 'OBDC', 'OBK', 'OC', 'OCFC',
+      'OCGN', 'OCUL', 'ODD', 'ODFL', 'ODP', 'OEC', 'OFG', 'OFIX', 'OGE', 'OGN', 'OGS', 'OHI',
+      'OIH', 'OI', 'OII', 'OIS', 'OKE', 'OKLO', 'OKTA', 'OLED', 'OLLI', 'OLO', 'OLMA', 'OLN',
+      'OLP', 'OLPX', 'OMC', 'OMCL', 'OMER', 'OMF', 'OMI', 'ON', 'ONB', 'ONEW', 'ONIT', 'ONON',
+      'ONTF', 'ONTO', 'OOMA', 'OPCH', 'OPK', 'OPRA', 'OPRX', 'ORA', 'ORC', 'ORCL', 'ORGO', 'ORI',
+      'ORIC', 'ORLY', 'OSBC', 'OSCR', 'OSI', 'OSIS', 'OSK', 'OSPN', 'OSUR', 'OSW', 'OTIS', 'OTTR',
+      'OUST', 'OUT', 'OVV', 'OWL', 'OXM', 'OXY', 'OZK', 'PAA', 'PAAS', 'PAC', 'PACB',
+      'PACK', 'PACS', 'PAG', 'PAGP', 'PAGS', 'PAHC', 'PANL', 'PANW', 'PAR', 'PARA', 'PARR',
+      'PATH', 'PATK', 'PAX', 'PAYC', 'PAYO', 'PAYS', 'PAYX', 'PB', 'PBA', 'PBF', 'PBI', 'PBPB',
+      'PBR', 'PCAR', 'PCG', 'PCH', 'PCOR', 'PCRX', 'PCT', 'PCTY', 'PCVX', 'PD', 'PDD', 'PDFS',
+      'PDM', 'PEB', 'PEBO', 'PECO', 'PEG', 'PEGA', 'PENG', 'PEN', 'PENN', 'PEP', 'PEPG', 'PFE',
+      'PFG', 'PFGC', 'PFS', 'PFSI', 'PG', 'PGC', 'PGEN', 'PGNY', 'PGR', 'PGRE', 'PGY', 'PH',
+      'PHAT', 'PHIN', 'PHLT', 'PHM', 'PHR', 'PI', 'PII', 'PINC', 'PINS', 'PIPR', 'PJT', 'PK',
+      'PKE', 'PKG', 'PKST', 'PL', 'PLAB', 'PLAY', 'PLD', 'PLL', 'PLMR', 'PLNT', 'PLRX', 'PLSE',
+      'PLTK', 'PLTR', 'PLUG', 'PLUS', 'PLXS', 'PLYM', 'PM', 'PMT', 'PNC', 'PNFP', 'PNR', 'PNTG',
+      'PNW', 'PODD', 'POOL', 'POR', 'POST', 'POWI', 'POWL', 'POWW', 'PPC', 'PPG', 'PPL', 'PPTA',
+      'PR', 'PRA', 'PRAA', 'PRAX', 'PRCH', 'PRCT', 'PRDO', 'PRG', 'PRGO', 'PRGS', 'PRI', 'PRIM',
+      'PRK', 'PRKS', 'PRLB', 'PRM', 'PRMB', 'PRME', 'PRO', 'PROK', 'PRSU', 'PRTA', 'PRTH', 'PRU',
+      'PRVA', 'PSA', 'PSEC', 'PSFE', 'PSMT', 'PSN', 'PSNY', 'PSTG', 'PSTL', 'PSX', 'PTC', 'PTCT',
+      'PTEN', 'PTGX', 'PTLO', 'PTON', 'PUBM', 'PUMP', 'PVH', 'PWP', 'PWR', 'PX', 'PYPL', 'PZZA',
+      'QBTS', 'QCOM', 'QDEL', 'QFIN', 'QGEN', 'QLYS', 'QNST', 'QQQ', 'QRVO', 'QS', 'QSI', 'QSR',
+      'QTRX', 'QTTB', 'QTWO', 'QUBT', 'QXO', 'QYLD', 'R', 'RACE', 'RAMP', 'RARE', 'RBA', 'RBBN',
+      'RBC', 'RBLX', 'RBRK', 'RC', 'RCAT', 'RCEL', 'RCL', 'RCKT', 'RCUS', 'RDDT', 'RDN', 'RDNT',
+      'RDUS', 'RDVT', 'RDW', 'RDWR', 'REAL', 'REAX', 'REFI', 'REG', 'REGN', 'RELY', 'REPL', 'REPX',
+      'RES', 'REVG', 'REX', 'REXR', 'REYN', 'REZI', 'RF', 'RGA', 'RGEN', 'RGLD', 'RGNX', 'RGP',
+      'RGR', 'RGTI', 'RH', 'RHI', 'RHP', 'RICK', 'RIG', 'RIGL', 'RIO', 'RIOT', 'RITM', 'RIVN',
+      'RJF', 'RKLB', 'RKT', 'RL', 'RLAY', 'RLI', 'RLJ', 'RLX', 'RM', 'RMAX', 'RMBS', 'RMD',
+      'RMNI', 'RMR', 'RNA', 'RNG', 'RNR', 'RNST', 'RNW', 'ROAD', 'ROCK', 'ROG', 'ROIV', 'ROK',
+      'ROL', 'ROOT', 'ROP', 'ROST', 'ROKU', 'RPM', 'RPRX', 'RRC', 'RRR', 'RRX', 'RS', 'RSG',
+      'RSI', 'RSP', 'RTX', 'RUM', 'RUN', 'RVLV', 'RVMD', 'RVTY', 'RWT', 'RXO', 'RXRX',
+      'RXST', 'RY', 'RYAM', 'RYAN', 'RYI', 'RYN', 'RYTM', 'S', 'SA', 'SABR', 'SAFE', 'SAFT', 'SAGE',
+      'SAH', 'SAIA', 'SAIC', 'SAIL', 'SAM', 'SANA', 'SAN', 'SAND', 'SANM', 'SAP', 'SARO', 'SATS',
+      'SAVA', 'SB', 'SBAC', 'SBCF', 'SBGI', 'SBH', 'SBRA', 'SBSI', 'SBUX', 'SCCO', 'SCHD', 'SCHG',
+      'SCHK', 'SCHL', 'SCHW', 'SCI', 'SCL', 'SCPH', 'SCS', 'SCSC', 'SCVL', 'SD', 'SDGR', 'SDRL',
+      'SE', 'SEAT', 'SEE', 'SEG', 'SEI', 'SEIC', 'SEM', 'SEMR', 'SEPN', 'SERV', 'SEZL', 'SF',
+      'SFBS', 'SFD', 'SFIX', 'SFL', 'SFM', 'SFNC', 'SFST', 'SG', 'SGHC', 'SGI', 'SGML', 'SGOL',
+      'SH', 'SHAK', 'SHBI', 'SHC', 'SHCO', 'SHEL', 'SHEN', 'SHLS', 'SHO', 'SHOO', 'SHOP', 'SHW',
+      'SIBN', 'SIG', 'SIGA', 'SIGI', 'SILA', 'SIL', 'SIRI', 'SITC', 'SITE', 'SITM', 'SJM', 'SKIN',
+      'SKT', 'SKWD', 'SKX', 'SKY', 'SKYT', 'SKYW', 'SLAB', 'SLB', 'SLDP', 'SLG', 'SLGN', 'SLM',
+      'SLNO', 'SLP', 'SLQT', 'SLVM', 'SM', 'SMBC', 'SMBK', 'SMCI', 'SMG', 'SMMT', 'SMP', 'SMPL',
+      'SMR', 'SMRT', 'SMTC', 'SN', 'SNA', 'SNBR', 'SNCY', 'SNDR', 'SNDX', 'SNEX', 'SNOW',
+      'SNPS', 'SNV', 'SNX', 'SO', 'SOC', 'SOFI', 'SOLV', 'SON', 'SONO', 'SONY', 'SOUN', 'SOXL',
+      'SOXX', 'SPB', 'SPCX', 'SPFI', 'SPG', 'SPGI', 'SPHR', 'SPNS', 'SPNT', 'SPOK', 'SPOT', 'SPR', 'SPRY',
+      'SPSC', 'SPT', 'SPTN', 'SPXC', 'SPXL', 'SPY', 'SR', 'SRAD', 'SRCE', 'SRDX', 'SRE', 'SRI',
+      'SRPT', 'SRRK', 'SSB', 'SSD', 'SSNC', 'SSP', 'SSRM', 'SSTI', 'SSTK', 'ST', 'STAA', 'STAG',
+      'STC', 'STE', 'STEM', 'STEP', 'STGW', 'STHO', 'STKL', 'STLD', 'STNE', 'STNG', 'STOK', 'STR',
+      'STRA', 'STRL', 'STRO', 'STT', 'STWD', 'STX', 'STZ', 'SU', 'SUI', 'SUN', 'SUNS', 'SUPN',
+      'SUZ', 'SVC', 'SVRA', 'SVV', 'SW', 'SWBI', 'SWK', 'SWKS', 'SWX', 'SWTX', 'SXC', 'SXI',
+      'SXT', 'SYBT', 'SYF', 'SYK', 'SYM', 'SYNA', 'SYRE', 'SYY', 'T', 'TAC', 'TAL', 'TALK',
+      'TALO', 'TAP', 'TARS', 'TBBK', 'TBCH', 'TBI', 'TBPH', 'TCBI', 'TCBK', 'TCMD', 'TCX', 'TDC',
+      'TDG', 'TDOC', 'TDS', 'TDUP', 'TDW', 'TDY', 'TEAD', 'TEAM', 'TECH', 'TECK', 'TEL', 'TEM',
+      'TENB', 'TER', 'TERN', 'TEX', 'TFC', 'TFI', 'TG', 'TGI', 'TGLS', 'TGNA', 'TGT', 'TGTX',
+      'TH', 'THC', 'THFF', 'THG', 'THO', 'THR', 'THRD', 'THRM', 'THRY', 'THS', 'TIGO', 'TIGR',
+      'TILE', 'TIPT', 'TITN', 'TJX', 'TK', 'TKO', 'TKR', 'TLN', 'TLRY', 'TLT', 'TM', 'TMC',
+      'TMCI', 'TMDX', 'TME', 'TMHC', 'TMO', 'TMP', 'TMUS', 'TNC', 'TNDM', 'TNET', 'TNGX', 'TNK',
+      'TNL', 'TNYA', 'TOL', 'TOST', 'TOWN', 'TPB', 'TPC', 'TPG', 'TPH', 'TPIC', 'TPL', 'TPR',
+      'TQQQ', 'TR', 'TRC', 'TRDA', 'TREE', 'TREX', 'TRGP', 'TRI', 'TRIP', 'TRMB', 'TRMK', 'TRML',
+      'TRN', 'TRNO', 'TRNS', 'TROW', 'TROX', 'TRS', 'TRST', 'TRTX', 'TRU', 'TRUE', 'TRUP', 'TRV',
+      'TS', 'TSCO', 'TSEM', 'TSHA', 'TSLA', 'TSM', 'TSN', 'TT', 'TTAN', 'TTC', 'TTD', 'TTEC',
+      'TTEK', 'TTGT', 'TTI', 'TTMI', 'TTWO', 'TVTX', 'TW', 'TWI', 'TWLO', 'TWO', 'TWST', 'TXG',
+      'TXN', 'TXNM', 'TXRH', 'TXT', 'TYL', 'TYRA', 'U', 'UA', 'UAA', 'UAL', 'UBER', 'UBSI',
+      'UBS', 'UCB', 'UCTT', 'UDMY', 'UDR', 'UE', 'UEC', 'UFCS', 'UFPI', 'UFPT', 'UGI', 'UHAL',
+      'UHS', 'UHT', 'UI', 'UIS', 'ULCC', 'ULTA', 'UMBF', 'UMH', 'UMC', 'UNF', 'UNFI', 'UNH',
+      'UNIT', 'UNM', 'UNP', 'UNTY', 'UPBD', 'UPRO', 'UPS', 'UPST', 'UPWK', 'URBN', 'URGN', 'URI',
+      'USAR', 'USB', 'USFD', 'USLM', 'USNA', 'USO', 'USPH', 'UTHR', 'UTI', 'UTL', 'UTZ', 'UUUU',
+      'UVE', 'UVSP', 'UVV', 'UWMC', 'V', 'VAC', 'VAL', 'VALE', 'VC', 'VCEL', 'VCTR', 'VCYT',
+      'VECO', 'VEEV', 'VEL', 'VERA', 'VERV', 'VERX', 'VET', 'VFC', 'VFS', 'VG', 'VGK',
+      'VIAV', 'VICI', 'VICR', 'VIK', 'VIR', 'VIRT', 'VIST', 'VITL', 'VKTX', 'VLTO', 'VLO', 'VLY',
+      'VMC', 'VMD', 'VMEO', 'VMI', 'VNDA', 'VNO', 'VNOM', 'VNQ', 'VOYA', 'VPG', 'VRA', 'VRNA',
+      'VRDN', 'VRE', 'VREX', 'VRNS', 'VRNT', 'VRRM', 'VRSK', 'VRSN', 'VRT', 'VRTX', 'VSAT', 'VSCO',
+      'VSEC', 'VSH', 'VST', 'VSTS', 'VTEX', 'VTMX', 'VTOL', 'VTR', 'VTRS', 'VVV', 'VVX', 'VWO',
+      'VYGR', 'VYX', 'VZ', 'W', 'WAB', 'WABC', 'WAFD', 'WAL', 'WASH', 'WAT', 'WAY',
+      'WBA', 'WBD', 'WBS', 'WCC', 'WCN', 'WD', 'WDC', 'WDAY', 'WDFC', 'WDS', 'WEAV', 'WEC',
+      'WELL', 'WEN', 'WERN', 'WES', 'WEX', 'WFC', 'WFRD', 'WGO', 'WGS', 'WH', 'WHD', 'WHR', 'WIT',
+      'WILD', 'WING', 'WIX', 'WKC', 'WLDN', 'WLK', 'WLY', 'WM', 'WMB', 'WMK', 'WMS', 'WMT',
+      'WNC', 'WNS', 'WOLF', 'WOOF', 'WOR', 'WOW', 'WPC', 'WPM', 'WRB', 'WRBY', 'WRD', 'WS',
+      'WSBC', 'WSBF', 'WSC', 'WSFS', 'WSM', 'WSO', 'WSR', 'WST', 'WT', 'WTBA', 'WTFC', 'WTI',
+      'WTRG', 'WTS', 'WTTR', 'WTW', 'WU', 'WULF', 'WVE', 'WWD', 'WWW', 'WY', 'WYNN', 'X',
+      'XENE', 'XERS', 'XFOR', 'XHB', 'XHR', 'XLB', 'XLC', 'XLE', 'XLF', 'XLI', 'XLK', 'XLP',
+      'XLU', 'XLV', 'XLY', 'XMTR', 'XNCR', 'XOM', 'XP', 'XPEL', 'XPER', 'XPEV', 'XPO', 'XPOF',
+      'XPRO', 'XRAY', 'XRX', 'XYL', 'XYZ', 'YELP', 'YETI', 'YEXT', 'YMAB', 'YORW', 'YOU', 'YUM',
+      'Z', 'ZBH', 'ZBRA', 'ZD', 'ZETA', 'ZEUS', 'ZG', 'ZI', 'ZIM', 'ZIMV', 'ZION', 'ZIP',
+      'ZM', 'ZNTL', 'ZS', 'ZTO', 'ZTS', 'ZUMZ', 'ZVRA', 'ZWS', 'ZYME', 'ZYXI'
     ];
     const themeToggle = document.getElementById('themeToggle');
     themeToggle.addEventListener('click', () => {
@@ -566,7 +334,6 @@
         }
       }
     }
-
     
 
     
@@ -594,16 +361,18 @@
         
         // Earnings date filter (er check) has been permanently removed as requested.
 
+        // ONLY fetch Yahoo Short Interest if it passed the strict filters!
+        const resShort = await fetchYahooShortInterest(ticker);
+
         // Fix: Use actual post_earnings_move_1d instead of expected_move_perc for historical realized moves
         const last4Quarters = json.data.slice(-5, -1); // Exclude the next earnings date
+        const last4Quarters = json.data.slice(-5, -1); 
 
-        // Calculate average absolute REALIZED move over last 4 quarters
         const avgHistoricRealizedMove = last4Quarters
           .map(q => Math.abs(parseFloat(q.post_earnings_move_1d) || 0))
           .filter(move => move > 0)
           .reduce((sum, move, i, arr) => sum + move / arr.length, 0);
 
-        // Get historic REALIZED moves for the past 4 quarters (most recent first)
         const histMoves = last4Quarters.map(q => {
           const baseMove = parseFloat(q.post_earnings_move_1d) || 0;
           return (baseMove * 100).toFixed(2);
@@ -611,7 +380,7 @@
 
         if (!latest.post_earnings_move_3d && json.data.length > 1)
           latest = json.data[json.data.length - 2];
-          
+
         let latestIndex = json.data.indexOf(latest);
         let lastToLast = latestIndex > 0 ? json.data[latestIndex - 1] : null;
         let mcp2qPreErPrice = lastToLast ? parseFloat(lastToLast.price) || 0 : 0;
@@ -627,7 +396,6 @@
         const total_revenue = financials.total_revenue || 0;
         const ps_ratio = (marketcap > 0 && total_revenue > 0) ? (marketcap / total_revenue) : 0;
         
-        // Use strictly the curr property from unusual whales price endpoint as requested
         const latestPrice = parseFloat(jsonPrice.curr) || 0;
         const preErPrice = parseFloat(latest.price) || 0;
         const postErMove1dRatio = parseFloat(latest.post_earnings_move_1d) || 0;
@@ -635,20 +403,6 @@
         const priceChange = postErPrice ? ((latestPrice - postErPrice) / postErPrice * 100).toFixed(2) : 0;
         const mcp = preErPrice ? ((latestPrice - preErPrice) / preErPrice * 100).toFixed(2) : 0;
         const mcp2q = mcp2qPreErPrice ? ((latestPrice - mcp2qPreErPrice) / mcp2qPreErPrice * 100).toFixed(2) : 0;
-        
-        const mcpAbs = latestPrice - preErPrice;
-        const lastImpliedMoveAbs = preErPrice * parseFloat(latest.expected_move_perc || 0);
-
-        const ucpAbs = preErPrice + 2 * lastImpliedMoveAbs;
-        const ucpaAbs = preErPrice + lastImpliedMoveAbs;
-        const lcpaAbs = preErPrice - lastImpliedMoveAbs;
-        const lcpAbs = preErPrice - 2 * lastImpliedMoveAbs;
-
-        const ucp = latestPrice ? ((latestPrice - ucpAbs) / latestPrice * 100).toFixed(2) : 0;
-        const ucpa = latestPrice ? ((latestPrice - ucpaAbs) / latestPrice * 100).toFixed(2) : 0;
-        const lcpa = latestPrice ? ((latestPrice - lcpaAbs) / latestPrice * 100).toFixed(2) : 0;
-        const lcp = latestPrice ? ((latestPrice - lcpAbs) / latestPrice * 100).toFixed(2) : 0;
-
         const reportTime = next.report_time == 'unknown' || next.report_time == '' || !next.report_time ? '-' : next.report_time == 'premarket' ? 'PM' : next.report_time == 'postmarket' ? 'AH' : next.report_time;
         
         const ma50 = jsonInfo.company ? parseFloat(jsonInfo.company.day50_moving_avg) || 0 : 0;
@@ -663,10 +417,6 @@
           priceChange: priceChange || 0,
           mcp: mcp || 0,
           mcp2q: mcp2q || 0,
-          ucp: ucp,
-          ucpa: ucpa,
-          lcpa: lcpa,
-          lcp: lcp,
           finvizSma200: null,
           er_date: next.report_date || 'N/A',
           report_date: latest.report_date || 'N/A',
@@ -686,7 +436,8 @@
           high52w: high52w,
           industry: industry,
           marketcap: marketcap,
-          ps_ratio: ps_ratio
+          ps_ratio: ps_ratio,
+          shortInt: shortInt
         };
       } catch (err) {
         console.error(`Error fetching ${ticker}:`, err);
@@ -709,8 +460,6 @@
       const finalRsi = (priceData && priceData.rsi) ? priceData.rsi : data.calculatedRsi;
       if(row.querySelector('.rsi')) row.querySelector('.rsi').textContent = finalRsi ? finalRsi.toFixed(2) : '-';
     }
-
-    
 
     // Utility to check if today is a new business day compared to cached date
     function isNewBusinessDay(lastDateStr) {
@@ -857,13 +606,6 @@
     }
 
     
-
-    
-
-    
-
-    
-
     
     let appData = []; // Array of {ticker, data, priceData}
     let currentSortColumn = 1;
