@@ -346,13 +346,16 @@
           <th onclick="sortTable(12)" title="Upper Chart Price (+1x Implied Move)">UCPa%</th>
           <th onclick="sortTable(13)" title="Lower Chart Price (-1x Implied Move)">LCPa%</th>
           <th class="col-group-divider" onclick="sortTable(14)" title="Lower Chart Price (-2x Implied Move)">LCP%</th>
-          <th onclick="sortTable(15)" title="10-Day Moving Average Distance">MA10D%</th>
+          <!-- <th onclick="sortTable(15)" title="10-Day Moving Average Distance">MA10D%</th> -->
           <th onclick="sortTable(16)" title="50-Day Moving Average Distance">MA50%</th>
           <th class="col-group-divider" onclick="sortTable(17)" title="200-Day Moving Average Distance">MA200%</th>
           <th onclick="sortTable(18)" title="Latest Price">Price</th>
-          <th class="col-group-divider" onclick="sortTable(19)" title="Relative Strength Index">Rsi</th>
+          <!-- <th class="col-group-divider" onclick="sortTable(19)" title="Relative Strength Index">Rsi</th> -->
           <th onclick="sortTable(20)" title="Implied Volatility Rank">IvRank</th>
-          <th onclick="sortTable(21)" title="Beta (Stock Volatility vs Market)">Beta</th>
+          <!-- <th onclick="sortTable(21)" title="Beta (Stock Volatility vs Market)">Beta</th> -->
+          <th onclick="sortTable(22)" title="Target 1">T1</th>
+          <th onclick="sortTable(23)" title="Target 2">T2</th>
+          <th onclick="sortTable(24)" title="Target 3">T3</th>
           
           
           
@@ -384,8 +387,8 @@
 
   // --- C ---
   'C', 'CARR', 'CAT', 'CAVA', 'CB', 'CBRS', 'CCJ', 'CCL', 'CDNS', 'CELH', 
-  'CHKP', 'CHTR', 'CHWY', 'CIFR', 'CL', 'CLF', 'CLSK', 'CLCOV', 'CLOV', 'CMCSA', 
-  'CMG', 'COCO', 'COIN', 'CORZ', 'COUR', 'COTY', 'CPNG', 'CPRI', 'CRCL', 'CRH', 
+  'CHKP', 'CHTR', 'CHWY', 'CIFR', 'CL', 'CLF', 'CLSK', 'CLOV', 'CMCSA', 
+  'CMG', 'COCO', 'COIN', 'CORZ', 'COST', 'COUR', 'COTY', 'CPNG', 'CPRI', 'CRCL', 'CRH', 
   'CRM', 'CRWD', 'CRWV', 'CSCO', 'CSIQ', 'CVS', 'CVLT', 'CVNA', 'CX', 'CXM', 'CYTK',
 
   // --- D ---
@@ -910,49 +913,49 @@
       let processedCount = 0;
       const totalTickers = tickers.length;
 
-      async function lazyFetchHistory(ticker) {
-        const cacheKey = `Straddle_er_${ticker}_lazy`;
+      async function lazyFetchTargets(ticker) {
+        const cacheKey = `Targets_${ticker}`;
         let cached = await getCache(cacheKey);
-        let rsi = 0;
-        let ma10 = 0;
+        let t1 = '-';
+        let t2 = '-';
+        let t3 = '-';
         
         if (cached && cached.data && cached.fetchedAt && !isNewBusinessDay(cached.fetchedAt)) {
-            rsi = cached.data.rsi;
-            ma10 = cached.data.ma10;
+            t1 = cached.data.t1;
+            t2 = cached.data.t2;
+            t3 = cached.data.t3;
         } else {
             try {
-                const res = await fetchWithRetry(`https://phx.unusualwhales.com/api/companies/${ticker}/get_historical_prices?limit=50`);
-                if (res && res.history && res.history.length > 9) {
-                    const sortedHistory = [...res.history].sort((a, b) => new Date(a.date) - new Date(b.date));
-                    const prices = sortedHistory.map(item => parseFloat(item.price || item.close_price)).filter(p => !isNaN(p));
-                    if (prices.length > 14) rsi = calculateRSI(prices);
-                    if (prices.length > 9) ma10 = calculateMA10(prices);
-                    await setCache(cacheKey, { data: { rsi, ma10 }, fetchedAt: new Date().toISOString() });
+                let res = await fetchWithRetry(`https://phx.unusualwhales.com/api/analyst_results/v2?ticker=${ticker}`);
+                if (res && res.data && res.data.length > 0) {
+                    const validRatings = res.data.filter(item => item.price_target !== null && !isNaN(parseFloat(item.price_target)));
+                    validRatings.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    
+                    if (validRatings.length > 0) t1 = parseFloat(validRatings[0].price_target).toFixed(2);
+                    if (validRatings.length > 1) t2 = parseFloat(validRatings[1].price_target).toFixed(2);
+                    if (validRatings.length > 2) t3 = parseFloat(validRatings[2].price_target).toFixed(2);
+                    
+                    await setCache(cacheKey, { data: { t1, t2, t3 }, fetchedAt: new Date().toISOString() });
                 }
             } catch(e) {}
         }
         
         const appDataItem = appData.find(item => item.ticker === ticker);
         if (appDataItem && appDataItem.data) {
-            appDataItem.data.calculatedRsi = rsi;
-            appDataItem.data.calculatedMa10 = ma10;
-            appDataItem.data.finalRsi = rsi;
-            const price = appDataItem.data.price || 0;
-            appDataItem.data.ma10Ratio = ma10 ? ((price - ma10) / ma10) * 100 : 0;
+            appDataItem.data.t1 = t1;
+            appDataItem.data.t2 = t2;
+            appDataItem.data.t3 = t3;
             
             const row = document.getElementById(`row-${ticker}`);
             if (row) {
-                const rsiCell = row.querySelector('.rsi');
-                if (rsiCell) rsiCell.innerText = rsi ? rsi.toFixed(2) : '-';
+                const t1Cell = row.querySelector('.t1');
+                if (t1Cell) t1Cell.innerText = t1;
                 
-                const ma10Cell = row.querySelector('.ma10');
-                if (ma10Cell) {
-                    const ma10Text = appDataItem.data.ma10Ratio ? appDataItem.data.ma10Ratio.toFixed(2) : '-';
-                    ma10Cell.innerText = ma10Text;
-                    
-                    const ratio = appDataItem.data.ma10Ratio;
-                    ma10Cell.style.color = ratio > 0 ? '#22c55e' : (ratio < 0 ? '#ef4444' : '');
-                }
+                const t2Cell = row.querySelector('.t2');
+                if (t2Cell) t2Cell.innerText = t2;
+                
+                const t3Cell = row.querySelector('.t3');
+                if (t3Cell) t3Cell.innerText = t3;
             }
         }
       }
@@ -960,7 +963,7 @@
       async function processLazyQueue() {
         while (lazyQueue.length > 0) {
           const batch = lazyQueue.splice(0, 10);
-          await Promise.all(batch.map(t => lazyFetchHistory(t)));
+          await Promise.all(batch.map(t => lazyFetchTargets(t)));
           await new Promise(res => setTimeout(res, 200));
         }
       }
@@ -1106,13 +1109,16 @@
                     <td class="ucpa" style="${colorNumDark(ucpa)}">${ucpa}</td>
                     <td class="lcpa" style="${colorNumDark(lcpa)}">${lcpa}</td>
                     <td class="lcp col-group-divider" style="${colorNumDark(lcp)}">${lcp}</td>
-                    <td class="ma10" style="${colorNumDark(ma10)}">${ma10}</td>
+                    <!-- <td class="ma10" style="${colorNumDark(ma10)}">${ma10}</td> -->
                     <td class="ma50" style="${colorNumDark(ma50)}">${ma50}</td>
                     <td class="ma200 col-group-divider" style="${colorNumDark(ma200)}"><a href="https://www.barchart.com/stocks/quotes/${ticker}/overview" target="_blank" style="color:inherit;">${ma200}</a></td>
                     <td class="price"><a href="https://finviz.com/quote.ashx?t=${ticker}" target="_blank" style="color:inherit;}">${price}</a></td>
-                    <td class="rsi col-group-divider">${rsi}</td>
+                    <!-- <td class="rsi col-group-divider">${rsi}</td> -->
                     <td><a href="https://marketchameleon.com/Overview/${ticker}" target="_blank" style="color:inherit;}">${iv_rank}</a></td>
-                    <td style="${beta > 1.29 ? 'color:#22c55e;' : 'color:inherit;'}">${beta}</td>
+                    <!-- <td style="${beta > 1.29 ? 'color:#22c55e;' : 'color:inherit;'}">${beta}</td> -->
+                    <td class="t1">${data.t1 || '-'}</td>
+                    <td class="t2">${data.t2 || '-'}</td>
+                    <td class="t3">${data.t3 || '-'}</td>
                   </tr>`;
       }
       tableBody.innerHTML = html;
@@ -1172,6 +1178,9 @@
         else if (columnIndex === 19) { valA = a.data.finalRsi || a.data.calculatedRsi || -999; valB = b.data.finalRsi || b.data.calculatedRsi || -999; }
         else if (columnIndex === 20) { valA = parseFloat(a.data.iv_rank) || -999; valB = parseFloat(b.data.iv_rank) || -999; }
         else if (columnIndex === 21) { valA = parseFloat(a.data.beta) || -999; valB = parseFloat(b.data.beta) || -999; }
+        else if (columnIndex === 22) { valA = parseFloat(a.data.t1) || -999; valB = parseFloat(b.data.t1) || -999; }
+        else if (columnIndex === 23) { valA = parseFloat(a.data.t2) || -999; valB = parseFloat(b.data.t2) || -999; }
+        else if (columnIndex === 24) { valA = parseFloat(a.data.t3) || -999; valB = parseFloat(b.data.t3) || -999; }
         else { valA = 0; valB = 0; }
 
         let result = 0;
