@@ -349,13 +349,15 @@
           <!-- <th onclick="sortTable(15)" title="10-Day Moving Average Distance">MA10D%</th> -->
           <th onclick="sortTable(16)" title="50-Day Moving Average Distance">MA50%</th>
           <th class="col-group-divider" onclick="sortTable(17)" title="200-Day Moving Average Distance">MA200%</th>
-          <th onclick="sortTable(18)" title="Latest Price">Price</th>
-          <!-- <th class="col-group-divider" onclick="sortTable(19)" title="Relative Strength Index">Rsi</th> -->
-          <th onclick="sortTable(20)" title="Implied Volatility Rank">IvRank</th>
-          <!-- <th onclick="sortTable(21)" title="Beta (Stock Volatility vs Market)">Beta</th> -->
-          <th onclick="sortTable(22)" title="Target 1">T1</th>
-          <th onclick="sortTable(23)" title="Target 2">T2</th>
-          <th onclick="sortTable(24)" title="Target 3">T3</th>
+          <th onclick="sortTable(18)" title="Entry Target">Entry</th>
+          <th onclick="sortTable(19)" title="Condition Code">Code</th>
+          <th onclick="sortTable(20)" title="Latest Price">Price</th>
+          <!-- <th class="col-group-divider" onclick="sortTable(21)" title="Relative Strength Index">Rsi</th> -->
+          <th onclick="sortTable(22)" title="Implied Volatility Rank">IvRank</th>
+          <!-- <th onclick="sortTable(23)" title="Beta (Stock Volatility vs Market)">Beta</th> -->
+          <th onclick="sortTable(24)" title="Target 1">T1</th>
+          <th onclick="sortTable(25)" title="Target 2">T2</th>
+          <th onclick="sortTable(26)" title="Target 3">T3</th>
           
           
           
@@ -897,6 +899,30 @@
       data.ma10Ratio = data.calculatedMa10 ? ((latestPrice - data.calculatedMa10) / data.calculatedMa10) * 100 : 0;
       data.ma50Ratio = data.ma50 ? ((latestPrice - data.ma50) / data.ma50) * 100 : 0;
       data.ma200Ratio = data.ma200 ? ((latestPrice - data.ma200) / data.ma200) * 100 : 0;
+      
+      const erM = parseFloat(data.post_earnings_move_1d) || 0;
+      const ma200v = parseFloat(data.ma200Ratio) || 0;
+      const mcp2qv = parseFloat(data.mcp2q) || 0;
+      const mcpv = parseFloat(data.mcp) || 0;
+      const lcpv = parseFloat(data.lcp) || 0;
+      const lcpav = parseFloat(data.lcpa) || 0;
+      const ucpv = parseFloat(data.ucp) || 0;
+      const ucpav = parseFloat(data.ucpa) || 0;
+
+      let entry = '-';
+      let code = '-';
+
+      if (erM > 0 && ma200v > 0 && mcp2qv > 0 && mcpv > 0 && lcpv > 0 && lcpav > 0 && ucpv > 0 && ucpav > 0) { entry = 'UCP'; code = 'BOU'; }
+      else if (erM > 0 && ma200v > 0 && mcp2qv > 0 && mcpv < 0 && lcpv > 0 && lcpav > 0 && ucpv < 0 && ucpav < 0) { entry = 'LCP'; code = 'BOL'; }
+      else if (erM > 0 && ma200v > 0 && mcp2qv > 0 && mcpv > 0 && lcpv > 0 && lcpav > 0 && ucpv < 0 && ucpav < 0) { entry = 'MCP'; code = 'BOM'; }
+      else if (ma200v > 0 && mcp2qv < 0 && mcpv < 0 && lcpv < 0 && lcpav < 0 && ucpv < 0 && ucpav < 0) { entry = 'LCP'; code = 'BDL'; }
+      else if (ma200v < 0 && mcp2qv < 0 && mcpv < 0 && lcpv > 0 && lcpav > 0 && ucpv < 0 && ucpav < 0) { entry = 'MA200'; code = 'BD2'; }
+      else if (erM < 0 && ma200v > 0 && mcp2qv > 0 && mcpv < 0 && lcpv > 0 && lcpav > 0 && ucpv < 0 && ucpav < 0) { entry = 'LCP/MA200'; code = 'UTL2'; }
+      else if (erM < 0 && ma200v > 0 && mcp2qv > 0 && mcpv > 0 && lcpv > 0 && lcpav > 0 && ucpv < 0 && ucpav < 0) { entry = 'MCP'; code = 'UTM'; }
+      else if (erM < 0 && ma200v > 0 && mcp2qv > 0 && mcpv > 0 && lcpv > 0 && lcpav > 0 && ucpv > 0 && ucpav > 0) { entry = 'UCP'; code = 'UTU'; }
+
+      data.entry = entry;
+      data.code = code;
       data.finalRsi = data.calculatedRsi;
     }
 
@@ -1112,6 +1138,8 @@
                     <!-- <td class="ma10" style="${colorNumDark(ma10)}">${ma10}</td> -->
                     <td class="ma50" style="${colorNumDark(ma50)}">${ma50}</td>
                     <td class="ma200 col-group-divider" style="${colorNumDark(ma200)}"><a href="https://www.barchart.com/stocks/quotes/${ticker}/overview" target="_blank" style="color:inherit;">${ma200}</a></td>
+                    <td>${data.entry || '-'}</td>
+                    <td>${data.code || '-'}</td>
                     <td class="price"><a href="https://finviz.com/quote.ashx?t=${ticker}" target="_blank" style="color:inherit;}">${price}</a></td>
                     <!-- <td class="rsi col-group-divider">${rsi}</td> -->
                     <td><a href="https://marketchameleon.com/Overview/${ticker}" target="_blank" style="color:inherit;}">${iv_rank}</a></td>
@@ -1174,13 +1202,15 @@
         else if (columnIndex === 15) { valA = parseFloat(a.data.ma10Ratio) || -999; valB = parseFloat(b.data.ma10Ratio) || -999; } // ma10
         else if (columnIndex === 16) { valA = parseFloat(a.data.ma50Ratio) || -999; valB = parseFloat(b.data.ma50Ratio) || -999; } // ma50
         else if (columnIndex === 17) { valA = parseFloat(a.data.ma200Ratio) || -999; valB = parseFloat(b.data.ma200Ratio) || -999; } // ma200
-        else if (columnIndex === 18) { valA = parseFloat(a.data.price) || -999; valB = parseFloat(b.data.price) || -999; }
-        else if (columnIndex === 19) { valA = a.data.finalRsi || a.data.calculatedRsi || -999; valB = b.data.finalRsi || b.data.calculatedRsi || -999; }
-        else if (columnIndex === 20) { valA = parseFloat(a.data.iv_rank) || -999; valB = parseFloat(b.data.iv_rank) || -999; }
-        else if (columnIndex === 21) { valA = parseFloat(a.data.beta) || -999; valB = parseFloat(b.data.beta) || -999; }
-        else if (columnIndex === 22) { valA = parseFloat(a.data.t1) || -999; valB = parseFloat(b.data.t1) || -999; }
-        else if (columnIndex === 23) { valA = parseFloat(a.data.t2) || -999; valB = parseFloat(b.data.t2) || -999; }
-        else if (columnIndex === 24) { valA = parseFloat(a.data.t3) || -999; valB = parseFloat(b.data.t3) || -999; }
+        else if (columnIndex === 18) { valA = a.data.entry || ''; valB = b.data.entry || ''; }
+          else if (columnIndex === 19) { valA = a.data.code || ''; valB = b.data.code || ''; }
+          else if (columnIndex === 20) { valA = parseFloat(a.data.price) || -999; valB = parseFloat(b.data.price) || -999; }
+          else if (columnIndex === 21) { valA = a.data.finalRsi || a.data.calculatedRsi || -999; valB = b.data.finalRsi || b.data.calculatedRsi || -999; }
+          else if (columnIndex === 22) { valA = parseFloat(a.data.iv_rank) || -999; valB = parseFloat(b.data.iv_rank) || -999; }
+          else if (columnIndex === 23) { valA = parseFloat(a.data.beta) || -999; valB = parseFloat(b.data.beta) || -999; }
+          else if (columnIndex === 24) { valA = parseFloat(a.data.t1) || -999; valB = parseFloat(b.data.t1) || -999; }
+          else if (columnIndex === 25) { valA = parseFloat(a.data.t2) || -999; valB = parseFloat(b.data.t2) || -999; }
+          else if (columnIndex === 26) { valA = parseFloat(a.data.t3) || -999; valB = parseFloat(b.data.t3) || -999; }
         else { valA = 0; valB = 0; }
 
         let result = 0;
