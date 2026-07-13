@@ -396,7 +396,7 @@
         const total_revenue = financials.total_revenue || 0;
         const ps_ratio = (marketcap > 0 && total_revenue > 0) ? (marketcap / total_revenue) : 0;
         
-        const latestPrice = parseFloat(jsonPrice.curr) || 0;
+        const latestPrice = parseFloat(jsonPrice.curr) || parseFloat(jsonPrice.prev) || 0;
         const preErPrice = parseFloat(latest.price) || 0;
         const postErMove1dRatio = parseFloat(latest.post_earnings_move_1d) || 0;
         const postErPrice = preErPrice * (1 + postErMove1dRatio);
@@ -553,7 +553,7 @@
                 const res = await fetch(`https://phx.unusualwhales.com/api/ticker/${ticker}/price/`);
                 if (res.ok) {
                     const jsonPrice = await res.json();
-                    const latestPrice = parseFloat(jsonPrice.curr) || 0;
+                    const latestPrice = parseFloat(jsonPrice.curr) || parseFloat(jsonPrice.prev) || 0;
                     if (latestPrice > 0) {
                         cached.data.price = latestPrice;
                         
@@ -657,6 +657,8 @@
       else if (erM < 0 && ma200v > 0 && mcp2qv > 0 && mcpv < 0 && lcpv > 0 && lcpav > 0 && ucpv < 0 && ucpav < 0) { entry = 'LCP/MA200'; code = 'UTL2'; }
       else if (erM < 0 && ma200v > 0 && mcp2qv > 0 && mcpv > 0 && lcpv > 0 && lcpav > 0 && ucpv < 0 && ucpav < 0) { entry = 'MCP'; code = 'UTM'; }
       else if (erM < 0 && ma200v > 0 && mcp2qv > 0 && mcpv > 0 && lcpv > 0 && lcpav > 0 && ucpv > 0 && ucpav > 0) { entry = 'UCP'; code = 'UTU'; }
+      else if (erM > 0 && ma200v < 0 && mcp2qv < 0 && mcpv < 0 && lcpv < 0 && lcpav < 0 && ucpv < 0 && ucpav < 0) { entry = 'Lcp-2S'; code = 'DCB'; }
+      else if (erM > 0 && mcp2qv < 0 && mcpv > 0 && lcpv > 0 && lcpav > 0 && ucpv > 0 && ucpav > 0) { entry = 'UCP'; code = 'BTB'; }
 
       data.entry = entry;
       data.code = code;
