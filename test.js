@@ -608,11 +608,19 @@
     
     
     let appData = []; // Array of {ticker, data, priceData}
-    let currentSortColumn = 1;
+    let currentSortColumn = 'er_date';
     let currentSortDesc = false;
 
     function updateDataWithPrices(data) {
       if (!data) return;
+      
+      const calcP = (data) => {
+         var sc = parseFloat(data.straddle && data.straddle != "N/A" && data.straddle != 0 ? (parseFloat(data.straddle) + parseFloat(data.straddle) * 0.15).toFixed(2) : 0);
+         var ec = parseFloat(data.expected_move_perc && data.expected_move_perc != 0 && data.expected_move_perc != 'N/A' ? (parseFloat(data.expected_move_perc) + parseFloat(data.expected_move_perc) * 0.15).toFixed(2) : 0);
+         ec = parseFloat(ec && ec != "N/A" && ec != 0 ? ec : (data.avgHistoricMove || 0));
+         return parseFloat((ec && sc && ec > 0 && sc > 0 ? parseFloat(((sc - ec) / ec) * 100) : 999).toFixed(2));
+      };
+      data.p_ratio = calcP(data);
       const latestPrice = data.price || 0;
       if (latestPrice === 0) return;
 
@@ -892,82 +900,54 @@
       if (typeof enableRowHighlighting === "function") enableRowHighlighting();
     }
 
-    function sortTable(columnIndex, forceDesc = null) {
-      if (forceDesc !== null) {
-        currentSortDesc = forceDesc;
-      } else if (currentSortColumn === columnIndex) {
-        currentSortDesc = !currentSortDesc;
-      } else {
-        currentSortColumn = columnIndex;
-        currentSortDesc = false;
-      }
-
-      const isDate = columnIndex === 1; // ErDate(Nxt)
-      const isNumeric = columnIndex !== 0 && columnIndex !== 1 && columnIndex !== 2; // 0=Ticker, 1=Date, 2=Time
-
-      // Map columnIndex to appData property logic
-      appData.sort((a, b) => {
-        let valA, valB;
-        
-        // Extract value based on column index
-        if (columnIndex === 0) { valA = a.ticker; valB = b.ticker; }
-        else if (columnIndex === 1) { valA = a.data.er_date || ''; valB = b.data.er_date || ''; }
-        else if (columnIndex === 2) { valA = a.data.report_time || ''; valB = b.data.report_time || ''; }
-        else if (columnIndex === 3) { 
-           // p
-           const calcP = (data) => {
-              var sc = parseFloat(data.straddle && data.straddle != "N/A" && data.straddle != 0 ? (parseFloat(data.straddle) + parseFloat(data.straddle) * 0.15).toFixed(2) : 0);
-              var ec = parseFloat(data.expected_move_perc && data.expected_move_perc != 0 && data.expected_move_perc != 'N/A' ? (parseFloat(data.expected_move_perc) + parseFloat(data.expected_move_perc) * 0.15).toFixed(2) : 0);
-              ec = parseFloat(ec && ec != "N/A" && ec != 0 ? ec : (data.avgHistoricMove || 0));
-              return parseFloat((ec && sc && ec > 0 && sc > 0 ? parseFloat(((sc - ec) / ec) * 100) : 999).toFixed(2));
-           };
-           valA = calcP(a.data); valB = calcP(b.data);
-        }
-        else if (columnIndex === 4) { 
-           const scA = a.data.straddle && a.data.straddle != "N/A" ? parseFloat(a.data.straddle) : 0;
-           const scB = b.data.straddle && b.data.straddle != "N/A" ? parseFloat(b.data.straddle) : 0;
-           valA = scA; valB = scB; 
-        }
-        else if (columnIndex === 5) { valA = parseFloat(a.data.histMove2) || -999; valB = parseFloat(b.data.histMove2) || -999; }
-        else if (columnIndex === 6) { valA = parseFloat(a.data.ps_ratio) || -999; valB = parseFloat(b.data.ps_ratio) || -999; }
-        else if (columnIndex === 7) { valA = parseFloat(a.data.post_earnings_move_1d) || -999; valB = parseFloat(b.data.post_earnings_move_1d) || -999; }
-        else if (columnIndex === 8) { valA = parseFloat(a.data.priceChange) || -999; valB = parseFloat(b.data.priceChange) || -999; }
-        else if (columnIndex === 9) { valA = parseFloat(a.data.mcp2q) || -999; valB = parseFloat(b.data.mcp2q) || -999; }
-        else if (columnIndex === 10) { valA = parseFloat(a.data.mcp) || -999; valB = parseFloat(b.data.mcp) || -999; }
-        else if (columnIndex === 11) { valA = parseFloat(a.data.ucp) || -999; valB = parseFloat(b.data.ucp) || -999; }
-        else if (columnIndex === 12) { valA = parseFloat(a.data.ucpa) || -999; valB = parseFloat(b.data.ucpa) || -999; }
-        else if (columnIndex === 13) { valA = parseFloat(a.data.lcpa) || -999; valB = parseFloat(b.data.lcpa) || -999; }
-        else if (columnIndex === 14) { valA = parseFloat(a.data.lcp) || -999; valB = parseFloat(b.data.lcp) || -999; }
-        else if (columnIndex === 15) { valA = parseFloat(a.data.ma10Ratio) || -999; valB = parseFloat(b.data.ma10Ratio) || -999; } // ma10
-        else if (columnIndex === 16) { valA = parseFloat(a.data.ma50Ratio) || -999; valB = parseFloat(b.data.ma50Ratio) || -999; } // ma50
-        else if (columnIndex === 17) { valA = parseFloat(a.data.ma200Ratio) || -999; valB = parseFloat(b.data.ma200Ratio) || -999; } // ma200
-        else if (columnIndex === 18) { valA = a.data.entry || ''; valB = b.data.entry || ''; }
-          else if (columnIndex === 19) { valA = a.data.code || ''; valB = b.data.code || ''; }
-          else if (columnIndex === 20) { valA = parseFloat(a.data.price) || -999; valB = parseFloat(b.data.price) || -999; }
-          else if (columnIndex === 21) { valA = a.data.finalRsi || a.data.calculatedRsi || -999; valB = b.data.finalRsi || b.data.calculatedRsi || -999; }
-          else if (columnIndex === 22) { valA = parseFloat(a.data.iv_rank) || -999; valB = parseFloat(b.data.iv_rank) || -999; }
-          else if (columnIndex === 23) { valA = parseFloat(a.data.beta) || -999; valB = parseFloat(b.data.beta) || -999; }
-          else if (columnIndex === 24) { valA = parseFloat(a.data.t1) || -999; valB = parseFloat(b.data.t1) || -999; }
-          else if (columnIndex === 25) { valA = parseFloat(a.data.t2) || -999; valB = parseFloat(b.data.t2) || -999; }
-          else if (columnIndex === 26) { valA = parseFloat(a.data.t3) || -999; valB = parseFloat(b.data.t3) || -999; }
-        else { valA = 0; valB = 0; }
-
-        let result = 0;
-        if (isDate) {
-          const dateA = Date.parse(valA.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3-$1-$2')) || 0;
-          const dateB = Date.parse(valB.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3-$1-$2')) || 0;
-          result = dateA - dateB;
-        } else if (isNumeric) {
-          result = valA - valB;
+    function sortTable(sortKey, forceDesc = null) {
+        if (forceDesc !== null) {
+          currentSortDesc = forceDesc;
+        } else if (currentSortColumn === sortKey) {
+          currentSortDesc = !currentSortDesc;
         } else {
-          result = String(valA).localeCompare(String(valB));
+          currentSortColumn = sortKey;
+          currentSortDesc = false;
         }
+  
+        const isDate = sortKey === 'er_date';
+        const isStringColumn = ['ticker', 'er_date', 'report_time', 'entry', 'code'].includes(sortKey);
+        const isNumeric = !isStringColumn;
+  
+        appData.sort((a, b) => {
+          let valA, valB;
+          
+          if (sortKey === 'ticker') {
+              valA = a.ticker; valB = b.ticker;
+          } else {
+              valA = a.data[sortKey];
+              valB = b.data[sortKey];
+          }
 
-        return currentSortDesc ? -result : result;
-      });
-
-      renderTableBody();
-    }
+          if (isNumeric) {
+              valA = parseFloat(valA) || -999;
+              valB = parseFloat(valB) || -999;
+          } else {
+              valA = valA || '';
+              valB = valB || '';
+          }
+  
+          let result = 0;
+          if (isDate) {
+            const dateA = Date.parse(valA.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3-$1-$2')) || 0;
+            const dateB = Date.parse(valB.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3-$1-$2')) || 0;
+            result = dateA - dateB;
+          } else if (isNumeric) {
+            result = valA - valB;
+          } else {
+            result = String(valA).localeCompare(String(valB));
+          }
+  
+          return currentSortDesc ? -result : result;
+        });
+  
+        renderTableBody();
+      }
 
     renderTable();
 

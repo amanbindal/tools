@@ -331,33 +331,33 @@
     <table id="earningsTable">
       <thead>
         <tr>
-          <th onclick="sortTable(0)">Ticker</th>
-          <th onclick="sortTable(1)" title="Next Earnings Date">ErDate(Nxt)</th>
-                    <th onclick="sortTable(2)" title="Premarket or After Hours">PM/AH</th>
-          <th class="col-group-divider" onclick="sortTable(3)" title="Straddle Price vs Expected Move Ratio">P</th>
-          <th onclick="sortTable(4)" title="Expected Move % (Straddle Price + 15%)">Straddle%</th>
-          <th onclick="sortTable(5)" title="Historical Move 2 Quarters Ago">HistMove2%</th>
-          <th onclick="sortTable(6)" title="Price to Sales Ratio">P/S</th>
-          <th class="col-group-divider" onclick="sortTable(7)" title="Last Earnings Move %">ER Move%</th>
-          <th onclick="sortTable(8)" title="% Change since last earnings report">Change%</th>
-          <th onclick="sortTable(9)" title="Market Chart Price 2Q: Current price vs Pre-Earnings price of last to last quarter">McP2Q%</th>
-          <th class="col-group-divider" onclick="sortTable(10)" title="Market Chart Price: Current price vs Pre-Earnings price">McP%</th>
-          <th onclick="sortTable(11)" title="Upper Chart Price (+2x Implied Move)">UCP%</th>
-          <th onclick="sortTable(12)" title="Upper Chart Price (+1x Implied Move)">UCPa%</th>
-          <th onclick="sortTable(13)" title="Lower Chart Price (-1x Implied Move)">LCPa%</th>
-          <th class="col-group-divider" onclick="sortTable(14)" title="Lower Chart Price (-2x Implied Move)">LCP%</th>
-          <!-- <th onclick="sortTable(15)" title="10-Day Moving Average Distance">MA10D%</th> -->
-          <th onclick="sortTable(16)" title="50-Day Moving Average Distance">MA50%</th>
-          <th class="col-group-divider" onclick="sortTable(17)" title="200-Day Moving Average Distance">MA200%</th>
-          <th onclick="sortTable(18)" title="Entry Target">Entry</th>
-          <th onclick="sortTable(19)" title="Condition Code">Code</th>
-          <th onclick="sortTable(20)" title="Latest Price">Price</th>
-          <!-- <th class="col-group-divider" onclick="sortTable(21)" title="Relative Strength Index">Rsi</th> -->
-          <th onclick="sortTable(22)" title="Implied Volatility Rank">IvRank</th>
-          <!-- <th onclick="sortTable(23)" title="Beta (Stock Volatility vs Market)">Beta</th> -->
-          <th onclick="sortTable(24)" title="Target 1">T1</th>
-          <th onclick="sortTable(25)" title="Target 2">T2</th>
-          <th onclick="sortTable(26)" title="Target 3">T3</th>
+          <th onclick="sortTable('ticker')">Ticker</th>
+          <th onclick="sortTable('er_date')" title="Next Earnings Date">ErDate(Nxt)</th>
+                    <th onclick="sortTable('report_time')" title="Premarket or After Hours">PM/AH</th>
+          <th class="col-group-divider" onclick="sortTable('p_ratio')" title="Straddle Price vs Expected Move Ratio">P</th>
+          <th onclick="sortTable('straddle')" title="Expected Move % (Straddle Price + 15%)">Straddle%</th>
+          <th onclick="sortTable('histMove2')" title="Historical Move 2 Quarters Ago">HistMove2%</th>
+          <th onclick="sortTable('ps_ratio')" title="Price to Sales Ratio">P/S</th>
+          <th class="col-group-divider" onclick="sortTable('post_earnings_move_1d')" title="Last Earnings Move %">ER Move%</th>
+          <th onclick="sortTable('priceChange')" title="% Change since last earnings report">Change%</th>
+          <th onclick="sortTable('mcp2q')" title="Market Chart Price 2Q: Current price vs Pre-Earnings price of last to last quarter">McP2Q%</th>
+          <th class="col-group-divider" onclick="sortTable('mcp')" title="Market Chart Price: Current price vs Pre-Earnings price">McP%</th>
+          <th onclick="sortTable('ucp')" title="Upper Chart Price (+2x Implied Move)">UCP%</th>
+          <th onclick="sortTable('ucpa')" title="Upper Chart Price (+1x Implied Move)">UCPa%</th>
+          <th onclick="sortTable('lcpa')" title="Lower Chart Price (-1x Implied Move)">LCPa%</th>
+          <th class="col-group-divider" onclick="sortTable('lcp')" title="Lower Chart Price (-2x Implied Move)">LCP%</th>
+          <!-- <th onclick="sortTable('ma10Ratio')" title="10-Day Moving Average Distance">MA10D%</th> -->
+          <th onclick="sortTable('ma50Ratio')" title="50-Day Moving Average Distance">MA50%</th>
+          <th class="col-group-divider" onclick="sortTable('ma200Ratio')" title="200-Day Moving Average Distance">MA200%</th>
+          <th onclick="sortTable('entry')" title="Entry Target">Entry</th>
+          <th onclick="sortTable('code')" title="Condition Code">Code</th>
+          <th onclick="sortTable('price')" title="Latest Price">Price</th>
+          <!-- <th class="col-group-divider" onclick="sortTable('finalRsi')" title="Relative Strength Index">Rsi</th> -->
+          <th onclick="sortTable('iv_rank')" title="Implied Volatility Rank">IvRank</th>
+          <!-- <th onclick="sortTable('beta')" title="Beta (Stock Volatility vs Market)">Beta</th> -->
+          <th onclick="sortTable('t1')" title="Target 1">T1</th>
+          <th onclick="sortTable('t2')" title="Target 2">T2</th>
+          <th onclick="sortTable('t3')" title="Target 3">T3</th>
           
           
           
@@ -871,11 +871,19 @@
 
     
     let appData = []; // Array of {ticker, data, priceData}
-    let currentSortColumn = 1;
+    let currentSortColumn = 'er_date';
     let currentSortDesc = false;
 
     function updateDataWithPrices(data) {
       if (!data) return;
+      
+      const calcP = (data) => {
+         var sc = parseFloat(data.straddle && data.straddle != "N/A" && data.straddle != 0 ? (parseFloat(data.straddle) + parseFloat(data.straddle) * 0.15).toFixed(2) : 0);
+         var ec = parseFloat(data.expected_move_perc && data.expected_move_perc != 0 && data.expected_move_perc != 'N/A' ? (parseFloat(data.expected_move_perc) + parseFloat(data.expected_move_perc) * 0.15).toFixed(2) : 0);
+         ec = parseFloat(ec && ec != "N/A" && ec != 0 ? ec : (data.avgHistoricMove || 0));
+         return parseFloat((ec && sc && ec > 0 && sc > 0 ? parseFloat(((sc - ec) / ec) * 100) : 999).toFixed(2));
+      };
+      data.p_ratio = calcP(data);
       const latestPrice = data.price || 0;
       if (latestPrice === 0) return;
 
@@ -1155,82 +1163,54 @@
       if (typeof enableRowHighlighting === "function") enableRowHighlighting();
     }
 
-    function sortTable(columnIndex, forceDesc = null) {
-      if (forceDesc !== null) {
-        currentSortDesc = forceDesc;
-      } else if (currentSortColumn === columnIndex) {
-        currentSortDesc = !currentSortDesc;
-      } else {
-        currentSortColumn = columnIndex;
-        currentSortDesc = false;
-      }
-
-      const isDate = columnIndex === 1; // ErDate(Nxt)
-      const isNumeric = columnIndex !== 0 && columnIndex !== 1 && columnIndex !== 2; // 0=Ticker, 1=Date, 2=Time
-
-      // Map columnIndex to appData property logic
-      appData.sort((a, b) => {
-        let valA, valB;
-        
-        // Extract value based on column index
-        if (columnIndex === 0) { valA = a.ticker; valB = b.ticker; }
-        else if (columnIndex === 1) { valA = a.data.er_date || ''; valB = b.data.er_date || ''; }
-        else if (columnIndex === 2) { valA = a.data.report_time || ''; valB = b.data.report_time || ''; }
-        else if (columnIndex === 3) { 
-           // p
-           const calcP = (data) => {
-              var sc = parseFloat(data.straddle && data.straddle != "N/A" && data.straddle != 0 ? (parseFloat(data.straddle) + parseFloat(data.straddle) * 0.15).toFixed(2) : 0);
-              var ec = parseFloat(data.expected_move_perc && data.expected_move_perc != 0 && data.expected_move_perc != 'N/A' ? (parseFloat(data.expected_move_perc) + parseFloat(data.expected_move_perc) * 0.15).toFixed(2) : 0);
-              ec = parseFloat(ec && ec != "N/A" && ec != 0 ? ec : (data.avgHistoricMove || 0));
-              return parseFloat((ec && sc && ec > 0 && sc > 0 ? parseFloat(((sc - ec) / ec) * 100) : 999).toFixed(2));
-           };
-           valA = calcP(a.data); valB = calcP(b.data);
-        }
-        else if (columnIndex === 4) { 
-           const scA = a.data.straddle && a.data.straddle != "N/A" ? parseFloat(a.data.straddle) : 0;
-           const scB = b.data.straddle && b.data.straddle != "N/A" ? parseFloat(b.data.straddle) : 0;
-           valA = scA; valB = scB; 
-        }
-        else if (columnIndex === 5) { valA = parseFloat(a.data.histMove2) || -999; valB = parseFloat(b.data.histMove2) || -999; }
-        else if (columnIndex === 6) { valA = parseFloat(a.data.ps_ratio) || -999; valB = parseFloat(b.data.ps_ratio) || -999; }
-        else if (columnIndex === 7) { valA = parseFloat(a.data.post_earnings_move_1d) || -999; valB = parseFloat(b.data.post_earnings_move_1d) || -999; }
-        else if (columnIndex === 8) { valA = parseFloat(a.data.priceChange) || -999; valB = parseFloat(b.data.priceChange) || -999; }
-        else if (columnIndex === 9) { valA = parseFloat(a.data.mcp2q) || -999; valB = parseFloat(b.data.mcp2q) || -999; }
-        else if (columnIndex === 10) { valA = parseFloat(a.data.mcp) || -999; valB = parseFloat(b.data.mcp) || -999; }
-        else if (columnIndex === 11) { valA = parseFloat(a.data.ucp) || -999; valB = parseFloat(b.data.ucp) || -999; }
-        else if (columnIndex === 12) { valA = parseFloat(a.data.ucpa) || -999; valB = parseFloat(b.data.ucpa) || -999; }
-        else if (columnIndex === 13) { valA = parseFloat(a.data.lcpa) || -999; valB = parseFloat(b.data.lcpa) || -999; }
-        else if (columnIndex === 14) { valA = parseFloat(a.data.lcp) || -999; valB = parseFloat(b.data.lcp) || -999; }
-        else if (columnIndex === 15) { valA = parseFloat(a.data.ma10Ratio) || -999; valB = parseFloat(b.data.ma10Ratio) || -999; } // ma10
-        else if (columnIndex === 16) { valA = parseFloat(a.data.ma50Ratio) || -999; valB = parseFloat(b.data.ma50Ratio) || -999; } // ma50
-        else if (columnIndex === 17) { valA = parseFloat(a.data.ma200Ratio) || -999; valB = parseFloat(b.data.ma200Ratio) || -999; } // ma200
-        else if (columnIndex === 18) { valA = a.data.entry || ''; valB = b.data.entry || ''; }
-          else if (columnIndex === 19) { valA = a.data.code || ''; valB = b.data.code || ''; }
-          else if (columnIndex === 20) { valA = parseFloat(a.data.price) || -999; valB = parseFloat(b.data.price) || -999; }
-          else if (columnIndex === 21) { valA = a.data.finalRsi || a.data.calculatedRsi || -999; valB = b.data.finalRsi || b.data.calculatedRsi || -999; }
-          else if (columnIndex === 22) { valA = parseFloat(a.data.iv_rank) || -999; valB = parseFloat(b.data.iv_rank) || -999; }
-          else if (columnIndex === 23) { valA = parseFloat(a.data.beta) || -999; valB = parseFloat(b.data.beta) || -999; }
-          else if (columnIndex === 24) { valA = parseFloat(a.data.t1) || -999; valB = parseFloat(b.data.t1) || -999; }
-          else if (columnIndex === 25) { valA = parseFloat(a.data.t2) || -999; valB = parseFloat(b.data.t2) || -999; }
-          else if (columnIndex === 26) { valA = parseFloat(a.data.t3) || -999; valB = parseFloat(b.data.t3) || -999; }
-        else { valA = 0; valB = 0; }
-
-        let result = 0;
-        if (isDate) {
-          const dateA = Date.parse(valA.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3-$1-$2')) || 0;
-          const dateB = Date.parse(valB.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3-$1-$2')) || 0;
-          result = dateA - dateB;
-        } else if (isNumeric) {
-          result = valA - valB;
+    function sortTable(sortKey, forceDesc = null) {
+        if (forceDesc !== null) {
+          currentSortDesc = forceDesc;
+        } else if (currentSortColumn === sortKey) {
+          currentSortDesc = !currentSortDesc;
         } else {
-          result = String(valA).localeCompare(String(valB));
+          currentSortColumn = sortKey;
+          currentSortDesc = false;
         }
+  
+        const isDate = sortKey === 'er_date';
+        const isStringColumn = ['ticker', 'er_date', 'report_time', 'entry', 'code'].includes(sortKey);
+        const isNumeric = !isStringColumn;
+  
+        appData.sort((a, b) => {
+          let valA, valB;
+          
+          if (sortKey === 'ticker') {
+              valA = a.ticker; valB = b.ticker;
+          } else {
+              valA = a.data[sortKey];
+              valB = b.data[sortKey];
+          }
 
-        return currentSortDesc ? -result : result;
-      });
-
-      renderTableBody();
-    }
+          if (isNumeric) {
+              valA = parseFloat(valA) || -999;
+              valB = parseFloat(valB) || -999;
+          } else {
+              valA = valA || '';
+              valB = valB || '';
+          }
+  
+          let result = 0;
+          if (isDate) {
+            const dateA = Date.parse(valA.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3-$1-$2')) || 0;
+            const dateB = Date.parse(valB.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3-$1-$2')) || 0;
+            result = dateA - dateB;
+          } else if (isNumeric) {
+            result = valA - valB;
+          } else {
+            result = String(valA).localeCompare(String(valB));
+          }
+  
+          return currentSortDesc ? -result : result;
+        });
+  
+        renderTableBody();
+      }
 
     renderTable();
 
