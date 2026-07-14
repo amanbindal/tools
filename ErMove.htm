@@ -1175,7 +1175,7 @@
                     <!-- <td class="ma10" style="${colorNumDark(ma10)}">${ma10}</td> -->
                     <td class="ma50" style="${colorNumDark(ma50)}">${ma50}</td>
                     <td class="ma200 col-group-divider" style="${colorNumDark(ma200)}"><a href="https://www.barchart.com/stocks/quotes/${ticker}/overview" target="_blank" style="color:inherit;">${ma200}</a></td>
-                    <td>${data.entry || '-'}</td>
+                    <td style="${isEntryNear ? 'font-weight: 900; color: #fff; font-size: 1.1em;' : ''}">${data.entry || '-'}</td>
                     <td>${data.code || '-'}</td>
                     <td class="price"><a href="https://finviz.com/quote.ashx?t=${ticker}" target="_blank" style="color:inherit;}">${price}</a></td>
                     <!-- <td class="rsi col-group-divider">${rsi}</td> -->
