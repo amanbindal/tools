@@ -1151,6 +1151,21 @@
         const ma50 = data.ma50Ratio ? data.ma50Ratio.toFixed(2) : '-';
         const ma200 = data.ma200Ratio ? data.ma200Ratio.toFixed(2) : '-';
         const price = data.price ? parseFloat(data.price).toFixed(2) : '-';
+        
+        let isEntryNear = false;
+        if (data.entry) {
+            const absUcp = Math.abs(parseFloat(data.ucp) || 999);
+            const absLcp = Math.abs(parseFloat(data.lcp) || 999);
+            const absMcp = Math.abs(parseFloat(data.mcp) || 999);
+            const absMa200 = Math.abs(parseFloat(data.ma200Ratio) || 999);
+            
+            if (data.entry === 'UCP' && absUcp <= 1) isEntryNear = true;
+            else if (data.entry === 'LCP' && absLcp <= 1) isEntryNear = true;
+            else if (data.entry === 'MCP' && absMcp <= 1) isEntryNear = true;
+            else if (data.entry === 'MA200' && absMa200 <= 1) isEntryNear = true;
+            else if (data.entry === 'LCP/MA200' && (absLcp <= 1 || absMa200 <= 1)) isEntryNear = true;
+            else if (data.entry === 'Lcp-2S' && absLcp <= 1) isEntryNear = true;
+        }
         const beta = data.beta ? parseFloat(data.beta).toFixed(2) : 0;
         
         // This handles columns mapped for BOTH ErMove.htm and test.js
