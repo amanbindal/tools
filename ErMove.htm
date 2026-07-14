@@ -956,7 +956,7 @@
         let t2 = '-';
         let t3 = '-';
         
-        if (cached && cached.data && cached.fetchedAt && !isNewBusinessDay(cached.fetchedAt)) {
+        if (cached && cached.data && cached.fetchedAt && !isNewBusinessDay(cached.fetchedAt) && typeof cached.data.t1 === 'object') {
             t1 = cached.data.t1;
             t2 = cached.data.t2;
             t3 = cached.data.t3;
@@ -967,9 +967,9 @@
                     const validRatings = res.data.filter(item => item.price_target !== null && !isNaN(parseFloat(item.price_target)));
                     validRatings.sort((a, b) => new Date(b.date) - new Date(a.date));
                     
-                    if (validRatings.length > 0) t1 = parseFloat(validRatings[0].price_target).toFixed(2);
-                    if (validRatings.length > 1) t2 = parseFloat(validRatings[1].price_target).toFixed(2);
-                    if (validRatings.length > 2) t3 = parseFloat(validRatings[2].price_target).toFixed(2);
+                    if (validRatings.length > 0) t1 = { price: parseFloat(validRatings[0].price_target).toFixed(2), date: validRatings[0].recommendation_date, firm: validRatings[0].firm_name };
+                    if (validRatings.length > 1) t2 = { price: parseFloat(validRatings[1].price_target).toFixed(2), date: validRatings[1].recommendation_date, firm: validRatings[1].firm_name };
+                    if (validRatings.length > 2) t3 = { price: parseFloat(validRatings[2].price_target).toFixed(2), date: validRatings[2].recommendation_date, firm: validRatings[2].firm_name };
                     
                     await setCache(cacheKey, { data: { t1, t2, t3 }, fetchedAt: new Date().toISOString() });
                 }
@@ -982,16 +982,29 @@
             appDataItem.data.t2 = t2;
             appDataItem.data.t3 = t3;
             
+            const getTCellHTML = (tData, tkr, linkTemp, currPrice) => {
+                if (!tData || tData === '-') return '-';
+                const p = parseFloat(tData.price);
+                if (isNaN(p)) return '-';
+                let colStr = '';
+                if (currPrice > 0) {
+                    if (p > currPrice) colStr = 'color:#22c55e;'; // Green
+                    else if (p < currPrice) colStr = 'color:#ef4444;'; // Red
+                }
+                const title = `${tData.date || ''} - ${tData.firm || ''}`;
+                if (linkTemp) return `<a href="${linkTemp.replace('{ticker}', tkr)}" target="_blank" style="${colStr}" title="${title}">${tData.price}</a>`;
+                return `<span style="${colStr}" title="${title}">${tData.price}</span>`;
+            };
             const row = document.getElementById(`row-${ticker}`);
             if (row) {
                 const t1Cell = row.querySelector('.t1');
-                if (t1Cell) t1Cell.innerText = t1;
+                if (t1Cell) t1Cell.innerHTML = getTCellHTML(t1, ticker, 'https://unusualwhales.com/stock/{ticker}/analysts/', appDataItem.data.price);
                 
                 const t2Cell = row.querySelector('.t2');
-                if (t2Cell) t2Cell.innerText = t2;
+                if (t2Cell) t2Cell.innerHTML = getTCellHTML(t2, ticker, 'https://www.tipranks.com/stocks/{ticker}/forecast/', appDataItem.data.price);
                 
                 const t3Cell = row.querySelector('.t3');
-                if (t3Cell) t3Cell.innerText = t3;
+                if (t3Cell) t3Cell.innerHTML = getTCellHTML(t3, ticker, null, appDataItem.data.price);
             }
         }
       }
@@ -1154,9 +1167,9 @@
                     <!-- <td class="rsi col-group-divider">${rsi}</td> -->
                     <td><a href="https://marketchameleon.com/Overview/${ticker}" target="_blank" style="color:inherit;}">${iv_rank}</a></td>
                     <!-- <td style="${beta > 1.29 ? 'color:#22c55e;' : 'color:inherit;'}">${beta}</td> -->
-                    <td class="t1">${data.t1 || '-'}</td>
-                    <td class="t2">${data.t2 || '-'}</td>
-                    <td class="t3">${data.t3 || '-'}</td>
+                    <td class="t1">${getTCellRender(data.t1, ticker, 'https://unusualwhales.com/stock/{ticker}/analysts/', data.price)}</td>
+                    <td class="t2">${getTCellRender(data.t2, ticker, 'https://www.tipranks.com/stocks/{ticker}/forecast/', data.price)}</td>
+                    <td class="t3">${getTCellRender(data.t3, ticker, null, data.price)}</td>
                   </tr>`;
       }
       tableBody.innerHTML = html;
@@ -1187,6 +1200,10 @@
               valB = b.data[sortKey];
           }
 
+          if (['t1', 't2', 't3'].includes(sortKey)) {
+              valA = (valA && typeof valA === 'object' && valA.price) ? valA.price : valA;
+              valB = (valB && typeof valB === 'object' && valB.price) ? valB.price : valB;
+          }
           if (isNumeric) {
               valA = parseFloat(valA) || -999;
               valB = parseFloat(valB) || -999;
