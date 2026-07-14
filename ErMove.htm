@@ -1082,6 +1082,20 @@
         });
       }
 
+      const getTCellRender = (tData, tkr, linkTemp, currPrice) => {
+        if (!tData || tData === '-' || typeof tData !== 'object') return tData || '-';
+        const p = parseFloat(tData.price);
+        if (isNaN(p)) return '-';
+        let colStr = '';
+        if (currPrice > 0) {
+            if (p > currPrice) colStr = 'color:#22c55e;';
+            else if (p < currPrice) colStr = 'color:#ef4444;';
+        }
+        const title = `${tData.date || ''} - ${tData.firm || ''}`;
+        if (linkTemp) return `<a href="${linkTemp.replace('{ticker}', tkr)}" target="_blank" style="${colStr}" title="${title}">${tData.price}</a>`;
+        return `<span style="${colStr}" title="${title}">${tData.price}</span>`;
+      };
+      
       for (const item of appData) {
         const { ticker, data } = item;
         var straddleCalulated = parseFloat(data.straddle && data.straddle != "N/A" && data.straddle != 0 ? (parseFloat(data.straddle) + parseFloat(data.straddle) * 0.15).toFixed(2) : 0);
