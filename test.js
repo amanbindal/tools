@@ -657,16 +657,16 @@
       let entry = '-';
       let code = '-';
 
-      if (erM > 0 && ma200v > 0 && mcp2qv > 0 && mcpv > 0 && lcpv > 0 && lcpav > 0 && ucpv > 0 && ucpav > 0) { entry = 'UCP'; code = 'BOU'; }
-      else if (erM > 0 && ma200v > 0 && mcp2qv > 0 && mcpv < 0 && lcpv > 0 && lcpav > 0 && ucpv < 0 && ucpav < 0) { entry = 'LCP'; code = 'BOL'; }
-      else if (erM > 0 && ma200v > 0 && mcp2qv > 0 && mcpv > 0 && lcpv > 0 && lcpav > 0 && ucpv < 0 && ucpav < 0) { entry = 'MCP'; code = 'BOM'; }
-      else if (ma200v > 0 && mcp2qv < 0 && mcpv < 0 && lcpv < 0 && lcpav < 0 && ucpv < 0 && ucpav < 0) { entry = 'LCP'; code = 'BDL'; }
-      else if (ma200v < 0 && mcp2qv < 0 && mcpv < 0 && lcpv > 0 && lcpav > 0 && ucpv < 0 && ucpav < 0) { entry = 'MA200'; code = 'BD2'; }
-      else if (erM < 0 && ma200v > 0 && mcp2qv > 0 && mcpv < 0 && lcpv > 0 && lcpav > 0 && ucpv < 0 && ucpav < 0) { entry = 'LCP/MA200'; code = 'UTL2'; }
-      else if (erM < 0 && ma200v > 0 && mcp2qv > 0 && mcpv > 0 && lcpv > 0 && lcpav > 0 && ucpv < 0 && ucpav < 0) { entry = 'MCP'; code = 'UTM'; }
-      else if (erM < 0 && ma200v > 0 && mcp2qv > 0 && mcpv > 0 && lcpv > 0 && lcpav > 0 && ucpv > 0 && ucpav > 0) { entry = 'UCP'; code = 'UTU'; }
-      else if (erM > 0 && ma200v < 0 && mcp2qv < 0 && mcpv < 0 && lcpv < 0 && lcpav < 0 && ucpv < 0 && ucpav < 0) { entry = 'Lcp-2S'; code = 'DCB'; }
-      else if (erM > 0 && mcp2qv < 0 && mcpv > 0 && lcpv > 0 && lcpav > 0 && ucpv > 0 && ucpav > 0) { entry = 'UCP'; code = 'BTB'; }
+      if (erM > 0 && ma200v > 0 && mcp2qv > 0 && mcpv > 0 && lcpv > 0 && ucpv > 0) { entry = 'UCP'; code = 'BOU'; }
+      else if (erM > 0 && ma200v > 0 && mcp2qv > 0 && mcpv < 0 && lcpv > 0 && ucpv < 0) { entry = 'LCP'; code = 'BOL'; }
+      else if (erM > 0 && ma200v > 0 && mcp2qv > 0 && mcpv > 0 && lcpv > 0 && ucpv < 0) { entry = 'MCP'; code = 'BOM'; }
+      else if (ma200v > 0 && mcp2qv < 0 && mcpv < 0 && lcpv < 0 && ucpv < 0) { entry = 'LCP'; code = 'BDL'; }
+      else if (ma200v < 0 && mcp2qv < 0 && mcpv < 0 && lcpv > 0 && ucpv < 0) { entry = 'MA200'; code = 'BD2'; }
+      else if (erM < 0 && ma200v > 0 && mcp2qv > 0 && mcpv < 0 && lcpv > 0 && ucpv < 0) { entry = 'LCP/MA200'; code = 'UTL2'; }
+      else if (erM < 0 && ma200v > 0 && mcp2qv > 0 && mcpv > 0 && lcpv > 0 && ucpv < 0) { entry = 'MCP'; code = 'UTM'; }
+      else if (erM < 0 && ma200v > 0 && mcp2qv > 0 && mcpv > 0 && lcpv > 0 && ucpv > 0) { entry = 'UCP'; code = 'UTU'; }
+      else if (erM > 0 && ma200v < 0 && mcp2qv < 0 && mcpv < 0 && lcpv < 0 && ucpv < 0) { entry = 'Lcp-2S'; code = 'DCB'; }
+      else if (erM > 0 && mcp2qv < 0 && mcpv > 0 && lcpv > 0 && ucpv > 0) { entry = 'UCP'; code = 'BTB'; }
 
       data.entry = entry;
       data.code = code;
