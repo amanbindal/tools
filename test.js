@@ -835,6 +835,12 @@
       
       for (const item of appData) {
         const { ticker, data } = item;
+        if (typeof currentSearchQuery !== 'undefined' && currentSearchQuery) {
+            const tMatch = ticker.toLowerCase().includes(currentSearchQuery);
+            const entryMatch = data.entry && data.entry.toLowerCase().includes(currentSearchQuery);
+            const codeMatch = data.code && data.code.toLowerCase().includes(currentSearchQuery);
+            if (!tMatch && !entryMatch && !codeMatch) continue;
+        }
         var straddleCalulated = parseFloat(data.straddle && data.straddle != "N/A" && data.straddle != 0 ? (parseFloat(data.straddle) + parseFloat(data.straddle) * 0.15).toFixed(2) : 0);
         var expMoveCalulated = parseFloat(data.expected_move_perc && data.expected_move_perc != 0 && data.expected_move_perc != 'N/A' ? (parseFloat(data.expected_move_perc) + parseFloat(data.expected_move_perc) * 0.15).toFixed(2) : 0);
         
@@ -1000,3 +1006,14 @@
   </script>
 </body>
 </html>
+
+    let currentSearchQuery = '';
+    document.addEventListener('DOMContentLoaded', () => {
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                currentSearchQuery = e.target.value.trim().toLowerCase();
+                renderTableBody();
+            });
+        }
+    });
