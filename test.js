@@ -667,6 +667,11 @@
       else if (erM < 0 && ma200v > 0 && mcp2qv > 0 && mcpv > 0 && lcpv > 0 && ucpv > 0) { entry = 'UCP'; code = 'UTU'; }
       else if (erM > 0 && ma200v < 0 && mcp2qv < 0 && mcpv < 0 && lcpv < 0 && ucpv < 0) { entry = 'Lcp-2S'; code = 'DCB'; }
       else if (erM > 0 && mcp2qv < 0 && mcpv > 0 && lcpv > 0 && ucpv > 0) { entry = 'UCP'; code = 'BTB'; }
+      else if (erM > 0 && ma200v > 0 && mcp2qv > 0 && mcpv < 0 && lcpv < 0 && ucpv < 0) { entry = 'LCP/MA200'; code = 'BOLB'; }
+      else if (erM > 0 && ma200v > 0 && mcp2qv < 0 && mcpv > 0 && lcpv > 0 && ucpv > 0) { entry = 'LCP/MA200'; code = 'BOUM'; }
+      else if (erM > 0 && ma200v > 0 && mcp2qv < 0 && mcpv > 0 && lcpv > 0 && ucpv < 0) { entry = 'LCP/MA200'; code = 'BOMM'; }
+      else if (erM > 0 && ma200v > 0 && mcp2qv < 0 && mcpv < 0 && lcpv > 0 && ucpv < 0) { entry = 'LCP/MA200'; code = 'BOLM'; }
+      else if (erM > 0 && ma200v > 0 && mcp2qv < 0 && mcpv < 0 && lcpv < 0 && ucpv < 0) { entry = 'LCP/MA200'; code = 'BOLBM'; }
 
       data.entry = entry;
       data.code = code;
