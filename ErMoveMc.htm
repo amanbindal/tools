@@ -2,13 +2,13 @@
 <html lang="en">
 
 <head>
-  <title>ER Data</title>
+  <title>ErMoveMc</title>
   <meta charset="UTF-8">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <div style="display: flex; justify-content: space-between; align-items: center;">
-    <h2>&nbspER Data &nbsp<span style="color: #DE3163;">BD</span>, <span style="color: #FFAC1C;">BU</span>,
+    <h2>&nbspErMoveMc &nbsp<span style="color: #DE3163;">BD</span>, <span style="color: #FFAC1C;">BU</span>,
       <span style="color: #6495ED;">TU</span>, <span style="color: #2AAA8A;">TD</span>
     </h2>
     <div style="display: flex; gap: 20px; align-items: center; margin-right: 60px;">
@@ -380,108 +380,252 @@
   </div>
   <script>
     const tickers = [
-      // --- A ---
-  'A', 'AAL', 'AAP', 'AAPL', 'ABBV', 'ABEV', 'ACHR', 'ACN', 'ADEA', 'ADI', 
-  'ADSK', 'ADBE', 'AEO', 'AEHR', 'AEM', 'AFL', 'AG', 'AGNC', 'AI', 'AKAM', 
-  'ALAB', 'AMAT', 'AMBA', 'AMD', 'AMR', 'AMZN', 'AN', 'ANF', 'ANET', 'APLD', 
-  'APP', 'APPN', 'APH', 'ARM', 'ASAN', 'ASML', 'ATEN', 'AUR', 'AVGO', 'AXP', 'AZO',
-
-  // --- B ---
-  'BA', 'BABA', 'BAC', 'BAND', 'BBAI', 'BB', 'BBD', 'BBWI', 'BBBY', 'BCE', 
-  'BDX', 'BIDU', 'BILL', 'BJ', 'BLK', 'BMNR', 'BOX', 'BRZE', 'BTG', 'BTE', 
-  'BTBT', 'BULL', 'BURL', 'BW',
-
-  // --- C ---
-  'C', 'CARR', 'CAT', 'CAVA', 'CB', 'CBRS', 'CCJ', 'CCL', 'CDNS', 'CELH', 
-  'CHKP', 'CHTR', 'CHWY', 'CIFR', 'CL', 'CLF', 'CLSK', 'CLOV', 'CMCSA', 
-  'CMG', 'COCO', 'COIN', 'CORZ', 'COST', 'COUR', 'COTY', 'CPNG', 'CPRI', 'CRCL', 'CRH', 
-  'CRM', 'CRWD', 'CRWV', 'CSCO', 'CSIQ', 'CVS', 'CVLT', 'CVNA', 'CX', 'CXM', 'CYTK',
-
-  // --- D ---
-  'DAL', 'DASH', 'DDOG', 'DE', 'DECK', 'DELL', 'DG', 'DGX', 'DHR', 'DIS', 
-  'DJT', 'DLO', 'DLR', 'DLTR', 'DKNG', 'DKS', 'DNN', 'DOCS', 'DOCU', 'DOW', 
-  'DT', 'DUK', 'DUOL', 'DVA', 'DVN', 'DXCM',
-
-  // --- E ---
-  'EDIT', 'EDU', 'EL', 'ELF', 'ENPH', 'EOSE', 'EQIX', 'ERIC', 'ESTC', 'ETN', 'ETSY',
-
-  // --- F ---
-  'F', 'FAST', 'FCEL', 'FCX', 'FDX', 'FICO', 'FIG', 'FIVN', 'FLUT', 'FMS', 
-  'FND', 'FRSH', 'FSLY', 'FTNT', 'FUTU',
-
-  // --- G ---
-  'GAP', 'GE', 'GEN', 'GGB', 'GME', 'GO', 'GOOG', 'GOOGL', 'GPC', 'GRAB', 
-  'GS', 'GTLB', 'GWW',
-
-  // --- H ---
-  'HAL', 'HCA', 'HD', 'HDB', 'HIMS', 'HL', 'HLT', 'HMC', 'HON', 'HOOD', 
-  'HPQ', 'HQY', 'HSY', 'HTZ', 'HUM', 'HUT',
-
-  // --- I ---
-  'IBM', 'IBN', 'IBRX', 'ILMN', 'INFY', 'INSM', 'INTC', 'INTU', 'IONQ', 'IOT', 
-  'IOVA', 'IREN',
-
-  // --- J ---
-  'JBHT', 'JBL', 'JD', 'JEF', 'JNJ', 'JOBY', 'JPM', 'JKS',
-
-  // --- K ---
-  'KEY', 'KEYS', 'KMX', 'KO', 'KOS', 'KSS', 'KVUE',
-
-  // --- L ---
-  'LAD', 'LEN', 'LEU', 'LEVI', 'LII', 'LITE', 'LLY', 'LMND', 'LOW', 'LQDA', 'LRCX', 'LULU', 
-  'LUNR', 'LW', 'LYFT', 'LYG',
-
-  // --- M ---
-  'M', 'MA', 'MANH', 'MAR', 'MARA', 'MCD', 'MCHP', 'MDLZ', 'MDT', 'MDB', 
-  'MELI', 'META', 'MET', 'MFC', 'MLKN', 'MNDY', 'MRNA', 'MRVL', 'MS', 'MSFT', 'MSTR', 'MU',
-
-  // --- N ---
-  'NAVN', 'NBIS', 'NCLH', 'NCNO', 'NEE', 'NEM', 'NET', 'NFLX', 'NIO', 'NKE', 
-  'NOK', 'NOW', 'NTAP', 'NTNX', 'NU', 'NUE', 'NVDA', 'NVTS', 'NVO', 'NXPI',
-
-  // --- O ---
-  'ODFL', 'OKTA', 'OMC', 'ON', 'ONDS', 'ONON', 'OPEN', 'ORCL', 'ORLY', 'OXY',
-
-  // --- P ---
-  'PAGS', 'PANW', 'PATH', 'PAYX', 'PBR', 'PCG', 'PDD', 'PEGA', 'PENG', 'PENN', 
-  'PEP', 'PFE', 'PG', 'PINS', 'PL', 'PLNT', 'PLTR', 'PLUG', 'PONY', 'PRU', 
-  'PSKY', 'PTC', 'PTON', 'PVH', 'PYPL',
-
-  // --- Q ---
-  'QBTS', 'QCOM', 'QS', 'QSR',
-
-  // --- R ---
-  'RBLX', 'RBRK', 'RCAT', 'RCL', 'RDDT', 'RDW', 'RELY', 'RGTI', 'RH', 'RIG', 
-  'RIOT', 'RIVN', 'RKLB', 'RKT', 'RL', 'ROK', 'ROKU', 'ROOT', 'ROST', 'RTX', 'RUN', 'RXRX', 'RXT',
-
-  // --- S ---
-  'S', 'SAIL', 'SAM', 'SAN', 'SBUX', 'SCHW', 'SE', 'SEDG', 'SHOP', 'SIG', 
-  'SLB', 'SMCI', 'SMTC', 'SNAP', 'SNDK', 'SNOW', 'SNPS', 'SO', 'SOFI', 'SONY', 
-  'SOUN', 'SPCX', 'SPOT', 'STLA', 'STLD', 'STZ', 'SWKS', 'SYM', 'SYY',
-
-  // --- T ---
-  'T', 'TAL', 'TDC', 'TEAM', 'TER', 'TGT', 'TGTX', 'THC', 'TJX', 
-  'TM', 'TMO', 'TMUS', 'TOST', 'TPR', 'TRV', 'TSLA', 'TSM', 'TT', 'TTD', 'TWLO', 'TXN',
-
-  // --- U ---
-  'U', 'UAL', 'UBER', 'UL', 'ULTA', 'UMC', 'UNFI', 'UNH', 'UNP', 'UPS', 
-  'UPST', 'URI', 'USFD', 'USO',
-
-  // --- V ---
-  'V', 'VAC', 'VALE', 'VFC', 'VG', 'VRNS', 'VRT', 'VRTX', 'VSXY', 'VZ',
-
-  // --- W ---
-  'W', 'WBD', 'WDC', 'WDAY', 'WFC', 'WFG', 'WHR', 'WIX', 'WMT', 'WOLF', 'WSM', 'WULF',
-
-  // --- X ---
-  'XOM',
-
-  // --- Y ---
-  'YOU',
-
-  // --- Z ---
-  'ZETA', 'ZM', 'ZTO', 'ZTS', 'ZS', 'XYZ'
-    ];
+'TWLO',
+'FTI',
+'CRS',
+'CW',
+'NVT',
+'ATI',
+'XPO',
+'P',
+'WWD',
+'OKTA',
+'UTHR',
+'MTZ',
+'RBA',
+'STRL',
+'MTSI',
+'ROKU',
+'RBC',
+'TLN',
+'NBIX',
+'ITT',
+'FN',
+'MKSI',
+'THC',
+'BWXT',
+'CDE',
+'APG',
+'RGLD',
+'ILMN',
+'SGI',
+'JAZZ',
+'TTMI',
+'TOST',
+'EXEL',
+'SITM',
+'DT',
+'TXRH',
+'BURL',
+'ELAN',
+'PEN',
+'DY',
+'NYT',
+'MEDP',
+'GWRE',
+'AEIS',
+'MOG.A',
+'RMBS',
+'EHC',
+'SANM',
+'SPXC',
+'DTM',
+'FIVE',
+'LSCC',
+'CACI',
+'ARWR',
+'HL',
+'DOCN',
+'COKE',
+'ENSG',
+'NXT',
+'VIAV',
+'WTS',
+'CTRE',
+'AMG',
+'GTLS',
+'LECO',
+'EWBC',
+'HALO',
+'GMED',
+'ROIV',
+'MLI',
+'KTOS',
+'NTNX',
+'FLS',
+'FR',
+'SMTC',
+'WPC',
+'ENTG',
+'FCFS',
+'LAMR',
+'HQY',
+'TTEK',
+'EVR',
+'OHI',
+'CLH',
+'AAON',
+'TRU',
+'KNSL',
+'HXL',
+'AM',
+'ENS',
+'PINS',
+'HIMS',
+'ONTO',
+'RNR',
+'EGP',
+'DCI',
+'ULS',
+'IDCC',
+'AIT',
+'AYI',
+'ORA',
+'BMRN',
+'EQH',
+'ELS',
+'AHR',
+'SF',
+'VMI',
+'GGG',
+'CYTK',
+'WMS',
+'VICR',
+'SCI',
+'CSL',
+'NEU',
+'MANH',
+'DOCU',
+'DKS',
+'GLPI',
+'PRI',
+'CHDN',
+'PCTY',
+'CR',
+'QLYS',
+'RPM',
+'IESC',
+'CGNX',
+'H',
+'ALV',
+'SEIC',
+'SOLS',
+'VAL',
+'SBRA',
+'CFR',
+'VVV',
+'ORI',
+'SHC',
+'NFG',
+'BROS',
+'LNTH',
+'CELH',
+'BYD',
+'ALSN',
+'AVAV',
+'TNL',
+'LIVN',
+'STAG',
+'CG',
+'DBX',
+'BRX',
+'EXLS',
+'IDA',
+'APPF',
+'LFUS',
+'CRUS',
+'ADC',
+'FHI',
+'RGEN',
+'WING',
+'OSK',
+'CUBE',
+'LOPE',
+'PLNT',
+'ALGM',
+'OLLI',
+'AFG',
+'MP',
+'ACM',
+'NNN',
+'SLAB',
+'PATH',
+'HLI',
+'SSD',
+'CVLT',
+'GATX',
+'CNM',
+'DUOL',
+'MSA',
+'AMKR',
+'KEX',
+'BRKR',
+'FBIN',
+'OPCH',
+'WEX',
+'EXP',
+'CHWY',
+'THG',
+'CHE',
+'SARO',
+'BCO',
+'RYAN',
+'CAVA',
+'MTG',
+'WH',
+'DOCS',
+'BSY',
+'ELF',
+'SFM',
+'HGV',
+'BIO',
+'PEGA',
+'NXST',
+'HRB',
+'CROX',
+'MTN',
+'SLM',
+'ESNT',
+'NOVT',
+'WFRD',
+'MSM',
+'EPR',
+'TXNM',
+'G',
+'WMG',
+'ESAB',
+'TCBI',
+'YETI',
+'HAE',
+'SR',
+'GNTX',
+'NWE',
+'PSN',
+'IBOC',
+'GHC',
+'FFIN',
+'FOUR',
+'MORN',
+'FCN',
+'BILL',
+'BDC',
+'CAR',
+'VNT',
+'HLNE',
+'KNF',
+'CDP',
+'ANF',
+'MMS',
+'MAT',
+'EXPO',
+'OLED',
+'NSA',
+'DLB',
+'CHH',
+'MZTI',
+'CXT',
+'CPRI'
+];
     const themeToggle = document.getElementById('themeToggle');
     themeToggle.addEventListener('click', () => {
       document.body.dataset.theme = document.body.dataset.theme === 'dark'
