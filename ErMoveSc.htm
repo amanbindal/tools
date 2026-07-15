@@ -355,11 +355,11 @@
           <th onclick="sortTable('code')" title="Condition Code">Code</th>
           <th onclick="sortTable('price')" title="Latest Price">Price</th>
           <!-- <th class="col-group-divider" onclick="sortTable('finalRsi')" title="Relative Strength Index">Rsi</th> -->
-          <th onclick="sortTable('iv_rank')" title="Implied Volatility Rank">IvRank</th>
           <!-- <th onclick="sortTable('beta')" title="Beta (Stock Volatility vs Market)">Beta</th> -->
           <th onclick="sortTable('t1')" title="Target 1">T1</th>
           <th onclick="sortTable('t2')" title="Target 2">T2</th>
           <th onclick="sortTable('t3')" title="Target 3">T3</th>
+          <th onclick="sortTable('iv_rank')" title="Implied Volatility Rank">IvRank</th>
           
           
           
@@ -1700,11 +1700,11 @@
                     <td>${data.code || '-'}</td>
                     <td class="price"><a href="https://finviz.com/quote.ashx?t=${ticker}" target="_blank" style="color:inherit;}">${price}</a></td>
                     <!-- <td class="rsi col-group-divider">${rsi}</td> -->
-                    <td><a href="https://marketchameleon.com/Overview/${ticker}" target="_blank" style="color:inherit;}">${iv_rank}</a></td>
                     <!-- <td style="${beta > 1.29 ? 'color:#22c55e;' : 'color:inherit;'}">${beta}</td> -->
                     <td class="t1">${getTCellRender(data.t1, ticker, 'https://unusualwhales.com/stock/{ticker}/analysts/', data.price)}</td>
                     <td class="t2">${getTCellRender(data.t2, ticker, 'https://www.tipranks.com/stocks/{ticker}/forecast/', data.price)}</td>
                     <td class="t3">${getTCellRender(data.t3, ticker, null, data.price)}</td>
+                    <td><a href="https://marketchameleon.com/Overview/${ticker}" target="_blank" style="color:inherit;}">${iv_rank}</a></td>
                   </tr>`;
       }
       tableBody.innerHTML = html;
