@@ -249,6 +249,16 @@
       color: #000 !important;
     }
 
+    .highlight-pink {
+      background-color: #FFC0CB !important;
+      color: #000 !important;
+    }
+
+    .highlight-white {
+      background-color: #FFFFFF !important;
+      color: #000 !important;
+    }
+
     a,
     a label,
     a:link,
@@ -1611,26 +1621,24 @@
         var p = parseFloat((expMoveCalulated && straddleCalulated && expMoveCalulated > 0 && straddleCalulated > 0 ? parseFloat(((straddleCalulated - expMoveCalulated) / expMoveCalulated) * 100) : 999).toFixed(2));
         
         let rowClass = "";
-        const valErMove = parseFloat(data.post_earnings_move_1d) || 0;
-        const valMcp = parseFloat(data.mcp) || 0;
-        const valMcp2q = parseFloat(data.mcp2q) || 0;
-        const valUcp = parseFloat(data.ucp) || 0;
-        const valLcp = parseFloat(data.lcp) || 0;
-
-        if (valErMove > 0 && valMcp2q > 0 && valUcp > 0) {
+        const cCode = data.code ? data.code.toUpperCase().trim() : "";
+        
+        if (cCode === "BOU" || cCode === "BOUM") {
             rowClass = "highlight-sky-blue";
-        } else if (valErMove > 0 && valMcp2q > 0 && valMcp > 0 && valUcp < 0) {
+        } else if (cCode === "BOM" || cCode === "BOMM") {
             rowClass = "highlight-dark-green";
-        } else if (valErMove > 0 && valMcp2q > 0 && valMcp < 0) {
+        } else if (cCode === "BOL" || cCode === "BOLM") {
             rowClass = "highlight-light-green";
-        } else if (valErMove < 0 && valMcp > 0 && valUcp > 0) {
-            rowClass = "highlight-orange";
-        } else if (valErMove < 0 && valMcp > 0 && valUcp < 0) {
-            rowClass = "highlight-yellow";
-        } else if (valErMove < 0 && valLcp < 0) {
+        } else if (cCode === "BDL") {
+            rowClass = "highlight-pink";
+        } else if (cCode === "BD2") {
             rowClass = "highlight-dark-red";
-        } else if (valErMove < 0) {
-            rowClass = "highlight-red";
+        } else if (cCode === "UTU") {
+            rowClass = "highlight-orange";
+        } else if (cCode === "UTM") {
+            rowClass = "highlight-yellow";
+        } else if (cCode === "UTL2") {
+            rowClass = "highlight-white";
         }
 
         const colorNumDark = (val) => {
