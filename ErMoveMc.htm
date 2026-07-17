@@ -351,7 +351,7 @@
           <th style="display:none;" onclick="sortTable('histMove2')" title="Historical Move 2 Quarters Ago">HistMove2%</th>
           <th style="display:none;" onclick="sortTable('ps_ratio')" title="Price to Sales Ratio">P/S</th>
           <th class="col-group-divider" onclick="sortTable('post_earnings_move_1d')" title="Last Earnings Move %">ER Move%</th>
-          <th onclick="sortTable('priceChange')" title="% Change since last earnings report">Change%</th>
+          <th onclick="sortTable('priceChange')" title="% Change from Highest of Last 10 Days">Change10H%</th>
           <th onclick="sortTable('mcp')" title="Market Chart Price: Current price vs Pre-Earnings price">MCP1%</th>
           <th class="col-group-divider" onclick="sortTable('mcp2q')" title="Market Chart Price 2Q: Current price vs Pre-Earnings price of last to last quarter">MCP2%</th>
           <th onclick="sortTable('ucpa')" title="Upper Chart Price (+1x Implied Move)">UCP1%</th>
@@ -738,6 +738,24 @@
 
     
 
+        async function fetchLast10DaysHigh(ticker) {
+      try {
+        const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=14d`);
+        const json = await res.json();
+        if (json && json.chart && json.chart.result && json.chart.result.length > 0) {
+            const highArr = json.chart.result[0].indicators.quote[0].high;
+            if (highArr && highArr.length > 0) {
+                const validHighs = highArr.filter(h => h !== null);
+                const last10 = validHighs.slice(-10);
+                if (last10.length > 0) {
+                    return Math.max(...last10);
+                }
+            }
+        }
+      } catch (err) {}
+      return null;
+    }
+
     async function fetchEarnings(ticker) {
       try {
         const [json, jsonPrice, jsonIvData, jsonInfo] = await Promise.all([
@@ -794,7 +812,8 @@
         const preErPrice = parseFloat(latest.price) || 0;
         const postErMove1dRatio = parseFloat(latest.post_earnings_move_1d) || 0;
         const postErPrice = preErPrice * (1 + postErMove1dRatio);
-        const priceChange = postErPrice ? ((latestPrice - postErPrice) / postErPrice * 100).toFixed(2) : 0;
+        const high10d = await fetchLast10DaysHigh(ticker);
+        const priceChange = (high10d && high10d > 0) ? ((latestPrice - high10d) / high10d * 100).toFixed(2) : 0;
         const mcp = preErPrice ? ((latestPrice - preErPrice) / preErPrice * 100).toFixed(2) : 0;
         const mcp2q = mcp2qPreErPrice ? ((latestPrice - mcp2qPreErPrice) / mcp2qPreErPrice * 100).toFixed(2) : 0;
         
@@ -825,6 +844,7 @@
           mcp2qPreErPrice: mcp2qPreErPrice || 0,
           price: latestPrice || 0,
           priceChange: priceChange || 0,
+          high10d: high10d || 0,
           mcp: mcp || 0,
           mcp2q: mcp2q || 0,
           ucp3: ucp3,
@@ -976,7 +996,11 @@
                         const preErPrice = cached.data.preErPrice || 0;
                         const postErMove1dRatio = parseFloat(cached.data.post_earnings_move_1d) / 100 || 0;
                         const postErPrice = preErPrice * (1 + postErMove1dRatio);
-                        cached.data.priceChange = postErPrice ? ((latestPrice - postErPrice) / postErPrice * 100).toFixed(2) : 0;
+                        if (!cached.data.high10d) {
+                            cached.data.high10d = await fetchLast10DaysHigh(ticker);
+                        }
+                        const high10d = cached.data.high10d;
+                        cached.data.priceChange = (high10d && high10d > 0) ? ((latestPrice - high10d) / high10d * 100).toFixed(2) : 0;
                         cached.data.mcp = preErPrice ? ((latestPrice - preErPrice) / preErPrice * 100).toFixed(2) : 0;
                         
                         const mcp2qPreErPrice = cached.data.mcp2qPreErPrice || 0; 
@@ -1006,6 +1030,11 @@
             }
         }
         
+        if (cached.data.high10d === undefined || cached.data.high10d === 0) {
+            cached.data.high10d = await fetchLast10DaysHigh(ticker);
+            const latestPrice = cached.data.price || 0;
+            cached.data.priceChange = (cached.data.high10d && cached.data.high10d > 0) ? ((latestPrice - cached.data.high10d) / cached.data.high10d * 100).toFixed(2) : 0;
+        }
         if (cached.data.ucp3 === undefined) {
             const preErPrice = cached.data.preErPrice || 0;
             const expectedMoveRatio = parseFloat(cached.data.expected_move_perc) / 100 || 0;
@@ -1072,7 +1101,7 @@
       data.ucpa = latestPrice ? ((latestPrice - (preErPrice + lastImpliedMoveAbs)) / latestPrice * 100).toFixed(2) : 0;
       data.lcpa = latestPrice ? ((latestPrice - (preErPrice - lastImpliedMoveAbs)) / latestPrice * 100).toFixed(2) : 0;
       data.lcp = latestPrice ? ((latestPrice - (preErPrice - 2 * lastImpliedMoveAbs)) / latestPrice * 100).toFixed(2) : 0;
-      data.priceChange = data.postErPrice ? (((latestPrice - data.postErPrice) / data.postErPrice) * 100).toFixed(2) : 0;
+      data.priceChange = (data.high10d && data.high10d > 0) ? (((latestPrice - data.high10d) / data.high10d) * 100).toFixed(2) : 0;
       
       data.ma10Ratio = data.calculatedMa10 ? ((latestPrice - data.calculatedMa10) / data.calculatedMa10) * 100 : 0;
       data.ma50Ratio = data.ma50 ? ((latestPrice - data.ma50) / data.ma50) * 100 : 0;
