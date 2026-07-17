@@ -348,16 +348,17 @@
                     <th onclick="sortTable('report_time')" title="Premarket or After Hours">PM/AH</th>
           <th class="col-group-divider" onclick="sortTable('p_ratio')" title="Straddle Price vs Expected Move Ratio">P</th>
           <th onclick="sortTable('straddle')" title="Expected Move % (Straddle Price + 15%)">Straddle%</th>
-          <th onclick="sortTable('histMove2')" title="Historical Move 2 Quarters Ago">HistMove2%</th>
-          <th onclick="sortTable('ps_ratio')" title="Price to Sales Ratio">P/S</th>
+          <th style="display:none;" onclick="sortTable('histMove2')" title="Historical Move 2 Quarters Ago">HistMove2%</th>
+          <th style="display:none;" onclick="sortTable('ps_ratio')" title="Price to Sales Ratio">P/S</th>
           <th class="col-group-divider" onclick="sortTable('post_earnings_move_1d')" title="Last Earnings Move %">ER Move%</th>
           <th onclick="sortTable('priceChange')" title="% Change since last earnings report">Change%</th>
-          <th onclick="sortTable('mcp2q')" title="Market Chart Price 2Q: Current price vs Pre-Earnings price of last to last quarter">McP2Q%</th>
-          <th class="col-group-divider" onclick="sortTable('mcp')" title="Market Chart Price: Current price vs Pre-Earnings price">McP%</th>
-          <th onclick="sortTable('ucp')" title="Upper Chart Price (+2x Implied Move)">UCP%</th>
-          <th onclick="sortTable('ucpa')" title="Upper Chart Price (+1x Implied Move)">UCPa%</th>
-          <th onclick="sortTable('lcpa')" title="Lower Chart Price (-1x Implied Move)">LCPa%</th>
-          <th class="col-group-divider" onclick="sortTable('lcp')" title="Lower Chart Price (-2x Implied Move)">LCP%</th>
+          <th onclick="sortTable('mcp2q')" title="Market Chart Price 2Q: Current price vs Pre-Earnings price of last to last quarter">MCP2%</th>
+          <th class="col-group-divider" onclick="sortTable('mcp')" title="Market Chart Price: Current price vs Pre-Earnings price">MCP1%</th>
+          <th onclick="sortTable('ucp')" title="Upper Chart Price (+2x Implied Move)">UCP2%</th>
+          <th onclick="sortTable('ucp3')" title="Upper Chart Price (+3x Implied Move)">UCP3%</th>
+          <th onclick="sortTable('ucpa')" title="Upper Chart Price (+1x Implied Move)">UCP1%</th>
+          <th onclick="sortTable('lcpa')" title="Lower Chart Price (-1x Implied Move)">LCP1%</th>
+          <th class="col-group-divider" onclick="sortTable('lcp')" title="Lower Chart Price (-2x Implied Move)">LCP2%</th>
           <!-- <th onclick="sortTable('ma10Ratio')" title="10-Day Moving Average Distance">MA10D%</th> -->
           <th onclick="sortTable('ma50Ratio')" title="50-Day Moving Average Distance">MA50%</th>
           <th class="col-group-divider" onclick="sortTable('ma200Ratio')" title="200-Day Moving Average Distance">MA200%</th>
@@ -656,11 +657,13 @@
         const mcpAbs = latestPrice - preErPrice;
         const lastImpliedMoveAbs = preErPrice * parseFloat(latest.expected_move_perc || 0);
 
+        const ucp3Abs = preErPrice + 3 * lastImpliedMoveAbs;
         const ucpAbs = preErPrice + 2 * lastImpliedMoveAbs;
         const ucpaAbs = preErPrice + lastImpliedMoveAbs;
         const lcpaAbs = preErPrice - lastImpliedMoveAbs;
         const lcpAbs = preErPrice - 2 * lastImpliedMoveAbs;
 
+        const ucp3 = latestPrice ? ((latestPrice - ucp3Abs) / latestPrice * 100).toFixed(2) : 0;
         const ucp = latestPrice ? ((latestPrice - ucpAbs) / latestPrice * 100).toFixed(2) : 0;
         const ucpa = latestPrice ? ((latestPrice - ucpaAbs) / latestPrice * 100).toFixed(2) : 0;
         const lcpa = latestPrice ? ((latestPrice - lcpaAbs) / latestPrice * 100).toFixed(2) : 0;
@@ -680,6 +683,7 @@
           priceChange: priceChange || 0,
           mcp: mcp || 0,
           mcp2q: mcp2q || 0,
+          ucp3: ucp3,
           ucp: ucp,
           ucpa: ucpa,
           lcpa: lcpa,
@@ -837,7 +841,8 @@
                         const expectedMoveRatio = parseFloat(cached.data.expected_move_perc) / 100 || 0;
                         const lastImpliedMoveAbs = preErPrice * expectedMoveRatio;
                         
-                        const ucpAbs = preErPrice + 2 * lastImpliedMoveAbs;
+                        const ucp3Abs = preErPrice + 3 * lastImpliedMoveAbs;
+        const ucpAbs = preErPrice + 2 * lastImpliedMoveAbs;
                         const ucpaAbs = preErPrice + lastImpliedMoveAbs;
                         const lcpaAbs = preErPrice - lastImpliedMoveAbs;
                         const lcpAbs = preErPrice - 2 * lastImpliedMoveAbs;
@@ -1168,6 +1173,7 @@
         const ucpa = data.ucpa || '-';
         const lcpa = data.lcpa || '-';
         const lcp = data.lcp || '-';
+        const ucp3 = data.ucp3 || '-';
         const ma10 = data.ma10Ratio ? data.ma10Ratio.toFixed(2) : '-';
         const ma50 = data.ma50Ratio ? data.ma50Ratio.toFixed(2) : '-';
         const ma200 = data.ma200Ratio ? data.ma200Ratio.toFixed(2) : '-';
@@ -1198,13 +1204,14 @@
                     <td>${report_time}</td>
                     <td class="col-group-divider">${p}</td>
                     <td style="${straddleCalulated > 0 && expMoveCalulated >= straddleCalulated ? 'color:#22c55e;' : 'color:#ef4444'}"><a href="https://unusualwhales.com/stock/${ticker}/earnings" target="_blank" style="color:inherit;">${straddleCalulated}</a></td>
-                    <td>${histMove2}</td>
-                    <td>${ps_ratio}</td>
+                    <td style="display:none;">${histMove2}</td>
+                    <td style="display:none;">${ps_ratio}</td>
                     <td class="col-group-divider" style="${colorNumDark(erMove)}">${erMove}</td>
                     <td class="priceChange" style="${colorNumDark(priceChange)}"><a href="https://robinhood.com/stocks/${ticker}" target="_blank" style="color:inherit;">${priceChange}</a></td>
                     <td class="mcp2q" style="${colorNumDark(mcp2q)}">${mcp2q}</td>
                     <td class="mcp col-group-divider" style="${colorNumDark(mcp)}">${mcp}</td>
                     <td class="ucp" style="${colorNumDark(ucp)}">${ucp}</td>
+                    <td class="ucp3" style="${colorNumDark(ucp3)}">${ucp3}</td>
                     <td class="ucpa" style="${colorNumDark(ucpa)}">${ucpa}</td>
                     <td class="lcpa" style="${colorNumDark(lcpa)}">${lcpa}</td>
                     <td class="lcp col-group-divider" style="${colorNumDark(lcp)}">${lcp}</td>
