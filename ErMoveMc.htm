@@ -728,19 +728,16 @@
         }
       }
     }
-
-    
-
-    
-
-    
-    
-
-    
-
-        async function fetchLast10DaysHigh(ticker) {
+    async function fetchLast10DaysHigh(ticker) {
       try {
-        const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=14d`);
+        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=14d`;
+        let res = null;
+        try {
+            res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`);
+        } catch (e) {}
+        if (!res || !res.ok) {
+            res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
+        }
         const json = await res.json();
         if (json && json.chart && json.chart.result && json.chart.result.length > 0) {
             const highArr = json.chart.result[0].indicators.quote[0].high;
@@ -753,7 +750,7 @@
             }
         }
       } catch (err) {}
-      return null;
+      return 0;
     }
 
     async function fetchEarnings(ticker) {
