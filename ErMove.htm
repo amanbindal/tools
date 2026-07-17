@@ -351,7 +351,7 @@
           <th style="display:none;" onclick="sortTable('histMove2')" title="Historical Move 2 Quarters Ago">HistMove2%</th>
           <th style="display:none;" onclick="sortTable('ps_ratio')" title="Price to Sales Ratio">P/S</th>
           <th class="col-group-divider" onclick="sortTable('post_earnings_move_1d')" title="Last Earnings Move %">ER Move%</th>
-          <th onclick="sortTable('priceChange')" title="% Change from Highest of Last 10 Days">Change10H%</th>
+          <th onclick="sortTable('priceChange')" title="% Change from Highest Close of Last 10 Days">10DayH%</th>
           <th onclick="sortTable('mcp')" title="Market Chart Price: Current price vs Pre-Earnings price">MCP1%</th>
           <th class="col-group-divider" onclick="sortTable('mcp2q')" title="Market Chart Price 2Q: Current price vs Pre-Earnings price of last to last quarter">MCP2%</th>
           <th onclick="sortTable('ucpa')" title="Upper Chart Price (+1x Implied Move)">UCP1%</th>
@@ -584,29 +584,30 @@
         }
       }
     }
-    async function fetchLast10DaysHigh(ticker) {
-      try {
-        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=14d`;
-        let res = null;
-        try {
-            res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`);
-        } catch (e) {}
-        if (!res || !res.ok) {
-            res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
-        }
-        const json = await res.json();
-        if (json && json.chart && json.chart.result && json.chart.result.length > 0) {
-            const highArr = json.chart.result[0].indicators.quote[0].high;
-            if (highArr && highArr.length > 0) {
-                const validHighs = highArr.filter(h => h !== null);
-                const last10 = validHighs.slice(-10);
-                if (last10.length > 0) {
-                    return Math.max(...last10);
+    async function updateAndGetHigh10d(ticker, latestPrice, cachedData = null) {
+        let history = (cachedData && cachedData.history) ? cachedData.history : [];
+        if (!history || history.length === 0) {
+            try {
+                let res = await fetch(`https://phx.unusualwhales.com/api/gex/${ticker}?timespan=10d`);
+                let json = await res.json();
+                if (json && json.data) {
+                    history = json.data.map(d => ({ date: d.date, close: parseFloat(d.close) }));
                 }
-            }
+            } catch (err) {}
         }
-      } catch (err) {}
-      return 0;
+        const today = new Date().toISOString().split('T')[0];
+        history.push({ date: today, close: latestPrice });
+        const uniqueHistoryMap = {};
+        history.forEach(item => { if (!isNaN(item.close)) uniqueHistoryMap[item.date] = item.close; });
+        const uniqueDates = Object.keys(uniqueHistoryMap).sort();
+        const updatedHistory = uniqueDates.slice(-15).map(date => ({ date, close: uniqueHistoryMap[date] }));
+        if (cachedData) cachedData.history = updatedHistory;
+        
+        const last10 = uniqueDates.slice(-10).map(date => uniqueHistoryMap[date]);
+        return {
+            high10d: last10.length > 0 ? Math.max(...last10) : 0,
+            history: updatedHistory
+        };
     }
 
     async function fetchEarnings(ticker) {
@@ -665,7 +666,9 @@
         const preErPrice = parseFloat(latest.price) || 0;
         const postErMove1dRatio = parseFloat(latest.post_earnings_move_1d) || 0;
         const postErPrice = preErPrice * (1 + postErMove1dRatio);
-        const high10d = await fetchLast10DaysHigh(ticker);
+        const gexData = await updateAndGetHigh10d(ticker, latestPrice, null);
+        const high10d = gexData.high10d;
+        const history = gexData.history;
         const priceChange = (high10d && high10d > 0) ? ((latestPrice - high10d) / high10d * 100).toFixed(2) : 0;
         const mcp = preErPrice ? ((latestPrice - preErPrice) / preErPrice * 100).toFixed(2) : 0;
         const mcp2q = mcp2qPreErPrice ? ((latestPrice - mcp2qPreErPrice) / mcp2qPreErPrice * 100).toFixed(2) : 0;
@@ -698,6 +701,7 @@
           price: latestPrice || 0,
           priceChange: priceChange || 0,
           high10d: high10d || 0,
+          history: history,
           mcp: mcp || 0,
           mcp2q: mcp2q || 0,
           ucp3: ucp3,
@@ -849,10 +853,10 @@
                         const preErPrice = cached.data.preErPrice || 0;
                         const postErMove1dRatio = parseFloat(cached.data.post_earnings_move_1d) / 100 || 0;
                         const postErPrice = preErPrice * (1 + postErMove1dRatio);
-                        if (!cached.data.high10d) {
-                            cached.data.high10d = await fetchLast10DaysHigh(ticker);
-                        }
-                        const high10d = cached.data.high10d;
+                        const gexData = await updateAndGetHigh10d(ticker, latestPrice, cached.data);
+                        const high10d = gexData.high10d;
+                        cached.data.high10d = high10d;
+                        cached.data.history = gexData.history;
                         cached.data.priceChange = (high10d && high10d > 0) ? ((latestPrice - high10d) / high10d * 100).toFixed(2) : 0;
                         cached.data.mcp = preErPrice ? ((latestPrice - preErPrice) / preErPrice * 100).toFixed(2) : 0;
                         
@@ -884,8 +888,10 @@
         }
         
         if (cached.data.high10d === undefined || cached.data.high10d === 0) {
-            cached.data.high10d = await fetchLast10DaysHigh(ticker);
             const latestPrice = cached.data.price || 0;
+            const gexData = await updateAndGetHigh10d(ticker, latestPrice, cached.data);
+            cached.data.high10d = gexData.high10d;
+            cached.data.history = gexData.history;
             cached.data.priceChange = (cached.data.high10d && cached.data.high10d > 0) ? ((latestPrice - cached.data.high10d) / cached.data.high10d * 100).toFixed(2) : 0;
         }
         if (cached.data.ucp3 === undefined) {
