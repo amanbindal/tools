@@ -1729,8 +1729,10 @@
               valB = (valB && typeof valB === 'object' && valB.price) ? valB.price : valB;
           }
           if (isNumeric) {
-              valA = parseFloat(valA) || -999;
-              valB = parseFloat(valB) || -999;
+              valA = parseFloat(valA);
+              valB = parseFloat(valB);
+              valA = isNaN(valA) ? -999999 : valA;
+              valB = isNaN(valB) ? -999999 : valB;
           } else {
               valA = valA || '';
               valB = valB || '';
