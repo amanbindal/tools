@@ -506,11 +506,11 @@
     document.body.dataset.theme = savedTheme;
     function toPercent(value) {
       const num = parseFloat(value);
-      return isNaN(num) ? 0 : (num * 100).toFixed(2);
+      return isNaN(num) ? 0 : (num * 100).toFixed(1);
     }
     function toDecimal(value) {
       const num = parseFloat(value);
-      return isNaN(num) ? 0 : num.toFixed(2);
+      return isNaN(num) ? 0 : num.toFixed(1);
     }
     // Add this function in your script section
     function enableRowHighlighting() {
@@ -637,10 +637,16 @@
           .filter(move => move > 0)
           .reduce((sum, move, i, arr) => sum + move / arr.length, 0);
 
+        // Calculate average absolute IMPLIED move over last 4 quarters
+        const avgImpliedMove = last4Quarters
+          .map(q => Math.abs(parseFloat(q.expected_move_perc) || 0))
+          .filter(move => move > 0)
+          .reduce((sum, move, i, arr) => sum + move / arr.length, 0);
+
         // Get historic REALIZED moves for the past 4 quarters (most recent first)
         const histMoves = last4Quarters.map(q => {
           const baseMove = parseFloat(q.post_earnings_move_1d) || 0;
-          return (baseMove * 100).toFixed(2);
+          return (baseMove * 100).toFixed(1);
         }).reverse();
 
         if (!latest.post_earnings_move_3d && json.data.length > 1)
@@ -669,9 +675,9 @@
         const gexData = await updateAndGetHigh10d(ticker, latestPrice, null);
         const high10d = gexData.high10d;
         const history = gexData.history;
-        const priceChange = (high10d && high10d > 0) ? ((latestPrice - high10d) / high10d * 100).toFixed(2) : 0;
-        const mcp = preErPrice ? ((latestPrice - preErPrice) / preErPrice * 100).toFixed(2) : 0;
-        const mcp2q = mcp2qPreErPrice ? ((latestPrice - mcp2qPreErPrice) / mcp2qPreErPrice * 100).toFixed(2) : 0;
+        const priceChange = (high10d && high10d > 0) ? ((latestPrice - high10d) / high10d * 100).toFixed(1) : 0;
+        const mcp = preErPrice ? ((latestPrice - preErPrice) / preErPrice * 100).toFixed(1) : 0;
+        const mcp2q = mcp2qPreErPrice ? ((latestPrice - mcp2qPreErPrice) / mcp2qPreErPrice * 100).toFixed(1) : 0;
         
         const mcpAbs = latestPrice - preErPrice;
         const lastImpliedMoveAbs = preErPrice * parseFloat(latest.expected_move_perc || 0);
@@ -682,11 +688,11 @@
         const lcpaAbs = preErPrice - lastImpliedMoveAbs;
         const lcpAbs = preErPrice - 2 * lastImpliedMoveAbs;
 
-        const ucp3 = latestPrice ? ((latestPrice - ucp3Abs) / latestPrice * 100).toFixed(2) : 0;
-        const ucp = latestPrice ? ((latestPrice - ucpAbs) / latestPrice * 100).toFixed(2) : 0;
-        const ucpa = latestPrice ? ((latestPrice - ucpaAbs) / latestPrice * 100).toFixed(2) : 0;
-        const lcpa = latestPrice ? ((latestPrice - lcpaAbs) / latestPrice * 100).toFixed(2) : 0;
-        const lcp = latestPrice ? ((latestPrice - lcpAbs) / latestPrice * 100).toFixed(2) : 0;
+        const ucp3 = latestPrice ? ((latestPrice - ucp3Abs) / latestPrice * 100).toFixed(1) : 0;
+        const ucp = latestPrice ? ((latestPrice - ucpAbs) / latestPrice * 100).toFixed(1) : 0;
+        const ucpa = latestPrice ? ((latestPrice - ucpaAbs) / latestPrice * 100).toFixed(1) : 0;
+        const lcpa = latestPrice ? ((latestPrice - lcpaAbs) / latestPrice * 100).toFixed(1) : 0;
+        const lcp = latestPrice ? ((latestPrice - lcpAbs) / latestPrice * 100).toFixed(1) : 0;
 
         const reportTime = next.report_time == 'unknown' || next.report_time == '' || !next.report_time ? '-' : next.report_time == 'premarket' ? 'PM' : next.report_time == 'postmarket' ? 'AH' : next.report_time;
         
@@ -713,6 +719,7 @@
           er_date: next.report_date || 'N/A',
           report_date: latest.report_date || 'N/A',
           avgHistoricMove: avgHistoricRealizedMove * 100 || 0,
+          avgImpliedMove: avgImpliedMove * 100 || 0,
           straddle: toPercent(next.expected_move_perc) || 0,
           expected_move_perc: toPercent(latest.expected_move_perc) || 0,
           post_earnings_move_1d: toPercent(latest.post_earnings_move_1d) || 0,
@@ -745,11 +752,11 @@
       const ma50Ratio = data.ma50 ? ((price - data.ma50) / data.ma50) * 100 : 0;
       const ma200Ratio = data.ma200 ? ((price - data.ma200) / data.ma200) * 100 : 0;
 
-      if(row.querySelector('.ma10')) row.querySelector('.ma10').innerHTML = `<span style="color:${ma10Ratio < 0 ? 'red' : 'green'}">${ma10Ratio.toFixed(2)}</span>`;
-      if(row.querySelector('.ma50')) row.querySelector('.ma50').innerHTML = `<span style="color:${ma50Ratio < 0 ? 'red' : 'green'}">${ma50Ratio.toFixed(2)}</span>`;
-      if(row.querySelector('.ma200')) row.querySelector('.ma200').innerHTML = `<a href="https://www.barchart.com/stocks/quotes/${ticker}/overview" target="_blank" style="color:${ma200Ratio < 0 ? 'red' : 'green'}">${ma200Ratio.toFixed(2)}</a>`;
+      if(row.querySelector('.ma10')) row.querySelector('.ma10').innerHTML = `<span style="color:${ma10Ratio < 0 ? 'red' : 'green'}">${ma10Ratio.toFixed(1)}</span>`;
+      if(row.querySelector('.ma50')) row.querySelector('.ma50').innerHTML = `<span style="color:${ma50Ratio < 0 ? 'red' : 'green'}">${ma50Ratio.toFixed(1)}</span>`;
+      if(row.querySelector('.ma200')) row.querySelector('.ma200').innerHTML = `<a href="https://www.barchart.com/stocks/quotes/${ticker}/overview" target="_blank" style="color:${ma200Ratio < 0 ? 'red' : 'green'}">${ma200Ratio.toFixed(1)}</a>`;
       const finalRsi = (priceData && priceData.rsi) ? priceData.rsi : data.calculatedRsi;
-      if(row.querySelector('.rsi')) row.querySelector('.rsi').textContent = finalRsi ? finalRsi.toFixed(2) : '-';
+      if(row.querySelector('.rsi')) row.querySelector('.rsi').textContent = finalRsi ? finalRsi.toFixed(1) : '-';
     }
 
     
@@ -857,11 +864,11 @@
                         const high10d = gexData.high10d;
                         cached.data.high10d = high10d;
                         cached.data.history = gexData.history;
-                        cached.data.priceChange = (high10d && high10d > 0) ? ((latestPrice - high10d) / high10d * 100).toFixed(2) : 0;
-                        cached.data.mcp = preErPrice ? ((latestPrice - preErPrice) / preErPrice * 100).toFixed(2) : 0;
+                        cached.data.priceChange = (high10d && high10d > 0) ? ((latestPrice - high10d) / high10d * 100).toFixed(1) : 0;
+                        cached.data.mcp = preErPrice ? ((latestPrice - preErPrice) / preErPrice * 100).toFixed(1) : 0;
                         
                         const mcp2qPreErPrice = cached.data.mcp2qPreErPrice || 0; 
-                        cached.data.mcp2q = mcp2qPreErPrice ? ((latestPrice - mcp2qPreErPrice) / mcp2qPreErPrice * 100).toFixed(2) : cached.data.mcp2q;
+                        cached.data.mcp2q = mcp2qPreErPrice ? ((latestPrice - mcp2qPreErPrice) / mcp2qPreErPrice * 100).toFixed(1) : cached.data.mcp2q;
                         
                         const expectedMoveRatio = parseFloat(cached.data.expected_move_perc) / 100 || 0;
                         const lastImpliedMoveAbs = preErPrice * expectedMoveRatio;
@@ -872,11 +879,11 @@
                         const lcpaAbs = preErPrice - lastImpliedMoveAbs;
                         const lcpAbs = preErPrice - 2 * lastImpliedMoveAbs;
 
-                        cached.data.ucp3 = latestPrice ? ((latestPrice - ucp3Abs) / latestPrice * 100).toFixed(2) : 0;
-                        cached.data.ucp = latestPrice ? ((latestPrice - ucpAbs) / latestPrice * 100).toFixed(2) : 0;
-                        cached.data.ucpa = latestPrice ? ((latestPrice - ucpaAbs) / latestPrice * 100).toFixed(2) : 0;
-                        cached.data.lcpa = latestPrice ? ((latestPrice - lcpaAbs) / latestPrice * 100).toFixed(2) : 0;
-                        cached.data.lcp = latestPrice ? ((latestPrice - lcpAbs) / latestPrice * 100).toFixed(2) : 0;
+                        cached.data.ucp3 = latestPrice ? ((latestPrice - ucp3Abs) / latestPrice * 100).toFixed(1) : 0;
+                        cached.data.ucp = latestPrice ? ((latestPrice - ucpAbs) / latestPrice * 100).toFixed(1) : 0;
+                        cached.data.ucpa = latestPrice ? ((latestPrice - ucpaAbs) / latestPrice * 100).toFixed(1) : 0;
+                        cached.data.lcpa = latestPrice ? ((latestPrice - lcpaAbs) / latestPrice * 100).toFixed(1) : 0;
+                        cached.data.lcp = latestPrice ? ((latestPrice - lcpAbs) / latestPrice * 100).toFixed(1) : 0;
                         
                         cached.fetchedAt = new Date().toISOString();
                         await setCache(cacheKey, cached);
@@ -892,7 +899,7 @@
             const gexData = await updateAndGetHigh10d(ticker, latestPrice, cached.data);
             cached.data.high10d = gexData.high10d;
             cached.data.history = gexData.history;
-            cached.data.priceChange = (cached.data.high10d && cached.data.high10d > 0) ? ((latestPrice - cached.data.high10d) / cached.data.high10d * 100).toFixed(2) : 0;
+            cached.data.priceChange = (cached.data.high10d && cached.data.high10d > 0) ? ((latestPrice - cached.data.high10d) / cached.data.high10d * 100).toFixed(1) : 0;
         }
         if (cached.data.ucp3 === undefined) {
             const preErPrice = cached.data.preErPrice || 0;
@@ -900,7 +907,7 @@
             const lastImpliedMoveAbs = preErPrice * expectedMoveRatio;
             const ucp3Abs = preErPrice + 3 * lastImpliedMoveAbs;
             const latestPrice = cached.data.price || 0;
-            cached.data.ucp3 = latestPrice ? ((latestPrice - ucp3Abs) / latestPrice * 100).toFixed(2) : 0;
+            cached.data.ucp3 = latestPrice ? ((latestPrice - ucp3Abs) / latestPrice * 100).toFixed(1) : 0;
         }
         return cached.data;
       }
@@ -936,10 +943,11 @@
       if (!data) return;
       
       const calcP = (data) => {
-         var sc = parseFloat(data.straddle && data.straddle != "N/A" && data.straddle != 0 ? (parseFloat(data.straddle) + parseFloat(data.straddle) * 0.15).toFixed(2) : 0);
-         var ec = parseFloat(data.expected_move_perc && data.expected_move_perc != 0 && data.expected_move_perc != 'N/A' ? (parseFloat(data.expected_move_perc) + parseFloat(data.expected_move_perc) * 0.15).toFixed(2) : 0);
+         var sc = parseFloat(data.straddle && data.straddle != "N/A" && data.straddle != 0 ? (parseFloat(data.straddle) + parseFloat(data.straddle) * 0.15).toFixed(1) : 0);
+         var ec_val = data.avgImpliedMove || data.expected_move_perc;
+         var ec = parseFloat(ec_val && ec_val != 0 && ec_val != 'N/A' ? (parseFloat(ec_val) + parseFloat(ec_val) * 0.15).toFixed(1) : 0);
          ec = parseFloat(ec && ec != "N/A" && ec != 0 ? ec : (data.avgHistoricMove || 0));
-         return parseFloat((ec && sc && ec > 0 && sc > 0 ? parseFloat(((sc - ec) / ec) * 100) : 999).toFixed(2));
+         return parseFloat((ec && sc && ec > 0 && sc > 0 ? parseFloat(((sc - ec) / ec) * 100) : 999).toFixed(1));
       };
       data.p_ratio = calcP(data);
       const latestPrice = data.price || 0;
@@ -948,19 +956,19 @@
       const preErPrice = data.preErPrice || 0;
       
       if (data.mcp2qPreErPrice) {
-          data.mcp2q = ((latestPrice - data.mcp2qPreErPrice) / data.mcp2qPreErPrice * 100).toFixed(2);
+          data.mcp2q = ((latestPrice - data.mcp2qPreErPrice) / data.mcp2qPreErPrice * 100).toFixed(1);
       }
 
       const postErMove1dRatio = parseFloat(data.post_earnings_move_1d) / 100 || 0;
       const expectedMoveRatio = parseFloat(data.expected_move_perc) / 100 || 0;
       const lastImpliedMoveAbs = preErPrice * expectedMoveRatio;
 
-      data.mcp = preErPrice ? ((latestPrice - preErPrice) / preErPrice * 100).toFixed(2) : 0;
-      data.ucp = latestPrice ? ((latestPrice - (preErPrice + 2 * lastImpliedMoveAbs)) / latestPrice * 100).toFixed(2) : 0;
-      data.ucpa = latestPrice ? ((latestPrice - (preErPrice + lastImpliedMoveAbs)) / latestPrice * 100).toFixed(2) : 0;
-      data.lcpa = latestPrice ? ((latestPrice - (preErPrice - lastImpliedMoveAbs)) / latestPrice * 100).toFixed(2) : 0;
-      data.lcp = latestPrice ? ((latestPrice - (preErPrice - 2 * lastImpliedMoveAbs)) / latestPrice * 100).toFixed(2) : 0;
-      data.priceChange = (data.high10d && data.high10d > 0) ? (((latestPrice - data.high10d) / data.high10d) * 100).toFixed(2) : 0;
+      data.mcp = preErPrice ? ((latestPrice - preErPrice) / preErPrice * 100).toFixed(1) : 0;
+      data.ucp = latestPrice ? ((latestPrice - (preErPrice + 2 * lastImpliedMoveAbs)) / latestPrice * 100).toFixed(1) : 0;
+      data.ucpa = latestPrice ? ((latestPrice - (preErPrice + lastImpliedMoveAbs)) / latestPrice * 100).toFixed(1) : 0;
+      data.lcpa = latestPrice ? ((latestPrice - (preErPrice - lastImpliedMoveAbs)) / latestPrice * 100).toFixed(1) : 0;
+      data.lcp = latestPrice ? ((latestPrice - (preErPrice - 2 * lastImpliedMoveAbs)) / latestPrice * 100).toFixed(1) : 0;
+      data.priceChange = (data.high10d && data.high10d > 0) ? (((latestPrice - data.high10d) / data.high10d) * 100).toFixed(1) : 0;
       
       data.ma10Ratio = data.calculatedMa10 ? ((latestPrice - data.calculatedMa10) / data.calculatedMa10) * 100 : 0;
       data.ma50Ratio = data.ma50 ? ((latestPrice - data.ma50) / data.ma50) * 100 : 0;
@@ -1030,9 +1038,9 @@
                     const validRatings = res.data.filter(item => item.price_target !== null && !isNaN(parseFloat(item.price_target)));
                     validRatings.sort((a, b) => new Date(b.date) - new Date(a.date));
                     
-                    if (validRatings.length > 0) t1 = { price: parseFloat(validRatings[0].price_target).toFixed(2), date: validRatings[0].recommendation_date, firm: validRatings[0].firm_name };
-                    if (validRatings.length > 1) t2 = { price: parseFloat(validRatings[1].price_target).toFixed(2), date: validRatings[1].recommendation_date, firm: validRatings[1].firm_name };
-                    if (validRatings.length > 2) t3 = { price: parseFloat(validRatings[2].price_target).toFixed(2), date: validRatings[2].recommendation_date, firm: validRatings[2].firm_name };
+                    if (validRatings.length > 0) t1 = { price: parseFloat(validRatings[0].price_target).toFixed(1), date: validRatings[0].recommendation_date, firm: validRatings[0].firm_name };
+                    if (validRatings.length > 1) t2 = { price: parseFloat(validRatings[1].price_target).toFixed(1), date: validRatings[1].recommendation_date, firm: validRatings[1].firm_name };
+                    if (validRatings.length > 2) t3 = { price: parseFloat(validRatings[2].price_target).toFixed(1), date: validRatings[2].recommendation_date, firm: validRatings[2].firm_name };
                     
                     await setCache(cacheKey, { data: { t1, t2, t3 }, fetchedAt: new Date().toISOString() });
                 }
@@ -1167,11 +1175,11 @@
             const codeMatch = data.code && data.code.toLowerCase().includes(currentSearchQuery);
             if (!tMatch && !entryMatch && !codeMatch) continue;
         }
-        var straddleCalulated = parseFloat(data.straddle && data.straddle != "N/A" && data.straddle != 0 ? (parseFloat(data.straddle) + parseFloat(data.straddle) * 0.15).toFixed(2) : 0);
-        var expMoveCalulated = parseFloat(data.expected_move_perc && data.expected_move_perc != 0 && data.expected_move_perc != 'N/A' ? (parseFloat(data.expected_move_perc) + parseFloat(data.expected_move_perc) * 0.15).toFixed(2) : 0);
+        var straddleCalulated = parseFloat(data.straddle && data.straddle != "N/A" && data.straddle != 0 ? (parseFloat(data.straddle) + parseFloat(data.straddle) * 0.15).toFixed(1) : 0);
+        var expMoveCalulated = parseFloat(data.expected_move_perc && data.expected_move_perc != 0 && data.expected_move_perc != 'N/A' ? (parseFloat(data.expected_move_perc) + parseFloat(data.expected_move_perc) * 0.15).toFixed(1) : 0);
         
         expMoveCalulated = parseFloat(expMoveCalulated && expMoveCalulated != "N/A" && expMoveCalulated != 0 ? expMoveCalulated : (data.avgHistoricMove || 0));
-        var p = parseFloat((expMoveCalulated && straddleCalulated && expMoveCalulated > 0 && straddleCalulated > 0 ? parseFloat(((straddleCalulated - expMoveCalulated) / expMoveCalulated) * 100) : 999).toFixed(2));
+        var p = parseFloat((expMoveCalulated && straddleCalulated && expMoveCalulated > 0 && straddleCalulated > 0 ? parseFloat(((straddleCalulated - expMoveCalulated) / expMoveCalulated) * 100) : 999).toFixed(1));
         
         let rowClass = "";
         const cCode = data.code ? data.code.toUpperCase().trim() : "";
@@ -1201,13 +1209,13 @@
             return num > 0 ? 'color: #22c55e;' : num < 0 ? 'color: #ef4444;' : '';
         };
 
-        const rsi = data.finalRsi ? data.finalRsi.toFixed(2) : (data.calculatedRsi ? data.calculatedRsi.toFixed(2) : '-');
-        const iv_rank = data.iv_rank ? parseFloat(data.iv_rank).toFixed(2) : '-';
+        const rsi = data.finalRsi ? data.finalRsi.toFixed(1) : (data.calculatedRsi ? data.calculatedRsi.toFixed(1) : '-');
+        const iv_rank = data.iv_rank ? parseFloat(data.iv_rank).toFixed(1) : '-';
         const report_time = data.report_time || '-';
-        const histMove2 = data.histMove2 != null ? parseFloat(data.histMove2).toFixed(2) : '-';
-        const ps_ratio = data.ps_ratio > 0 ? data.ps_ratio.toFixed(2) : '-';
+        const histMove2 = data.histMove2 != null ? parseFloat(data.histMove2).toFixed(1) : '-';
+        const ps_ratio = data.ps_ratio > 0 ? data.ps_ratio.toFixed(1) : '-';
         const erMove = parseFloat(data.post_earnings_move_1d && data.post_earnings_move_1d != 0 && data.post_earnings_move_1d != 'N/A' ? data.post_earnings_move_1d : 0);
-        const priceChange = data.priceChange ? parseFloat(data.priceChange).toFixed(2) : '-';
+        const priceChange = data.priceChange ? parseFloat(data.priceChange).toFixed(1) : '-';
         const mcp2q = data.mcp2q || '-';
         const mcp = data.mcp || '-';
         const ucp = data.ucp || '-';
@@ -1215,10 +1223,10 @@
         const lcpa = data.lcpa || '-';
         const lcp = data.lcp || '-';
         const ucp3 = data.ucp3 || '-';
-        const ma10 = data.ma10Ratio ? data.ma10Ratio.toFixed(2) : '-';
-        const ma50 = data.ma50Ratio ? data.ma50Ratio.toFixed(2) : '-';
-        const ma200 = data.ma200Ratio ? data.ma200Ratio.toFixed(2) : '-';
-        const price = data.price ? parseFloat(data.price).toFixed(2) : '-';
+        const ma10 = data.ma10Ratio ? data.ma10Ratio.toFixed(1) : '-';
+        const ma50 = data.ma50Ratio ? data.ma50Ratio.toFixed(1) : '-';
+        const ma200 = data.ma200Ratio ? data.ma200Ratio.toFixed(1) : '-';
+        const price = data.price ? parseFloat(data.price).toFixed(1) : '-';
         
         let isEntryNear = false;
         if (data.entry) {
@@ -1234,7 +1242,7 @@
             else if (data.entry === 'LCP/MA200' && (absLcp <= 2 || absMa200 <= 2)) isEntryNear = true;
             else if (data.entry === 'Lcp-2S' && absLcp <= 2) isEntryNear = true;
         }
-        const beta = data.beta ? parseFloat(data.beta).toFixed(2) : 0;
+        const beta = data.beta ? parseFloat(data.beta).toFixed(1) : 0;
         
         // This handles columns mapped for BOTH ErMove.htm and test.js
         // ErMove.htm layout: Ticker(0), Date(1), RSI(2), Time(3), P(4), Straddle%(5), HistMove2(6), P/S(7), ErMove(8), Change(9), McP2q(10), McP(11), Ucp(12), Ucpa(13), Lcpa(14), Lcp(15), Ma10(16), Ma50(17), Ma200(18), Price(19), IV(20), Beta(21)
