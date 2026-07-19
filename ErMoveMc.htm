@@ -1088,7 +1088,7 @@
       
       const calcP = (data) => {
          var sc = parseFloat(data.straddle && data.straddle != "N/A" && data.straddle != 0 ? (parseFloat(data.straddle) + parseFloat(data.straddle) * 0.15).toFixed(1) : 0);
-         var ec_val = data.avgImpliedMove || data.expected_move_perc;
+         var ec_val = data.expected_move_perc;
          var ec = parseFloat(ec_val && ec_val != 0 && ec_val != 'N/A' ? (parseFloat(ec_val) + parseFloat(ec_val) * 0.15).toFixed(1) : 0);
          ec = parseFloat(ec && ec != "N/A" && ec != 0 ? ec : (data.avgHistoricMove || 0));
          return parseFloat((ec && sc && ec > 0 && sc > 0 ? parseFloat(((sc - ec) / ec) * 100) : 999).toFixed(1));
@@ -1323,7 +1323,7 @@
         var expMoveCalulated = parseFloat(data.expected_move_perc && data.expected_move_perc != 0 && data.expected_move_perc != 'N/A' ? (parseFloat(data.expected_move_perc) + parseFloat(data.expected_move_perc) * 0.15).toFixed(1) : 0);
         
         expMoveCalulated = parseFloat(expMoveCalulated && expMoveCalulated != "N/A" && expMoveCalulated != 0 ? expMoveCalulated : (data.avgHistoricMove || 0));
-        var p = parseFloat((expMoveCalulated && straddleCalulated && expMoveCalulated > 0 && straddleCalulated > 0 ? parseFloat(((straddleCalulated - expMoveCalulated) / expMoveCalulated) * 100) : 999).toFixed(1));
+        var p = data.p_ratio !== undefined ? data.p_ratio : 999;
         
         let rowClass = "";
         const cCode = data.code ? data.code.toUpperCase().trim() : "";
