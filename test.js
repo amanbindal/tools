@@ -343,6 +343,42 @@
 
     
 
+    
+    async function getYahooLatestPrice(ticker) {
+        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1d`;
+        try {
+            let res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`).catch(()=>null);
+            if (!res || !res.ok) res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`).catch(()=>null);
+            if (res && res.ok) {
+                const j = await res.json();
+                return parseFloat(j.chart.result[0].meta.regularMarketPrice);
+            }
+        } catch(e) {}
+        return null;
+    }
+
+    
+    async function getLatestPriceHandling(ticker, jsonPrice) {
+        let latestPrice = parseFloat(jsonPrice.curr);
+        if (latestPrice && !isNaN(latestPrice)) return latestPrice;
+        
+        try {
+            const cached = await getCache(`Straddle_er_${ticker}`);
+            if (cached && cached.data && cached.data.price && cached.fetchedAt) {
+                const fetchedTime = new Date(cached.fetchedAt);
+                const now = new Date();
+                const isToday = fetchedTime.toDateString() === now.toDateString();
+                const fetchedTimeET = new Date(fetchedTime.toLocaleString("en-US", {timeZone: "America/New_York"}));
+                if (isToday && fetchedTimeET.getHours() >= 14) {
+                    return cached.data.price;
+                }
+            }
+        } catch(e) {}
+        
+        const yPrice = await getYahooLatestPrice(ticker);
+        return yPrice || parseFloat(jsonPrice.prev) || 0;
+    }
+
     async function fetchEarnings(ticker) {
       try {
         const [json, jsonPrice, jsonIvData, jsonInfo] = await Promise.all([
@@ -396,7 +432,7 @@
         const total_revenue = financials.total_revenue || 0;
         const ps_ratio = (marketcap > 0 && total_revenue > 0) ? (marketcap / total_revenue) : 0;
         
-        const latestPrice = parseFloat(jsonPrice.curr) || parseFloat(jsonPrice.prev) || 0;
+        let latestPrice = await getLatestPriceHandling(ticker, jsonPrice);
         const preErPrice = parseFloat(latest.price) || 0;
         const postErMove1dRatio = parseFloat(latest.post_earnings_move_1d) || 0;
         const postErPrice = preErPrice * (1 + postErMove1dRatio);
@@ -553,7 +589,7 @@
                 const res = await fetch(`https://phx.unusualwhales.com/api/ticker/${ticker}/price/`);
                 if (res.ok) {
                     const jsonPrice = await res.json();
-                    const latestPrice = parseFloat(jsonPrice.curr) || parseFloat(jsonPrice.prev) || 0;
+                    let latestPrice = await getLatestPriceHandling(ticker, jsonPrice);
                     if (latestPrice > 0) {
                         cached.data.price = latestPrice;
                         
@@ -660,7 +696,7 @@
       if (erM > 0 && ma200v > 0 && mcp2qv > 0 && mcpv > 0 && lcpv > 0 && ucpv > 0) { entry = 'UCP'; code = 'BOU'; }
       else if (erM > 0 && ma200v > 0 && mcp2qv > 0 && mcpv < 0 && lcpv > 0 && ucpv < 0) { entry = 'LCP'; code = 'BOL'; }
       else if (erM > 0 && ma200v > 0 && mcp2qv > 0 && mcpv > 0 && lcpv > 0 && ucpv < 0) { entry = 'MCP'; code = 'BOM'; }
-      else if (ma200v > 0 && mcp2qv < 0 && mcpv < 0 && lcpv < 0 && ucpv < 0) { entry = 'LCP'; code = 'BDL'; }
+      else if (ma200v > 0 && mcp2qv < 0 && mcpv < 0 && lcpv < 0 && ucpv < 0) { entry = 'LCP'; code = erM > 0 ? 'BDL+' : 'BDL-'; }
       else if (ma200v < 0 && mcp2qv < 0 && mcpv < 0 && lcpv > 0 && ucpv < 0) { entry = 'MA200'; code = 'BD2'; }
       else if (erM < 0 && ma200v > 0 && mcp2qv > 0 && mcpv < 0 && lcpv > 0 && ucpv < 0) { entry = 'LCP/MA200'; code = 'UTL2'; }
       else if (erM < 0 && ma200v > 0 && mcp2qv > 0 && mcpv > 0 && lcpv > 0 && ucpv < 0) { entry = 'MCP'; code = 'UTM'; }
