@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>PEAD</title>
+  <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <h2>&nbspPEAD &nbsp<span style="color: #DE3163;">BD</span>, <span style="color: #FFAC1C;">BU</span>,
+      <span style="color: #6495ED;">TU</span>, <span style="color: #2AAA8A;">TD</span>
+    </h2>
+    <div style="display: flex; gap: 20px; align-items: center; margin-right: 60px;">
+      <input type="text" id="searchInput" placeholder="Search Ticker..." style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--table-border); background: var(--table-bg); color: var(--text-color); outline: none;">
+      <button id="themeToggle" class="theme-toggle" style="display: none;">🌙&nbsp☀️</button>
+      <a href="ErMove.htm" target="_blank" style="text-decoration: none; color: #FFAC1C;">GT_100</a>
+      <a href="ErMoveSc.htm" target="_blank" style="text-decoration: none; color: #2AAA8A;">ErMoveSc</a>
+      <a href="ErMoveLc.htm" target="_blank" style="text-decoration: none; color: #9B59B6;">ErMoveLc</a>
+      <a href="ErMoveMc.htm" target="_blank" style="text-decoration: none; color: #E74C3C;">ErMoveMc</a>
+      <a href="ErMove.htm" target="_blank" style="text-decoration: none; color: #3498DB;">ErMove</a>
+    </div>
+  </div>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: var(--background-color);
+      color: var(--text-color);
+      transition: all 0.3s ease;
+    }
+
+    :root {
+      --background-color: #f4f7f6;
+      --text-color: #1a1a1a;
+      --table-bg: #ffffff;
+      --table-border: #e0e0e0;
+      --header-bg: #2c3e50;
+      --header-text: #ffffff;
+      --row-hover: #f1f5f9;
+    }
+
+    [data-theme="dark"] {
+      --background-color: #121212;
+      --text-color: #e0e0e0;
+      --table-bg: #1e1e1e;
+      --table-border: #333333;
+      --header-bg: #1f2937;
+      --header-text: #f9fafb;
+      --row-hover: #2d3748;
+    }
+
+    .light-theme {
+      background-color: #ffffff;
+      color: #000000;
+    }
+
+    .theme-toggle {
+      position: fixed;
+      margin-right: 8px;
+      padding: 8px 8px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      background: transparent;
+    }
+
+    [data-theme="dark"] .theme-toggle span:first-child {
+      display: none;
+    }
+
+    [data-theme="light"] .theme-toggle span:last-child {
+      display: none;
+    }
+
+    th, td {
+      padding: 8px 10px;
+      font-size: 13px;
+      text-align: right;
+      border-bottom: 1px solid var(--table-border);
+      transition: background-color 0.2s;
+      font-variant-numeric: tabular-nums;
+    }
+
+    th {
+      background-color: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    th:hover {
+      background-color: #3b4d61;
+    }
+
+    /* Sticky Ticker Column */
+    th:nth-child(1), td:nth-child(1) {
+      text-align: left;
+      position: sticky;
+      left: 0;
+      background-color: var(--table-bg);
+      z-index: 1;
+      border-right: 1px solid var(--table-border);
+      box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+      font-weight: 600;
+    }
+
+    thead th:nth-child(1) {
+      z-index: 3;
+      background-color: var(--header-bg);
+    }
+    
+    .light-theme th:nth-child(1) {
+      background-color: #eee;
+    }
+
+    /* Left align Date */
+    th:nth-child(2), td:nth-child(2) {
+      text-align: left;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--table-bg);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+    
+    tbody tr:hover {
+      background-color: var(--row-hover);
+    }
+
+    .light-theme th {
+      background-color: #eee;
+      color: black;
+    }
+
+    .toggle-btn {
+      padding: 10px;
+      margin: 10px;
+      cursor: pointer;
+      border: none;
+      background-color: #444;
+      color: white;
+    }
+
+    .light-theme .toggle-btn {
+      background-color: #ccc;
+      color: black;
+    }
+
+    /* Use GPU acceleration for animations */
+    .animated {
+      transform: translateZ(0);
+      will-change: transform;
+    }
+
+    /* Optimize table rendering */
+    #table-wrapper {
+      contain: content;
+      height: 90vh;
+      overflow-y: auto;
+    }
+
+    /* Prevent layout shifts */
+    table {
+      table-layout: fixed;
+      width: 100%;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background-color: rgba(44, 62, 80, 0.85); /* Glassmorphism */
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      color: white;
+    }
+    
+    [data-theme="light"] thead th {
+      background-color: rgba(238, 238, 238, 0.85);
+      color: black;
+    }
+
+    /* Column Grouping Dividers */
+    .col-group-divider {
+      border-right: 1px solid var(--table-border) !important;
+    }
+    
+    td.col-group-divider {
+      border-right: 2px solid var(--table-border) !important;
+    }
+
+    .light-theme thead th {
+      background-color: #eee;
+      color: black;
+    }
+
+    #earningsTable {
+      max-height: 80vh;
+      overflow-y: auto;
+      width: 100%;
+    }
+
+    .highlight-green {
+      background-color: #d6fbb1 !important;
+    }
+
+    .highlight-orange {
+      background-color: #FFECB3 !important;
+    }
+
+    .highlight-red {
+      background-color: #FFEBEE !important;
+    }
+
+    .highlight-blue {
+      background-color: #cefcfd !important;
+    }
+
+    .highlight-sky-blue {
+      background-color: #87CEEB !important;
+      color: #000 !important;
+    }
+
+    .highlight-dark-red {
+      background-color: #ff4d4d !important;
+      color: #fff !important;
+    }
+
+    .highlight-dark-green {
+      background-color: #228B22 !important;
+      color: #fff !important;
+    }
+
+    .highlight-light-green {
+      background-color: #90EE90 !important;
+      color: #000 !important;
+    }
+    
+    .highlight-yellow {
+      background-color: #FFFFE0 !important;
+      color: #000 !important;
+    }
+
+    .highlight-pink {
+      background-color: #FFC0CB !important;
+      color: #000 !important;
+    }
+
+    .highlight-white {
+      background-color: #FFFFFF !important;
+      color: #000 !important;
+    }
+
+    a,
+    a label,
+    a:link,
+    a:visited,
+    a:hover,
+    a:active {
+      cursor: pointer !important;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    a:hover {
+      text-decoration: underline !important;
+    }
+
+    td a,
+    td a:link,
+    td a:visited,
+    td a:hover,
+    td a:active {
+      cursor: pointer !important;
+    }
+
+    .row-selected {
+      outline: 2px solid #1976d2 !important;
+      background-color: #e3f2fd !important;
+      color: black !important;
+    }
+    .row-selected td, .row-selected a, .row-selected td a {
+      color: black !important;
+    }
+    /* Progress Bar Styles */
+    .progress-wrapper {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 300px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(5px);
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      z-index: 1000;
+      text-align: center;
+    }
+    
+    .progress-bar-container {
+      width: 100%;
+      height: 10px;
+      background: var(--table-border);
+      border-radius: 5px;
+      overflow: hidden;
+      margin-top: 15px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: #007bff;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .progress-text {
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 10px;
+      color: var(--text-color);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="progress-wrapper" id="progressWrapper" style="display: none;">
+    <div style="font-size: 16px; font-weight: 600; margin-bottom: 5px;">Loading Earnings Data</div>
+    <div class="progress-bar-container">
+      <div class="progress-bar-fill" id="progressBarFill"></div>
+    </div>
+    <div class="progress-text" id="progressText">0 / 400</div>
+  </div>
+
+  <div id="table-wrapper">
+    <table id="earningsTable">
+      <thead>
+        <tr>
+          <th onclick="sortTable('ticker')">Ticker</th>
+          <th onclick="sortTable('er_date')" title="Recent Earnings Date">ErDate</th>
+
+          <th style="display:none;" onclick="sortTable('histMove2')" title="Historical Move 2 Quarters Ago">HistMove2%</th>
+          <th style="display:none;" onclick="sortTable('ps_ratio')" title="Price to Sales Ratio">P/S</th>
+          <th class="col-group-divider" onclick="sortTable('post_earnings_move_1d')" title="Last Earnings Move %">ER Move%</th>
+          <th onclick="sortTable('priceChange')" title="% Change from Highest Close of Last 10 Days">10DayH%</th>
+          <th onclick="sortTable('mcp')" title="Market Chart Price: Current price vs Pre-Earnings price">MCP1%</th>
+          <th class="col-group-divider" onclick="sortTable('mcp2q')" title="Market Chart Price 2Q: Current price vs Pre-Earnings price of last to last quarter">MCP2%</th>
+          <th onclick="sortTable('ucpa')" title="Upper Chart Price (+1x Implied Move)">UCP1%</th>
+          <th onclick="sortTable('ucp')" title="Upper Chart Price (+2x Implied Move)">UCP2%</th>
+          <th onclick="sortTable('ucp3')" title="Upper Chart Price (+3x Implied Move)">UCP3%</th>
+          <th onclick="sortTable('lcpa')" title="Lower Chart Price (-1x Implied Move)">LCP1%</th>
+          <th class="col-group-divider" onclick="sortTable('lcp')" title="Lower Chart Price (-2x Implied Move)">LCP2%</th>
+          <!-- <th onclick="sortTable('ma10Ratio')" title="10-Day Moving Average Distance">MA10D%</th> -->
+          <th onclick="sortTable('ma50Ratio')" title="50-Day Moving Average Distance">MA50%</th>
+          <th class="col-group-divider" onclick="sortTable('ma200Ratio')" title="200-Day Moving Average Distance">MA200%</th>
+          <th onclick="sortTable('entry')" title="Entry Target">Entry</th>
+          <th onclick="sortTable('code')" title="Condition Code">Code</th>
+          <th onclick="sortTable('price')" title="Latest Price">Price</th>
+          <th onclick="sortTable('mcp')" title="Change from Pre-Earnings Close">Change%</th>
+          <!-- <th class="col-group-divider" onclick="sortTable('finalRsi')" title="Relative Strength Index">Rsi</th> -->
+          <!-- <th onclick="sortTable('beta')" title="Beta (Stock Volatility vs Market)">Beta</th> -->
+          <th onclick="sortTable('t1')" title="Target 1">T1</th>
+          <th onclick="sortTable('t2')" title="Target 2">T2</th>
+          <th onclick="sortTable('t3')" title="Target 3">T3</th>
+          <th onclick="sortTable('iv_rank')" title="Implied Volatility Rank">IvRank</th>
+          
+          
+          
+          
+          
+          
+          
+          
+          
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Data will be injected here -->
+      </tbody>
+    </table>
+  </div>
+  <script>
+    const tickers = [ 'JPM', 'CNH', 'AGCO', 'DE', 'KUBTY', 'TTC', 'FMC', 'CTVA', 'FMX', 'CF', 'NTR', 'MOS', 'PWR', 'VRT', 'VST', 'CEG', 'ETN', 'ARM', 'INTC', 'TSM', 'AVGO', 'HPE', 'DELL', 'MRVL', 'NTAP', 'NTNX', 'NVDA', 'CBRS', 'CSCO', 'SMCI', 'AMD', 'DOCN', 'CRDO', 'COHR', 'EXTR', 'ALAB', 'ANET', 'GLW', 'CIEN', 'LITE', 'AAOI', 'VIAV', 'AER', 'BA', 'EADSY', 'HXL', 'FTAI', 'GE', 'RTX', 'HEI', 'TDG', 'SAFRY', 'BABA', 'PDD', 'JD', 'SE', 'CPNG', 'MPNGY', 'LMND', 'PGR', 'CB', 'TRV', 'ALL', 'MCY', 'CVNA', 'PAG', 'LAD', 'GPI', 'SAH', 'KMX', 'CPRT', 'AN', 'MNRO', 'ORLY', 'AZO', 'AAP', 'DRVN', 'RIVN', 'LKQ', 'STLA', 'TSLA', 'F', 'GM', 'ALV', 'TM', 'BWA', 'HMC', 'APTV', 'LCID', 'ALSN', 'LEA', 'MGA', 'ULTA', 'COTY', 'EL', 'ELF', 'IPAR', 'LRLCY', 'CM', 'TD', 'RY', 'BMO', 'BNS', 'SLF', 'MFC', 'MGM', 'SPHR', 'LVS', 'CZR', 'DKNG', 'PENN', 'FLUT', 'WYNN', 'MLCO', 'LEVI', 'AEO', 'KTB', 'FFIV', 'AKAM', 'NET', 'FSLY', 'WRB', 'AIG', 'CNA', 'NCLH', 'RCL', 'CCL', 'VIK', 'BAND', 'ADBE', 'CRM', 'VEEV', 'NCNO', 'FIVN', 'TWLO', 'FIG', 'HUBS', 'NICE', 'SOUN', 'FTNT', 'CHKP', 'CVLT', 'RBRK', 'SAIL', 'ZS', 'S', 'CRWD', 'OKTA', 'PANW', 'NTSK', 'ORCL', 'SNOW', 'MDB', 'PLTR', 'DXCM', 'ABT', 'MDT', 'DVA', 'FMS', 'EMR', 'POWL', 'FLEX', 'SANM', 'BHE', 'CLS', 'JBL', 'ADP', 'WEX', 'PAYX', 'HQY', 'INTU', 'WDAY', 'PAYC', 'PCTY', 'BE', 'FCEL', 'PLUG', 'BLDP', 'LIN', 'TRP', 'EPD', 'KMI', 'LNG', 'TRGP', 'ET', 'MPLX', 'OKE', 'WMB', 'ENB', 'ICE', 'CME', 'IVZ', 'NDAQ', 'STT', 'BLK', 'CBOE', 'TROW', 'BAC', 'MSBC', 'GS', 'WFC', 'CROX', 'VFC', 'DECK', 'NKE', 'GCO', 'BIRK', 'ONON', 'UAA', 'ETD', 'MLKN', 'LOVE', 'RH', 'WSM', 'LZB', 'ARHS', 'W', 'RBLX', 'EA', 'TTWO', 'CRSR', 'SONY', 'U', 'GME', 'SITE', 'SMG', 'TEVA', 'VTRS', 'RDY', 'SDZNY', 'CNC', 'HUM', 'MOH', 'UNH', 'ELV', 'OSCR', 'CLOV', 'CVS', 'JCI', 'WSO', 'TT', 'LII', 'CARR', 'AOS', 'MAS', 'MLM', 'BLDR', 'EXP', 'VMC', 'AWI', 'SHW', 'RPM', 'LOW', 'HD', 'IBP', 'JHX', 'OC', 'SXYAY', 'FBIN', 'FAF', 'STC', 'CSGP', 'ORI', 'RKT', 'UWMC', 'Z', 'ZG', 'COMP', 'OPEN', 'NVR', 'DHI', 'PHM', 'KBH', 'LEN', 'HOV', 'TOL', 'BSX', 'PEN', 'SYK', 'THC', 'UHS', 'HCA', 'CYH', 'ISRG', 'SGRY', 'GMED', 'ZBH', 'TMDX', 'ECL', 'PG', 'CL', 'CLX', 'ABM', 'GROV', 'KMB', 'CHD', 'BDRFY', 'RBGLY', 'UL', 'TER', 'HON', 'ABBNY', 'SIEGY', 'CGNX', 'EMB', 'ROK', 'AA', 'FCX', 'FSUGY', 'BHP', 'VALE', 'RIO', 'CLF', 'ITW', 'MMM', 'FAST', 'AIT', 'PH', 'GWW', 'PTC', 'DASTY', 'ADSK', 'IOT', 'CTSH', 'INFY', 'WIT', 'GIB', 'ACN', 'EPAM', 'GLOB', 'DXC', 'KD', 'BBAR', 'DLO', 'STNE', 'NU', 'PAGS', 'MELI', 'BBD', 'ITUB', 'INTR', 'LNC', 'MET', 'EQH', 'PRU', 'BUD', 'SAM', 'TAP', 'CELH', 'STZ', 'KO', 'PEP', 'KDP', 'MNST', 'DEO', 'HEINY', 'BF.B', 'ARCB', 'CHRW', 'ODFL', 'SAIA', 'XPO', 'LSTR', 'RXO', 'FWRD', 'URI', 'CAT', 'CMI', 'TSN', 'HRL', 'JBS', 'SFD', 'PPC', 'CORZ', 'APLD', 'IREN', 'CRWV', 'BW', 'WULF', 'CIFR', 'NBIS', 'HUT', 'GEV', 'OKLO', 'SMR', 'LEU', 'BWXT', 'CCJ', 'SHEL', 'BP', 'XOM', 'CVX', 'HAL', 'SLB', 'DVN', 'COP', 'AZN', 'BMY', 'MRK', 'NVS', 'RHHBY', 'COUR', 'CHGG', 'DUOL', 'HSY', 'MDLZ', 'CAG', 'GIS', 'CPB', 'SJM', 'KHC', 'NSRGY', 'EMN', 'AXTA', 'PPG', 'CC', 'MA', 'V', 'AXP', 'AAPL', 'HPQ', 'XRX', 'LOGI', 'STX', 'MU', 'SNDK', 'WDC', 'TREE', 'SOFI', 'HAPN', 'UPST', 'AFRM', 'CHWY', 'WOOF', 'ZTS', 'ELAN', 'FRPT', 'IDXX', 'AEM', 'AG', 'PAAS', 'WPM', 'KGC', 'NEM', 'B', 'HL', 'CDE', 'SIG', 'DLR', 'PLD', 'CFG', 'FHN', 'PNC', 'ZION', 'FITB', 'HBAN', 'RF', 'TFC', 'MTB', 'USB', 'CMG', 'SBUX', 'CAVA', 'SG', 'BROS', 'DASH', 'SYY', 'WING', 'YUM', 'WEN', 'QSR', 'SHAK', 'MCD', 'BJRI', 'CAKE', 'DRI', 'CBRL', 'EAT', 'TXRH', 'BLMN', 'DIN', 'AMZN', 'ACI', 'COST', 'KR', 'BJ', 'WMT', 'TGT', 'GO', 'KLAC', 'LRCX', 'ASML', 'AMAT', 'NXPI', 'TXN', 'AEHR', 'ADI', 'ON', 'ILMN', 'TMO', 'LH', 'DGX', 'DHR', 'A', 'BIO', 'QCOM', 'QRVO', 'SWKS', 'CRUS', 'MO', 'PM', 'RLX', 'TPB', 'BTI', 'GOOG', 'META', 'RDDT', 'FOXA', 'PINS', 'SNAP', 'NOW', 'ASAN', 'GTLB', 'MNDY', 'FROG', 'TEAM', 'FSLR', 'ENPH', 'NXT', 'CSIQ', 'ARRY', 'SEDG', 'FVRR', 'KFRC', 'NSP', 'RANJY', 'RHI', 'MAN', 'KFY', 'UPWK', 'MT', 'NUE', 'STLD', 'GGB', 'NFLX', 'PUBM', 'TTD', 'WBD', 'APP', 'DIS', 'MGNI', 'PSKY', 'SPOT', 'NOK', 'ERIC', 'HOOD', 'COIN', 'MS', 'IBKR', 'SCHW', 'BULL', 'GLXY', 'FUTU', 'PATK', 'WGO', 'CWH', 'THO', 'LCII', 'H', 'HLT', 'LUV', 'WH', 'JBLU', 'AAL', 'ALK', 'UAL', 'DAL', 'ABNB', 'TRIP', 'EXPE', 'MAR', 'IHG', 'BKNG', 'CAR', 'HTZ', 'DIDIY', 'LYFT', 'UBER', 'GRAB', 'KNX', 'GBX', 'UPS', 'NSC', 'UNP', 'JBHT', 'CSX', 'RAIL', 'FDX', 'AEP', 'EXC', 'SO', 'XEL', 'EIX', 'NEE', 'PCG', 'ED', 'DUK', 'PEG', 'D', 'GOOS', 'COLM', 'RL', 'ANF', 'LULU', 'GAP', 'URBN', 'ROST', 'TJX', 'PVH', 'USFD', 'UNFI' ];
+    const themeToggle = document.getElementById('themeToggle');
+    themeToggle.addEventListener('click', () => {
+      document.body.dataset.theme = document.body.dataset.theme === 'dark'
+        ? 'light'
+        : 'dark';
+
+      // Optional: Save preference to localStorage
+      localStorage.setItem('theme', document.body.dataset.theme);
+    });
+
+    // Load saved theme preference
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.body.dataset.theme = savedTheme;
+    function toPercent(value) {
+      const num = parseFloat(value);
+      return isNaN(num) ? 0 : (num * 100).toFixed(1);
+    }
+    function toDecimal(value) {
+      const num = parseFloat(value);
+      return isNaN(num) ? 0 : num.toFixed(1);
+    }
+    // Add this function in your script section
+    function enableRowHighlighting() {
+      document.querySelectorAll('#earningsTable tbody tr').forEach(row => {
+        row.onclick = function () {
+          // Remove highlight from all rows
+          document.querySelectorAll('#earningsTable tbody tr').forEach(r => r.classList.remove('row-selected'));
+          // Add highlight to clicked row
+          this.classList.add('row-selected');
+        };
+      });
+    }
+    function calculateRSI(closes, period = 14) {
+      if (closes.length <= period) return null;
+
+      let gains = 0;
+      let losses = 0;
+
+      // Initial average gain/loss
+      for (let i = 1; i <= period; i++) {
+        const delta = closes[i] - closes[i - 1];
+        if (delta > 0) gains += delta;
+        else losses -= delta;
+      }
+
+      let avgGain = gains / period;
+      let avgLoss = losses / period;
+
+      // Apply smoothing for the rest
+      for (let i = period + 1; i < closes.length; i++) {
+        const delta = closes[i] - closes[i - 1];
+        const gain = delta > 0 ? delta : 0;
+        const loss = delta < 0 ? -delta : 0;
+
+        avgGain = (avgGain * (period - 1) + gain) / period;
+        avgLoss = (avgLoss * (period - 1) + loss) / period;
+      }
+
+      const rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
+      const rsi = 100 - 100 / (1 + rs);
+      return rsi;
+    }
+
+    function calculateMA10(closes) {
+      if (!closes || closes.length < 10) return 0;
+      const recent = closes.slice(-10);
+      return recent.reduce((sum, price) => sum + price, 0) / 10;
+    }
+
+    function calculateMA50(closes) {
+      if (!closes || closes.length < 50) return 0;
+      const recent = closes.slice(-50);
+      return recent.reduce((sum, price) => sum + price, 0) / 50;
+    }
+
+    function calculateMA200(closes) {
+      if (!closes || closes.length < 200) return 0;
+      const recent = closes.slice(-200);
+      return recent.reduce((sum, price) => sum + price, 0) / 200;
+    }
+
+    async function fetchWithRetry(url, retries = 2, delay = 1000) {
+      for (let i = 0; i < retries; i++) {
+        try {
+          const res = await fetch(url);
+          if (res.status === 429 || res.status >= 500) throw new Error('Rate limit or server error');
+          return await res.json().catch(() => ({}));
+        } catch (err) {
+          if (i === retries - 1) return {};
+          await new Promise(res => setTimeout(res, delay + Math.random() * 500));
+        }
+      }
+    }
+    async function updateAndGetHigh10d(ticker, latestPrice, cachedData = null) {
+        let history = (cachedData && cachedData.history) ? cachedData.history : [];
+        if (!history || history.length === 0) {
+            try {
+                let res = await fetch(`https://phx.unusualwhales.com/api/gex/${ticker}?timespan=10d`);
+                let json = await res.json();
+                if (json && json.data) {
+                    history = json.data.map(d => ({ date: d.date, close: parseFloat(d.close) }));
+                }
+            } catch (err) {}
+        }
+        const today = new Date().toISOString().split('T')[0];
+        history.push({ date: today, close: latestPrice });
+        const uniqueHistoryMap = {};
+        history.forEach(item => { if (!isNaN(item.close)) uniqueHistoryMap[item.date] = item.close; });
+        const uniqueDates = Object.keys(uniqueHistoryMap).sort();
+        const updatedHistory = uniqueDates.slice(-15).map(date => ({ date, close: uniqueHistoryMap[date] }));
+        if (cachedData) cachedData.history = updatedHistory;
+        
+        const last10 = uniqueDates.slice(-10).map(date => uniqueHistoryMap[date]);
+        return {
+            high10d: last10.length > 0 ? Math.max(...last10) : 0,
+            history: updatedHistory
+        };
+    }
+
+    
+    async function getYahooLatestPrice(ticker) {
+        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1d`;
+        try {
+            let res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`).catch(()=>null);
+            if (!res || !res.ok) res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`).catch(()=>null);
+            if (res && res.ok) {
+                const j = await res.json();
+                return parseFloat(j.chart.result[0].meta.regularMarketPrice);
+            }
+        } catch(e) {}
+        return null;
+    }
+
+    
+    async function getLatestPriceHandling(ticker, jsonPrice) {
+        let latestPrice = parseFloat(jsonPrice.curr);
+        if (latestPrice && !isNaN(latestPrice)) return latestPrice;
+        
+        try {
+            const cached = await getCache(`Straddle_er_${ticker}`);
+            if (cached && cached.data && cached.data.price && cached.fetchedAt) {
+                const fetchedTime = new Date(cached.fetchedAt);
+                const now = new Date();
+                const isToday = fetchedTime.toDateString() === now.toDateString();
+                const fetchedTimeET = new Date(fetchedTime.toLocaleString("en-US", {timeZone: "America/New_York"}));
+                if (isToday && fetchedTimeET.getHours() >= 14) {
+                    return cached.data.price;
+                }
+            }
+        } catch(e) {}
+        
+        const yPrice = await getYahooLatestPrice(ticker);
+        return yPrice || parseFloat(jsonPrice.prev) || 0;
+    }
+
+    async function fetchEarnings(ticker) {
+      try {
+        const [json, jsonPrice, jsonIvData, jsonInfo] = await Promise.all([
+          fetchWithRetry(`https://phx.unusualwhales.com/api/companies_earnings/historic/${ticker}`),
+          fetchWithRetry(`https://phx.unusualwhales.com/api/ticker/${ticker}/price/`),
+          fetchWithRetry(`https://phx.unusualwhales.com/api/volatility/${ticker}/stats`),
+          fetchWithRetry(`https://phx.unusualwhales.com/api/companies/${ticker}/`)
+        ]);
+
+        // EMSE Filter: Market Cap > 1 Billion and 30-Day Volume > 1 Million (Commented out as tickers are pre-filtered)
+        if (!json.data || json.data.length === 0) // || !jsonInfo.company || jsonInfo.company.marketcap < 1000000000 || jsonInfo.company.avg30_volume < 1000000)
+          return null;
+
+        var latest = json.data[json.data.length - 1];
+        var next = latest;
+        
+        if (!latest.post_earnings_move_3d && json.data.length > 1) {
+          latest = json.data[json.data.length - 2];
+        }
+
+        // Keep/Filter stocks with earnings happened in last 2 days only.
+        if (!latest.report_date) return null;
+        const erDate = new Date(latest.report_date);
+        const today = new Date();
+        const diffDays = (today - erDate) / (1000 * 60 * 60 * 24);
+        // Using 3 days to account for weekends and timezone shifts, effectively capturing the last 2 business days.
+        if (diffDays < 0 || diffDays > 3) {
+            return null;
+        }
+
+        // Fix: Use actual post_earnings_move_1d instead of expected_move_perc for historical realized moves
+        const last4Quarters = json.data.slice(-5, -1); // Exclude the next earnings date
+
+        // Calculate average absolute REALIZED move over last 4 quarters
+        const avgHistoricRealizedMove = last4Quarters
+          .map(q => Math.abs(parseFloat(q.post_earnings_move_1d) || 0))
+          .filter(move => move > 0)
+          .reduce((sum, move, i, arr) => sum + move / arr.length, 0);
+
+        // Calculate average absolute IMPLIED move over last 4 quarters
+        const avgImpliedMove = last4Quarters
+          .map(q => Math.abs(parseFloat(q.expected_move_perc) || 0))
+          .filter(move => move > 0)
+          .reduce((sum, move, i, arr) => sum + move / arr.length, 0);
+
+        const histMoves = last4Quarters.map(q => {
+          const baseMove = parseFloat(q.post_earnings_move_1d) || 0;
+          return (baseMove * 100).toFixed(1);
+        }).reverse();
+          
+        let latestIndex = json.data.indexOf(latest);
+        let lastToLast = latestIndex > 0 ? json.data[latestIndex - 1] : null;
+        let mcp2qPreErPrice = lastToLast ? parseFloat(lastToLast.price) || 0 : 0;
+
+        const beta = jsonInfo.company ? parseFloat(jsonInfo.company.beta) || 0 : 0;
+        const ma200 = parseFloat(jsonInfo.company.day200_moving_avg) || 0;
+        const high52w = parseFloat(jsonInfo.company.week52_high) || 0;
+        const industry = jsonInfo.company.industry_type || "";
+        const marketcap = jsonInfo.company ? parseFloat(jsonInfo.company.marketcap) || 0 : 0;
+        const ivRank = jsonIvData && jsonIvData.data ? parseFloat(jsonIvData.data.iv_rank) || 999 : 999;
+        
+        const financials = await getFinancialsCached(ticker);
+        const total_revenue = financials.total_revenue || 0;
+        const ps_ratio = (marketcap > 0 && total_revenue > 0) ? (marketcap / total_revenue) : 0;
+        
+        // Use strictly the curr property from unusual whales price endpoint as requested
+        let latestPrice = await getLatestPriceHandling(ticker, jsonPrice);
+        const preErPrice = parseFloat(latest.price) || 0;
+        const postErMove1dRatio = parseFloat(latest.post_earnings_move_1d) || 0;
+        const postErPrice = preErPrice * (1 + postErMove1dRatio);
+        const gexData = await updateAndGetHigh10d(ticker, latestPrice, null);
+        const high10d = gexData.high10d;
+        const history = gexData.history;
+        const priceChange = (high10d && high10d > 0) ? ((latestPrice - high10d) / high10d * 100).toFixed(1) : 0;
+        const mcp = preErPrice ? ((latestPrice - preErPrice) / preErPrice * 100).toFixed(1) : 0;
+        const mcp2q = mcp2qPreErPrice ? ((latestPrice - mcp2qPreErPrice) / mcp2qPreErPrice * 100).toFixed(1) : 0;
+        
+        const mcpAbs = latestPrice - preErPrice;
+        const lastImpliedMoveAbs = preErPrice * parseFloat(latest.expected_move_perc || 0);
+
+        const ucp3Abs = preErPrice + 3 * lastImpliedMoveAbs;
+        const ucpAbs = preErPrice + 2 * lastImpliedMoveAbs;
+        const ucpaAbs = preErPrice + lastImpliedMoveAbs;
+        const lcpaAbs = preErPrice - lastImpliedMoveAbs;
+        const lcpAbs = preErPrice - 2 * lastImpliedMoveAbs;
+
+        const ucp3 = latestPrice ? ((latestPrice - ucp3Abs) / latestPrice * 100).toFixed(1) : 0;
+        const ucp = latestPrice ? ((latestPrice - ucpAbs) / latestPrice * 100).toFixed(1) : 0;
+        const ucpa = latestPrice ? ((latestPrice - ucpaAbs) / latestPrice * 100).toFixed(1) : 0;
+        const lcpa = latestPrice ? ((latestPrice - lcpaAbs) / latestPrice * 100).toFixed(1) : 0;
+        const lcp = latestPrice ? ((latestPrice - lcpAbs) / latestPrice * 100).toFixed(1) : 0;
+
+        const reportTime = latest.report_time == 'unknown' || latest.report_time == '' || !latest.report_time ? '-' : latest.report_time == 'premarket' ? 'PM' : latest.report_time == 'postmarket' ? 'AH' : latest.report_time;
+        
+        const ma50 = jsonInfo.company ? parseFloat(jsonInfo.company.day50_moving_avg) || 0 : 0;
+
+        
+
+        return {
+          ticker: ticker,
+          preErPrice: preErPrice || 0,
+          mcp2qPreErPrice: mcp2qPreErPrice || 0,
+          price: latestPrice || 0,
+          priceChange: priceChange || 0,
+          high10d: high10d || 0,
+          history: history,
+          mcp: mcp || 0,
+          mcp2q: mcp2q || 0,
+          ucp3: ucp3,
+          ucp: ucp,
+          ucpa: ucpa,
+          lcpa: lcpa,
+          lcp: lcp,
+          finvizSma200: null,
+          er_date: latest.report_date || 'N/A',
+          report_date: latest.report_date || 'N/A',
+          avgHistoricMove: avgHistoricRealizedMove * 100 || 0,
+          avgImpliedMove: avgImpliedMove * 100 || 0,
+          straddle: toPercent(next.expected_move_perc) || 0,
+          expected_move_perc: toPercent(latest.expected_move_perc) || 0,
+          post_earnings_move_1d: toPercent(latest.post_earnings_move_1d) || 0,
+          histMove1: histMoves[0] !== undefined ? histMoves[0] : null,
+          histMove2: histMoves[1] !== undefined ? histMoves[1] : null,
+          histMove3: histMoves[2] !== undefined ? histMoves[2] : null,
+          histMove4: histMoves[3] !== undefined ? histMoves[3] : null,
+          report_time: reportTime,
+          iv_rank: ivRank,
+          beta: beta,
+          ma200: ma200,
+          ma50: ma50,
+          high52w: high52w,
+          industry: industry,
+          marketcap: marketcap,
+          ps_ratio: ps_ratio
+        };
+      } catch (err) {
+        console.error(`Error fetching ${ticker}:`, err);
+        return null;
+      }
+    }
+
+    function updatePriceCells(ticker, priceData, data) {
+      const row = document.getElementById(`row-${ticker}`);
+      if (!row) return;
+
+      const price = data.price || 0;
+      const ma10Ratio = priceData.ma10 ? ((price - priceData.ma10) / priceData.ma10) * 100 : 0;
+      const ma50Ratio = data.ma50 ? ((price - data.ma50) / data.ma50) * 100 : 0;
+      const ma200Ratio = data.ma200 ? ((price - data.ma200) / data.ma200) * 100 : 0;
+
+      if(row.querySelector('.ma10')) row.querySelector('.ma10').innerHTML = `<span style="color:${ma10Ratio < 0 ? 'red' : 'green'}">${ma10Ratio.toFixed(1)}</span>`;
+      if(row.querySelector('.ma50')) row.querySelector('.ma50').innerHTML = `<span style="color:${ma50Ratio < 0 ? 'red' : 'green'}">${ma50Ratio.toFixed(1)}</span>`;
+      if(row.querySelector('.ma200')) row.querySelector('.ma200').innerHTML = `<a href="https://www.barchart.com/stocks/quotes/${ticker}/overview" target="_blank" style="color:${ma200Ratio < 0 ? 'red' : 'green'}">${ma200Ratio.toFixed(1)}</a>`;
+      const finalRsi = (priceData && priceData.rsi) ? priceData.rsi : data.calculatedRsi;
+      if(row.querySelector('.rsi')) row.querySelector('.rsi').textContent = finalRsi ? finalRsi.toFixed(1) : '-';
+    }
+
+    
+
+    // Utility to check if today is a new business day compared to cached date
+    function isNewBusinessDay(lastDateStr) {
+      if (!lastDateStr) return true;
+      const lastDate = new Date(lastDateStr);
+      const now = new Date();
+
+      return (
+        lastDate.getFullYear() !== now.getFullYear() ||
+        lastDate.getMonth() !== now.getMonth() ||
+        lastDate.getDate() !== now.getDate()
+      );
+    }
+
+    // IndexedDB Cache helpers
+    const dbPromise = new Promise((resolve, reject) => {
+      const request = indexedDB.open('PeadCacheDB', 1);
+      request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        if (!db.objectStoreNames.contains('cache')) {
+          db.createObjectStore('cache');
+        }
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+
+    async function getCache(key) {
+      try {
+        const db = await dbPromise;
+        return new Promise((resolve) => {
+          const transaction = db.transaction('cache', 'readonly');
+          const store = transaction.objectStore('cache');
+          const request = store.get(key);
+          request.onsuccess = () => resolve(request.result || null);
+          request.onerror = () => resolve(null);
+        });
+      } catch { return null; }
+    }
+
+    async function setCache(key, value) {
+      try {
+        const db = await dbPromise;
+        return new Promise((resolve) => {
+          const transaction = db.transaction('cache', 'readwrite');
+          const store = transaction.objectStore('cache');
+          const request = store.put(value, key);
+          request.onsuccess = () => resolve();
+          request.onerror = () => resolve();
+        });
+      } catch {}
+    }
+
+    async function getFinancialsCached(ticker) {
+      const cacheKey = `Straddle_fin_${ticker}`;
+      const cached = await getCache(cacheKey);
+      if (cached && cached.total_revenue) {
+        return cached;
+      }
+      try {
+        const res = await fetchWithRetry(`https://phx.unusualwhales.com/api/stock/${ticker}/av/financials`);
+        if (res && res.data && res.data.income_statements) {
+          const annual = res.data.income_statements.find(r => r.report_type === 'annual');
+          const ttm = annual ? parseFloat(annual.total_revenue) : 0;
+          if (ttm > 0) {
+             const data = { total_revenue: ttm };
+             await setCache(cacheKey, data);
+             return data;
+          }
+        }
+      } catch(e) {}
+      return { total_revenue: 0 };
+    }
+
+    // Wrap fetchEarnings with caching
+    async function fetchEarningsCached(ticker) {
+      const spinner = document.getElementById('loadingSpinner');
+      const cacheKey = `Straddle_er_${ticker}`;
+      const cached = await getCache(cacheKey);
+
+      if (cached && cached.data && cached.fetchedAt &&
+        cached.data.histMove1 !== undefined &&
+        !isNewBusinessDay(cached.fetchedAt)) {
+        
+        const fetchedTime = new Date(cached.fetchedAt);
+        const now = new Date();
+        const diffHours = (now - fetchedTime) / (1000 * 60 * 60);
+
+        if (diffHours >= 1) {
+            try {
+                const res = await fetch(`https://phx.unusualwhales.com/api/ticker/${ticker}/price/`);
+                if (res.ok) {
+                    const jsonPrice = await res.json();
+                    let latestPrice = await getLatestPriceHandling(ticker, jsonPrice);
+                    if (latestPrice > 0) {
+                        cached.data.price = latestPrice;
+                        
+                        const preErPrice = cached.data.preErPrice || 0;
+                        const postErMove1dRatio = parseFloat(cached.data.post_earnings_move_1d) / 100 || 0;
+                        const postErPrice = preErPrice * (1 + postErMove1dRatio);
+                        const gexData = await updateAndGetHigh10d(ticker, latestPrice, cached.data);
+                        const high10d = gexData.high10d;
+                        cached.data.high10d = high10d;
+                        cached.data.history = gexData.history;
+                        cached.data.priceChange = (high10d && high10d > 0) ? ((latestPrice - high10d) / high10d * 100).toFixed(1) : 0;
+                        cached.data.mcp = preErPrice ? ((latestPrice - preErPrice) / preErPrice * 100).toFixed(1) : 0;
+                        
+                        const mcp2qPreErPrice = cached.data.mcp2qPreErPrice || 0; 
+                        cached.data.mcp2q = mcp2qPreErPrice ? ((latestPrice - mcp2qPreErPrice) / mcp2qPreErPrice * 100).toFixed(1) : cached.data.mcp2q;
+                        
+                        const expectedMoveRatio = parseFloat(cached.data.expected_move_perc) / 100 || 0;
+                        const lastImpliedMoveAbs = preErPrice * expectedMoveRatio;
+                        
+                        const ucp3Abs = preErPrice + 3 * lastImpliedMoveAbs;
+        const ucpAbs = preErPrice + 2 * lastImpliedMoveAbs;
+                        const ucpaAbs = preErPrice + lastImpliedMoveAbs;
+                        const lcpaAbs = preErPrice - lastImpliedMoveAbs;
+                        const lcpAbs = preErPrice - 2 * lastImpliedMoveAbs;
+
+                        cached.data.ucp3 = latestPrice ? ((latestPrice - ucp3Abs) / latestPrice * 100).toFixed(1) : 0;
+                        cached.data.ucp = latestPrice ? ((latestPrice - ucpAbs) / latestPrice * 100).toFixed(1) : 0;
+                        cached.data.ucpa = latestPrice ? ((latestPrice - ucpaAbs) / latestPrice * 100).toFixed(1) : 0;
+                        cached.data.lcpa = latestPrice ? ((latestPrice - lcpaAbs) / latestPrice * 100).toFixed(1) : 0;
+                        cached.data.lcp = latestPrice ? ((latestPrice - lcpAbs) / latestPrice * 100).toFixed(1) : 0;
+                        
+                        cached.fetchedAt = new Date().toISOString();
+                        await setCache(cacheKey, cached);
+                    }
+                }
+            } catch (err) {
+                console.error(`Price refresh failed for ${ticker}:`, err);
+            }
+        }
+        
+        if (cached.data.high10d === undefined || cached.data.high10d === 0) {
+            const latestPrice = cached.data.price || 0;
+            const gexData = await updateAndGetHigh10d(ticker, latestPrice, cached.data);
+            cached.data.high10d = gexData.high10d;
+            cached.data.history = gexData.history;
+            cached.data.priceChange = (cached.data.high10d && cached.data.high10d > 0) ? ((latestPrice - cached.data.high10d) / cached.data.high10d * 100).toFixed(1) : 0;
+        }
+        if (cached.data.ucp3 === undefined) {
+            const preErPrice = cached.data.preErPrice || 0;
+            const expectedMoveRatio = parseFloat(cached.data.expected_move_perc) / 100 || 0;
+            const lastImpliedMoveAbs = preErPrice * expectedMoveRatio;
+            const ucp3Abs = preErPrice + 3 * lastImpliedMoveAbs;
+            const latestPrice = cached.data.price || 0;
+            cached.data.ucp3 = latestPrice ? ((latestPrice - ucp3Abs) / latestPrice * 100).toFixed(1) : 0;
+        }
+        return cached.data;
+      }
+
+      if (spinner) spinner.style.display = 'block';
+      try {
+        const data = await fetchEarnings(ticker);
+        if (data) {
+          await setCache(cacheKey, { data, fetchedAt: new Date().toISOString() });
+        }
+        return data;
+      } finally {
+        if (spinner) spinner.style.display = 'none';
+        const spinnerDone = document.getElementById('doneSpinner');
+        if (spinner) spinner.style.display = 'block';
+      }
+    }
+
+    
+
+    
+
+    
+
+    
+
+    
+    let appData = []; // Array of {ticker, data, priceData}
+    let currentSortColumn = 'er_date';
+    let currentSortDesc = false;
+
+    function updateDataWithPrices(data) {
+      if (!data) return;
+      
+      const calcP = (data) => {
+         var sc = parseFloat(data.straddle && data.straddle != "N/A" && data.straddle != 0 ? (parseFloat(data.straddle) + parseFloat(data.straddle) * 0.15).toFixed(1) : 0);
+         var ec_val = data.expected_move_perc;
+         var ec = parseFloat(ec_val && ec_val != 0 && ec_val != 'N/A' ? (parseFloat(ec_val) + parseFloat(ec_val) * 0.15).toFixed(1) : 0);
+         ec = parseFloat(ec && ec != "N/A" && ec != 0 ? ec : (data.avgHistoricMove || 0));
+         return parseFloat((ec && sc && ec > 0 && sc > 0 ? parseFloat(((sc - ec) / ec) * 100) : 999).toFixed(1));
+      };
+      data.p_ratio = calcP(data);
+      const latestPrice = data.price || 0;
+      if (latestPrice === 0) return;
+
+      const preErPrice = data.preErPrice || 0;
+      
+      if (data.mcp2qPreErPrice) {
+          data.mcp2q = ((latestPrice - data.mcp2qPreErPrice) / data.mcp2qPreErPrice * 100).toFixed(1);
+      }
+
+      const postErMove1dRatio = parseFloat(data.post_earnings_move_1d) / 100 || 0;
+      const expectedMoveRatio = parseFloat(data.expected_move_perc) / 100 || 0;
+      const lastImpliedMoveAbs = preErPrice * expectedMoveRatio;
+
+      data.mcp = preErPrice ? ((latestPrice - preErPrice) / preErPrice * 100).toFixed(1) : 0;
+      data.ucp = latestPrice ? ((latestPrice - (preErPrice + 2 * lastImpliedMoveAbs)) / latestPrice * 100).toFixed(1) : 0;
+      data.ucpa = latestPrice ? ((latestPrice - (preErPrice + lastImpliedMoveAbs)) / latestPrice * 100).toFixed(1) : 0;
+      data.lcpa = latestPrice ? ((latestPrice - (preErPrice - lastImpliedMoveAbs)) / latestPrice * 100).toFixed(1) : 0;
+      data.lcp = latestPrice ? ((latestPrice - (preErPrice - 2 * lastImpliedMoveAbs)) / latestPrice * 100).toFixed(1) : 0;
+      data.priceChange = (data.high10d && data.high10d > 0) ? (((latestPrice - data.high10d) / data.high10d) * 100).toFixed(1) : 0;
+      
+      data.ma10Ratio = data.calculatedMa10 ? ((latestPrice - data.calculatedMa10) / data.calculatedMa10) * 100 : 0;
+      data.ma50Ratio = data.ma50 ? ((latestPrice - data.ma50) / data.ma50) * 100 : 0;
+      data.ma200Ratio = data.ma200 ? ((latestPrice - data.ma200) / data.ma200) * 100 : 0;
+      
+      const erM = parseFloat(data.post_earnings_move_1d) || 0;
+      const ma200v = parseFloat(data.ma200Ratio) || 0;
+      const mcp2qv = parseFloat(data.mcp2q) || 0;
+      const mcpv = parseFloat(data.mcp) || 0;
+      const lcpv = parseFloat(data.lcp) || 0;
+      const lcpav = parseFloat(data.lcpa) || 0;
+      const ucpv = parseFloat(data.ucp) || 0;
+      const ucpav = parseFloat(data.ucpa) || 0;
+
+      let entry = '-';
+      let code = '-';
+
+      if (erM > 0 && ma200v > 0 && mcp2qv > 0 && mcpv > 0 && lcpv > 0 && ucpv > 0) { entry = 'UCP'; code = 'BOU'; }
+      else if (erM > 0 && ma200v > 0 && mcp2qv > 0 && mcpv < 0 && lcpv > 0 && ucpv < 0) { entry = 'LCP'; code = 'BOL'; }
+      else if (erM > 0 && ma200v > 0 && mcp2qv > 0 && mcpv > 0 && lcpv > 0 && ucpv < 0) { entry = 'MCP'; code = 'BOM'; }
+      else if (ma200v > 0 && mcp2qv < 0 && mcpv < 0 && lcpv < 0 && ucpv < 0) { entry = 'LCP'; code = erM > 0 ? 'BDL+' : 'BDL-'; }
+      else if (ma200v < 0 && mcp2qv < 0 && mcpv < 0 && lcpv > 0 && ucpv < 0) { entry = 'MA200'; code = 'BD2'; }
+      else if (erM < 0 && ma200v > 0 && mcp2qv > 0 && mcpv < 0 && lcpv > 0 && ucpv < 0) { entry = 'LCP/MA200'; code = 'UTL2'; }
+      else if (erM < 0 && ma200v > 0 && mcp2qv > 0 && mcpv > 0 && lcpv > 0 && ucpv < 0) { entry = 'MCP'; code = 'UTM'; }
+      else if (erM < 0 && ma200v > 0 && mcp2qv > 0 && mcpv > 0 && lcpv > 0 && ucpv > 0) { entry = 'UCP'; code = 'UTU'; }
+      else if (erM > 0 && ma200v < 0 && mcp2qv < 0 && mcpv < 0 && lcpv < 0 && ucpv < 0) { entry = 'Lcp-2S'; code = 'DCB'; }
+      else if (erM > 0 && mcp2qv < 0 && mcpv > 0 && lcpv > 0 && ucpv > 0) { entry = 'UCP'; code = 'BTB'; }
+      else if (erM > 0 && ma200v > 0 && mcp2qv > 0 && mcpv < 0 && lcpv < 0 && ucpv < 0) { entry = 'LCP/MA200'; code = 'BOLB'; }
+      else if (erM > 0 && ma200v > 0 && mcp2qv < 0 && mcpv > 0 && lcpv > 0 && ucpv > 0) { entry = 'LCP/MA200'; code = 'BOUM'; }
+      else if (erM > 0 && ma200v > 0 && mcp2qv < 0 && mcpv > 0 && lcpv > 0 && ucpv < 0) { entry = 'LCP/MA200'; code = 'BOMM'; }
+      else if (erM > 0 && ma200v > 0 && mcp2qv < 0 && mcpv < 0 && lcpv > 0 && ucpv < 0) { entry = 'LCP/MA200'; code = 'BOLM'; }
+      else if (erM > 0 && ma200v > 0 && mcp2qv < 0 && mcpv < 0 && lcpv < 0 && ucpv < 0) { entry = 'LCP/MA200'; code = 'BOLBM'; }
+
+      data.entry = entry;
+      data.code = code;
+      data.finalRsi = data.calculatedRsi;
+    }
+
+    async function renderTable() {
+      const progressWrapper = document.getElementById('progressWrapper');
+      const progressBarFill = document.getElementById('progressBarFill');
+      const progressText = document.getElementById('progressText');
+      if (progressWrapper) progressWrapper.style.display = 'block';
+
+      appData = [];
+      const lazyQueue = [];
+      const CONCURRENCY_LIMIT = 10;
+      let index = 0;
+      let processedCount = 0;
+      const totalTickers = tickers.length;
+
+      async function lazyFetchTargets(ticker) {
+        const cacheKey = `Targets_${ticker}`;
+        let cached = await getCache(cacheKey);
+        let t1 = '-';
+        let t2 = '-';
+        let t3 = '-';
+        
+        if (cached && cached.data && cached.fetchedAt && !isNewBusinessDay(cached.fetchedAt) && typeof cached.data.t1 === 'object') {
+            t1 = cached.data.t1;
+            t2 = cached.data.t2;
+            t3 = cached.data.t3;
+        } else {
+            try {
+                let res = await fetchWithRetry(`https://phx.unusualwhales.com/api/analyst_results/v2?ticker=${ticker}`);
+                if (res && res.data && res.data.length > 0) {
+                    const validRatings = res.data.filter(item => item.price_target !== null && !isNaN(parseFloat(item.price_target)));
+                    validRatings.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    
+                    if (validRatings.length > 0) t1 = { price: parseFloat(validRatings[0].price_target).toFixed(1), date: validRatings[0].recommendation_date, firm: validRatings[0].firm_name };
+                    if (validRatings.length > 1) t2 = { price: parseFloat(validRatings[1].price_target).toFixed(1), date: validRatings[1].recommendation_date, firm: validRatings[1].firm_name };
+                    if (validRatings.length > 2) t3 = { price: parseFloat(validRatings[2].price_target).toFixed(1), date: validRatings[2].recommendation_date, firm: validRatings[2].firm_name };
+                    
+                    await setCache(cacheKey, { data: { t1, t2, t3 }, fetchedAt: new Date().toISOString() });
+                }
+            } catch(e) {}
+        }
+        
+        const appDataItem = appData.find(item => item.ticker === ticker);
+        if (appDataItem && appDataItem.data) {
+            appDataItem.data.t1 = t1;
+            appDataItem.data.t2 = t2;
+            appDataItem.data.t3 = t3;
+            
+            const getTCellHTML = (tData, tkr, linkTemp, currPrice) => {
+                if (!tData || tData === '-') return '-';
+                const p = parseFloat(tData.price);
+                if (isNaN(p)) return '-';
+                let colStr = '';
+                if (currPrice > 0) {
+                    if (p > currPrice) colStr = 'color:#22c55e;'; // Green
+                    else if (p < currPrice) colStr = 'color:#ef4444;'; // Red
+                }
+                const title = `${tData.date || ''} - ${tData.firm || ''}`;
+                if (linkTemp) return `<a href="${linkTemp.replace('{ticker}', tkr)}" target="_blank" style="${colStr}" title="${title}">${tData.price}</a>`;
+                return `<span style="${colStr}" title="${title}">${tData.price}</span>`;
+            };
+            const row = document.getElementById(`row-${ticker}`);
+            if (row) {
+                const t1Cell = row.querySelector('.t1');
+                if (t1Cell) t1Cell.innerHTML = getTCellHTML(t1, ticker, 'https://unusualwhales.com/stock/{ticker}/analysts/', appDataItem.data.price);
+                
+                const t2Cell = row.querySelector('.t2');
+                if (t2Cell) t2Cell.innerHTML = getTCellHTML(t2, ticker, 'https://www.tipranks.com/stocks/{ticker}/forecast/', appDataItem.data.price);
+                
+                const t3Cell = row.querySelector('.t3');
+                if (t3Cell) t3Cell.innerHTML = getTCellHTML(t3, ticker, null, appDataItem.data.price);
+            }
+        }
+      }
+
+      async function processLazyQueue() {
+        while (lazyQueue.length > 0) {
+          const batch = lazyQueue.splice(0, 10);
+          await Promise.all(batch.map(t => lazyFetchTargets(t)));
+          await new Promise(res => setTimeout(res, 200));
+        }
+      }
+
+      async function processBatch(batch) {
+        const promises = batch.map(async (ticker) => {
+          try {
+            const data = await fetchEarningsCached(ticker);
+            if (data) {
+              updateDataWithPrices(data);
+              appData.push({ ticker, data });
+              lazyQueue.push(ticker);
+            }
+          } catch(e) {}
+          processedCount++;
+          if (progressBarFill && progressText) {
+            const perc = Math.round((processedCount / totalTickers) * 100);
+            progressBarFill.style.width = perc + '%';
+            progressText.innerText = `${processedCount} / ${totalTickers}`;
+          }
+        });
+        await Promise.all(promises);
+      }
+
+      // Pre-sort tickers by cached marketcap
+      const mcCache = {};
+      for (const t of tickers) {
+          const c = await getCache(`Straddle_er_${t}`);
+          mcCache[t] = c && c.data && c.data.marketcap ? parseFloat(c.data.marketcap) : 0;
+      }
+      tickers.sort((a, b) => mcCache[b] - mcCache[a]);
+
+      while (index < tickers.length) {
+        const batch = tickers.slice(index, index + CONCURRENCY_LIMIT);
+        await processBatch(batch);
+        index += CONCURRENCY_LIMIT;
+        
+        // Render incrementally as data comes in
+        sortTable(currentSortColumn);
+        
+        await new Promise(res => setTimeout(res, 200));
+      }
+
+      if (progressWrapper) progressWrapper.style.display = 'none';
+      
+      // Initial sort was 1, but we just use currentSortColumn to maintain any user changes
+      sortTable(currentSortColumn); 
+      
+      // Start processing lazy queue in background
+      processLazyQueue(); 
+    }
+
+    function renderTableBody() {
+      const tableBody = document.querySelector('#earningsTable tbody');
+      if(!tableBody) return;
+      let html = '';
+      
+      // Headers visual update
+      const thead = document.querySelector('#earningsTable thead tr');
+      if (thead) {
+        Array.from(thead.children).forEach((th, idx) => {
+          let text = th.textContent.replace(/[🔼🔽]/g, '').trim();
+          if (idx === currentSortColumn) {
+            text += currentSortDesc ? ' 🔽' : ' 🔼';
+          }
+          th.textContent = text;
+        });
+      }
+
+      const getTCellRender = (tData, tkr, linkTemp, currPrice) => {
+        if (!tData || tData === '-' || typeof tData !== 'object') return tData || '-';
+        const p = parseFloat(tData.price);
+        if (isNaN(p)) return '-';
+        let colStr = '';
+        if (currPrice > 0) {
+            if (p > currPrice) colStr = 'color:#22c55e;';
+            else if (p < currPrice) colStr = 'color:#ef4444;';
+        }
+        const title = `${tData.date || ''} - ${tData.firm || ''}`;
+        if (linkTemp) return `<a href="${linkTemp.replace('{ticker}', tkr)}" target="_blank" style="${colStr}" title="${title}">${tData.price}</a>`;
+        return `<span style="${colStr}" title="${title}">${tData.price}</span>`;
+      };
+      
+      for (const item of appData) {
+        const { ticker, data } = item;
+        if (typeof currentSearchQuery !== 'undefined' && currentSearchQuery) {
+            const tMatch = ticker.toLowerCase().includes(currentSearchQuery);
+            const entryMatch = data.entry && data.entry.toLowerCase().includes(currentSearchQuery);
+            const codeMatch = data.code && data.code.toLowerCase().includes(currentSearchQuery);
+            if (!tMatch && !entryMatch && !codeMatch) continue;
+        }
+        var straddleCalulated = parseFloat(data.straddle && data.straddle != "N/A" && data.straddle != 0 ? (parseFloat(data.straddle) + parseFloat(data.straddle) * 0.15).toFixed(1) : 0);
+        var expMoveCalulated = parseFloat(data.expected_move_perc && data.expected_move_perc != 0 && data.expected_move_perc != 'N/A' ? (parseFloat(data.expected_move_perc) + parseFloat(data.expected_move_perc) * 0.15).toFixed(1) : 0);
+        
+        expMoveCalulated = parseFloat(expMoveCalulated && expMoveCalulated != "N/A" && expMoveCalulated != 0 ? expMoveCalulated : (data.avgHistoricMove || 0));
+        var p = data.p_ratio !== undefined ? data.p_ratio : 999;
+        
+        let rowClass = "";
+        
+        const ucpav = parseFloat(data.ucpa) || 0;
+        if (ucpav > 0) {
+            rowClass = "highlight-green";
+        }
+
+        const colorNumDark = (val) => {
+            if (rowClass) return ''; 
+            const num = parseFloat(val);
+            if (isNaN(num)) return '';
+            return num > 0 ? 'color: #22c55e;' : num < 0 ? 'color: #ef4444;' : '';
+        };
+
+        const rsi = data.finalRsi ? data.finalRsi.toFixed(1) : (data.calculatedRsi ? data.calculatedRsi.toFixed(1) : '-');
+        const iv_rank = data.iv_rank ? parseFloat(data.iv_rank).toFixed(1) : '-';
+        const report_time = data.report_time || '-';
+        const histMove2 = data.histMove2 != null ? parseFloat(data.histMove2).toFixed(1) : '-';
+        const ps_ratio = data.ps_ratio > 0 ? data.ps_ratio.toFixed(1) : '-';
+        const erMove = parseFloat(data.post_earnings_move_1d && data.post_earnings_move_1d != 0 && data.post_earnings_move_1d != 'N/A' ? data.post_earnings_move_1d : 0);
+        const priceChange = data.priceChange ? parseFloat(data.priceChange).toFixed(1) : '-';
+        const mcp2q = data.mcp2q || '-';
+        const mcp = data.mcp || '-';
+        const ucp = data.ucp || '-';
+        const ucpa = data.ucpa || '-';
+        const lcpa = data.lcpa || '-';
+        const lcp = data.lcp || '-';
+        const ucp3 = data.ucp3 || '-';
+        const ma10 = data.ma10Ratio ? data.ma10Ratio.toFixed(1) : '-';
+        const ma50 = data.ma50Ratio ? data.ma50Ratio.toFixed(1) : '-';
+        const ma200 = data.ma200Ratio ? data.ma200Ratio.toFixed(1) : '-';
+        const price = data.price ? parseFloat(data.price).toFixed(1) : '-';
+        
+        let isEntryNear = false;
+        if (data.entry) {
+            const absUcp = Math.abs(parseFloat(data.ucp) || 999);
+            const absLcp = Math.abs(parseFloat(data.lcp) || 999);
+            const absMcp = Math.abs(parseFloat(data.mcp) || 999);
+            const absMa200 = Math.abs(parseFloat(data.ma200Ratio) || 999);
+            
+            if (data.entry === 'UCP' && absUcp <= 2) isEntryNear = true;
+            else if (data.entry === 'LCP' && absLcp <= 2) isEntryNear = true;
+            else if (data.entry === 'MCP' && absMcp <= 2) isEntryNear = true;
+            else if (data.entry === 'MA200' && absMa200 <= 2) isEntryNear = true;
+            else if (data.entry === 'LCP/MA200' && (absLcp <= 2 || absMa200 <= 2)) isEntryNear = true;
+            else if (data.entry === 'Lcp-2S' && absLcp <= 2) isEntryNear = true;
+        }
+        const beta = data.beta ? parseFloat(data.beta).toFixed(1) : 0;
+        
+        // This handles columns mapped for BOTH ErMove.htm and test.js
+        // ErMove.htm layout: Ticker(0), Date(1), RSI(2), Time(3), P(4), Straddle%(5), HistMove2(6), P/S(7), ErMove(8), Change(9), McP2q(10), McP(11), Ucp(12), Ucpa(13), Lcpa(14), Lcp(15), Ma10(16), Ma50(17), Ma200(18), Price(19), IV(20), Beta(21)
+        // Note: The HTML output matches ErMove.htm format, test.js format is identical since it's the exact same UI structure.
+        html += `<tr id="row-${ticker}" class="${rowClass}">
+                    <td style="color: black !important;">${ticker}</td>
+                    <td>${data.er_date || '-'}${report_time !== '-' ? ' ' + report_time : ''}</td>
+
+                    <td style="display:none;">${histMove2}</td>
+                    <td style="display:none;">${ps_ratio}</td>
+                    <td class="col-group-divider" style="${colorNumDark(erMove)}">${erMove}</td>
+                    <td class="priceChange" style="${colorNumDark(priceChange)}"><a href="https://robinhood.com/stocks/${ticker}" target="_blank" style="color:inherit;">${priceChange}</a></td>
+                    <td class="mcp" style="${colorNumDark(mcp)}">${mcp}</td>
+                    <td class="mcp2q col-group-divider" style="${colorNumDark(mcp2q)}">${mcp2q}</td>
+                    <td class="ucpa" style="${colorNumDark(ucpa)}">${ucpa}</td>
+                    <td class="ucp" style="${colorNumDark(ucp)}">${ucp}</td>
+                    <td class="ucp3" style="${colorNumDark(ucp3)}">${ucp3}</td>
+                    <td class="lcpa" style="${colorNumDark(lcpa)}">${lcpa}</td>
+                    <td class="lcp col-group-divider" style="${colorNumDark(lcp)}">${lcp}</td>
+                    <!-- <td class="ma10" style="${colorNumDark(ma10)}">${ma10}</td> -->
+                    <td class="ma50" style="${colorNumDark(ma50)}">${ma50}</td>
+                    <td class="ma200 col-group-divider" style="${colorNumDark(ma200)}"><a href="https://www.barchart.com/stocks/quotes/${ticker}/overview" target="_blank" style="color:inherit;">${ma200}</a></td>
+                    <td style="${isEntryNear ? 'font-weight: 900; color: #fff; font-size: 1.1em;' : ''}">${data.entry || '-'}</td>
+                    <td>${data.code || '-'}</td>
+                    <td class="price"><a href="https://finviz.com/quote.ashx?t=${ticker}" target="_blank" style="color:inherit;}">${price}</a></td>
+                    <td class="change_perc" style="${colorNumDark(mcp)}">${mcp}</td>
+                    <!-- <td class="rsi col-group-divider">${rsi}</td> -->
+                    <!-- <td style="${beta > 1.29 ? 'color:#22c55e;' : 'color:inherit;'}">${beta}</td> -->
+                    <td class="t1">${getTCellRender(data.t1, ticker, 'https://unusualwhales.com/stock/{ticker}/analysts/', data.price)}</td>
+                    <td class="t2">${getTCellRender(data.t2, ticker, 'https://www.tipranks.com/stocks/{ticker}/forecast/', data.price)}</td>
+                    <td class="t3">${getTCellRender(data.t3, ticker, null, data.price)}</td>
+                    <td><a href="https://marketchameleon.com/Overview/${ticker}" target="_blank" style="color:inherit;}">${iv_rank}</a></td>
+                  </tr>`;
+      }
+      tableBody.innerHTML = html;
+      if (typeof enableRowHighlighting === "function") enableRowHighlighting();
+    }
+
+    function sortTable(sortKey, forceDesc = null) {
+        if (forceDesc !== null) {
+          currentSortDesc = forceDesc;
+        } else if (currentSortColumn === sortKey) {
+          currentSortDesc = !currentSortDesc;
+        } else {
+          currentSortColumn = sortKey;
+          currentSortDesc = false;
+        }
+  
+        const isDate = sortKey === 'er_date';
+        const isStringColumn = ['ticker', 'er_date', 'report_time', 'entry', 'code'].includes(sortKey);
+        const isNumeric = !isStringColumn;
+  
+        appData.sort((a, b) => {
+          let valA, valB;
+          
+          if (sortKey === 'ticker') {
+              valA = a.ticker; valB = b.ticker;
+          } else {
+              valA = a.data[sortKey];
+              valB = b.data[sortKey];
+          }
+
+          if (['t1', 't2', 't3'].includes(sortKey)) {
+              valA = (valA && typeof valA === 'object' && valA.price) ? valA.price : valA;
+              valB = (valB && typeof valB === 'object' && valB.price) ? valB.price : valB;
+          }
+          if (isNumeric) {
+              valA = parseFloat(valA);
+              valB = parseFloat(valB);
+              valA = isNaN(valA) ? -999999 : valA;
+              valB = isNaN(valB) ? -999999 : valB;
+          } else {
+              valA = valA || '';
+              valB = valB || '';
+          }
+  
+          let result = 0;
+          if (isDate) {
+            const parseDateStr = (dStr) => {
+                if (!dStr || dStr === 'N/A' || dStr === '-') return 0;
+                // Replace dashes with slashes for Safari compatibility
+                const cleanStr = dStr.replace(/-/g, '/');
+                return new Date(cleanStr).getTime() || 0;
+            };
+            const dateA = parseDateStr(valA);
+            const dateB = parseDateStr(valB);
+            result = dateA - dateB;
+          } else if (isNumeric) {
+            result = valA - valB;
+          } else {
+            result = String(valA).localeCompare(String(valB));
+          }
+  
+          return currentSortDesc ? -result : result;
+        });
+  
+        renderTableBody();
+      }
+
+    renderTable();
+
+  
+    let currentSearchQuery = '';
+    document.addEventListener('DOMContentLoaded', () => {
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                currentSearchQuery = e.target.value.trim().toLowerCase();
+                renderTableBody();
+            });
+        }
+    });
+</script>
+</body>
+</html>
