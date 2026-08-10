@@ -388,7 +388,7 @@
     </table>
   </div>
   <script>
-    const tickers = [ 'JPM', 'CNH', 'AGCO', 'DE', 'KUBTY', 'TTC', 'FMC', 'CTVA', 'FMX', 'CF', 'NTR', 'MOS', 'PWR', 'VRT', 'VST', 'CEG', 'ETN', 'ARM', 'INTC', 'TSM', 'AVGO', 'HPE', 'DELL', 'MRVL', 'NTAP', 'NTNX', 'NVDA', 'CBRS', 'CSCO', 'SMCI', 'AMD', 'DOCN', 'CRDO', 'COHR', 'EXTR', 'ALAB', 'ANET', 'GLW', 'CIEN', 'LITE', 'AAOI', 'VIAV', 'AER', 'BA', 'EADSY', 'HXL', 'FTAI', 'GE', 'RTX', 'HEI', 'TDG', 'SAFRY', 'BABA', 'PDD', 'JD', 'SE', 'CPNG', 'MPNGY', 'LMND', 'PGR', 'CB', 'TRV', 'ALL', 'MCY', 'CVNA', 'PAG', 'LAD', 'GPI', 'SAH', 'KMX', 'CPRT', 'AN', 'MNRO', 'ORLY', 'AZO', 'AAP', 'DRVN', 'RIVN', 'LKQ', 'STLA', 'TSLA', 'F', 'GM', 'ALV', 'TM', 'BWA', 'HMC', 'APTV', 'LCID', 'ALSN', 'LEA', 'MGA', 'ULTA', 'COTY', 'EL', 'ELF', 'IPAR', 'LRLCY', 'CM', 'TD', 'RY', 'BMO', 'BNS', 'SLF', 'MFC', 'MGM', 'SPHR', 'LVS', 'CZR', 'DKNG', 'PENN', 'FLUT', 'WYNN', 'MLCO', 'LEVI', 'AEO', 'KTB', 'FFIV', 'AKAM', 'NET', 'FSLY', 'WRB', 'AIG', 'CNA', 'NCLH', 'RCL', 'CCL', 'VIK', 'BAND', 'ADBE', 'CRM', 'VEEV', 'NCNO', 'FIVN', 'TWLO', 'FIG', 'HUBS', 'NICE', 'SOUN', 'FTNT', 'CHKP', 'CVLT', 'RBRK', 'SAIL', 'ZS', 'S', 'CRWD', 'OKTA', 'PANW', 'NTSK', 'ORCL', 'SNOW', 'MDB', 'PLTR', 'DXCM', 'ABT', 'MDT', 'DVA', 'FMS', 'EMR', 'POWL', 'FLEX', 'SANM', 'BHE', 'CLS', 'JBL', 'ADP', 'WEX', 'PAYX', 'HQY', 'INTU', 'WDAY', 'PAYC', 'PCTY', 'BE', 'FCEL', 'PLUG', 'BLDP', 'LIN', 'TRP', 'EPD', 'KMI', 'LNG', 'TRGP', 'ET', 'MPLX', 'OKE', 'WMB', 'ENB', 'ICE', 'CME', 'IVZ', 'NDAQ', 'STT', 'BLK', 'CBOE', 'TROW', 'BAC', 'MSBC', 'GS', 'WFC', 'CROX', 'VFC', 'DECK', 'NKE', 'GCO', 'BIRK', 'ONON', 'UAA', 'ETD', 'MLKN', 'LOVE', 'RH', 'WSM', 'LZB', 'ARHS', 'W', 'RBLX', 'EA', 'TTWO', 'CRSR', 'SONY', 'U', 'GME', 'SITE', 'SMG', 'TEVA', 'VTRS', 'RDY', 'SDZNY', 'CNC', 'HUM', 'MOH', 'UNH', 'ELV', 'OSCR', 'CLOV', 'CVS', 'JCI', 'WSO', 'TT', 'LII', 'CARR', 'AOS', 'MAS', 'MLM', 'BLDR', 'EXP', 'VMC', 'AWI', 'SHW', 'RPM', 'LOW', 'HD', 'IBP', 'JHX', 'OC', 'SXYAY', 'FBIN', 'FAF', 'STC', 'CSGP', 'ORI', 'RKT', 'UWMC', 'Z', 'ZG', 'COMP', 'OPEN', 'NVR', 'DHI', 'PHM', 'KBH', 'LEN', 'HOV', 'TOL', 'BSX', 'PEN', 'SYK', 'THC', 'UHS', 'HCA', 'CYH', 'ISRG', 'SGRY', 'GMED', 'ZBH', 'TMDX', 'ECL', 'PG', 'CL', 'CLX', 'ABM', 'GROV', 'KMB', 'CHD', 'BDRFY', 'RBGLY', 'UL', 'TER', 'HON', 'ABBNY', 'SIEGY', 'CGNX', 'EMB', 'ROK', 'AA', 'FCX', 'FSUGY', 'BHP', 'VALE', 'RIO', 'CLF', 'ITW', 'MMM', 'FAST', 'AIT', 'PH', 'GWW', 'PTC', 'DASTY', 'ADSK', 'IOT', 'CTSH', 'INFY', 'WIT', 'GIB', 'ACN', 'EPAM', 'GLOB', 'DXC', 'KD', 'BBAR', 'DLO', 'STNE', 'NU', 'PAGS', 'MELI', 'BBD', 'ITUB', 'INTR', 'LNC', 'MET', 'EQH', 'PRU', 'BUD', 'SAM', 'TAP', 'CELH', 'STZ', 'KO', 'PEP', 'KDP', 'MNST', 'DEO', 'HEINY', 'BF.B', 'ARCB', 'CHRW', 'ODFL', 'SAIA', 'XPO', 'LSTR', 'RXO', 'FWRD', 'URI', 'CAT', 'CMI', 'TSN', 'HRL', 'JBS', 'SFD', 'PPC', 'CORZ', 'APLD', 'IREN', 'CRWV', 'BW', 'WULF', 'CIFR', 'NBIS', 'HUT', 'GEV', 'OKLO', 'SMR', 'LEU', 'BWXT', 'CCJ', 'SHEL', 'BP', 'XOM', 'CVX', 'HAL', 'SLB', 'DVN', 'COP', 'AZN', 'BMY', 'MRK', 'NVS', 'RHHBY', 'COUR', 'CHGG', 'DUOL', 'HSY', 'MDLZ', 'CAG', 'GIS', 'CPB', 'SJM', 'KHC', 'NSRGY', 'EMN', 'AXTA', 'PPG', 'CC', 'MA', 'V', 'AXP', 'AAPL', 'HPQ', 'XRX', 'LOGI', 'STX', 'MU', 'SNDK', 'WDC', 'TREE', 'SOFI', 'HAPN', 'UPST', 'AFRM', 'CHWY', 'WOOF', 'ZTS', 'ELAN', 'FRPT', 'IDXX', 'AEM', 'AG', 'PAAS', 'WPM', 'KGC', 'NEM', 'B', 'HL', 'CDE', 'SIG', 'DLR', 'PLD', 'CFG', 'FHN', 'PNC', 'ZION', 'FITB', 'HBAN', 'RF', 'TFC', 'MTB', 'USB', 'CMG', 'SBUX', 'CAVA', 'SG', 'BROS', 'DASH', 'SYY', 'WING', 'YUM', 'WEN', 'QSR', 'SHAK', 'MCD', 'BJRI', 'CAKE', 'DRI', 'CBRL', 'EAT', 'TXRH', 'BLMN', 'DIN', 'AMZN', 'ACI', 'COST', 'KR', 'BJ', 'WMT', 'TGT', 'GO', 'KLAC', 'LRCX', 'ASML', 'AMAT', 'NXPI', 'TXN', 'AEHR', 'ADI', 'ON', 'ILMN', 'TMO', 'LH', 'DGX', 'DHR', 'A', 'BIO', 'QCOM', 'QRVO', 'SWKS', 'CRUS', 'MO', 'PM', 'RLX', 'TPB', 'BTI', 'GOOG', 'META', 'RDDT', 'FOXA', 'PINS', 'SNAP', 'NOW', 'ASAN', 'GTLB', 'MNDY', 'FROG', 'TEAM', 'FSLR', 'ENPH', 'NXT', 'CSIQ', 'ARRY', 'SEDG', 'FVRR', 'KFRC', 'NSP', 'RANJY', 'RHI', 'MAN', 'KFY', 'UPWK', 'MT', 'NUE', 'STLD', 'GGB', 'NFLX', 'PUBM', 'TTD', 'WBD', 'APP', 'DIS', 'MGNI', 'PSKY', 'SPOT', 'NOK', 'ERIC', 'HOOD', 'COIN', 'MS', 'IBKR', 'SCHW', 'BULL', 'GLXY', 'FUTU', 'PATK', 'WGO', 'CWH', 'THO', 'LCII', 'H', 'HLT', 'LUV', 'WH', 'JBLU', 'AAL', 'ALK', 'UAL', 'DAL', 'ABNB', 'TRIP', 'EXPE', 'MAR', 'IHG', 'BKNG', 'CAR', 'HTZ', 'DIDIY', 'LYFT', 'UBER', 'GRAB', 'KNX', 'GBX', 'UPS', 'NSC', 'UNP', 'JBHT', 'CSX', 'RAIL', 'FDX', 'AEP', 'EXC', 'SO', 'XEL', 'EIX', 'NEE', 'PCG', 'ED', 'DUK', 'PEG', 'D', 'GOOS', 'COLM', 'RL', 'ANF', 'LULU', 'GAP', 'URBN', 'ROST', 'TJX', 'PVH', 'USFD', 'UNFI' ];
+    const tickers = [ 'LINC', 'JPM', 'CNH', 'AGCO', 'DE', 'KUBTY', 'TTC', 'FMC', 'CTVA', 'FMX', 'CF', 'NTR', 'MOS', 'PWR', 'VRT', 'VST', 'CEG', 'ETN', 'ARM', 'INTC', 'TSM', 'AVGO', 'HPE', 'DELL', 'MRVL', 'NTAP', 'NTNX', 'NVDA', 'CBRS', 'CSCO', 'SMCI', 'AMD', 'DOCN', 'CRDO', 'COHR', 'EXTR', 'ALAB', 'ANET', 'GLW', 'CIEN', 'LITE', 'AAOI', 'VIAV', 'AER', 'BA', 'EADSY', 'HXL', 'FTAI', 'GE', 'RTX', 'HEI', 'TDG', 'SAFRY', 'BABA', 'PDD', 'JD', 'SE', 'CPNG', 'MPNGY', 'LMND', 'PGR', 'CB', 'TRV', 'ALL', 'MCY', 'CVNA', 'PAG', 'LAD', 'GPI', 'SAH', 'KMX', 'CPRT', 'AN', 'MNRO', 'ORLY', 'AZO', 'AAP', 'DRVN', 'RIVN', 'LKQ', 'STLA', 'TSLA', 'F', 'GM', 'ALV', 'TM', 'BWA', 'HMC', 'APTV', 'LCID', 'ALSN', 'LEA', 'MGA', 'ULTA', 'COTY', 'EL', 'ELF', 'IPAR', 'LRLCY', 'CM', 'TD', 'RY', 'BMO', 'BNS', 'SLF', 'MFC', 'MGM', 'SPHR', 'LVS', 'CZR', 'DKNG', 'PENN', 'FLUT', 'WYNN', 'MLCO', 'LEVI', 'AEO', 'KTB', 'FFIV', 'AKAM', 'NET', 'FSLY', 'WRB', 'AIG', 'CNA', 'NCLH', 'RCL', 'CCL', 'VIK', 'BAND', 'ADBE', 'CRM', 'VEEV', 'NCNO', 'FIVN', 'TWLO', 'FIG', 'HUBS', 'NICE', 'SOUN', 'FTNT', 'CHKP', 'CVLT', 'RBRK', 'SAIL', 'ZS', 'S', 'CRWD', 'OKTA', 'PANW', 'NTSK', 'ORCL', 'SNOW', 'MDB', 'PLTR', 'DXCM', 'ABT', 'MDT', 'DVA', 'FMS', 'EMR', 'POWL', 'FLEX', 'SANM', 'BHE', 'CLS', 'JBL', 'ADP', 'WEX', 'PAYX', 'HQY', 'INTU', 'WDAY', 'PAYC', 'PCTY', 'BE', 'FCEL', 'PLUG', 'BLDP', 'LIN', 'TRP', 'EPD', 'KMI', 'LNG', 'TRGP', 'ET', 'MPLX', 'OKE', 'WMB', 'ENB', 'ICE', 'CME', 'IVZ', 'NDAQ', 'STT', 'BLK', 'CBOE', 'TROW', 'BAC', 'MSBC', 'GS', 'WFC', 'CROX', 'VFC', 'DECK', 'NKE', 'GCO', 'BIRK', 'ONON', 'UAA', 'ETD', 'MLKN', 'LOVE', 'RH', 'WSM', 'LZB', 'ARHS', 'W', 'RBLX', 'EA', 'TTWO', 'CRSR', 'SONY', 'U', 'GME', 'SITE', 'SMG', 'TEVA', 'VTRS', 'RDY', 'SDZNY', 'CNC', 'HUM', 'MOH', 'UNH', 'ELV', 'OSCR', 'CLOV', 'CVS', 'JCI', 'WSO', 'TT', 'LII', 'CARR', 'AOS', 'MAS', 'MLM', 'BLDR', 'EXP', 'VMC', 'AWI', 'SHW', 'RPM', 'LOW', 'HD', 'IBP', 'JHX', 'OC', 'SXYAY', 'FBIN', 'FAF', 'STC', 'CSGP', 'ORI', 'RKT', 'UWMC', 'Z', 'ZG', 'COMP', 'OPEN', 'NVR', 'DHI', 'PHM', 'KBH', 'LEN', 'HOV', 'TOL', 'BSX', 'PEN', 'SYK', 'THC', 'UHS', 'HCA', 'CYH', 'ISRG', 'SGRY', 'GMED', 'ZBH', 'TMDX', 'ECL', 'PG', 'CL', 'CLX', 'ABM', 'GROV', 'KMB', 'CHD', 'BDRFY', 'RBGLY', 'UL', 'TER', 'HON', 'ABBNY', 'SIEGY', 'CGNX', 'EMB', 'ROK', 'AA', 'FCX', 'FSUGY', 'BHP', 'VALE', 'RIO', 'CLF', 'ITW', 'MMM', 'FAST', 'AIT', 'PH', 'GWW', 'PTC', 'DASTY', 'ADSK', 'IOT', 'CTSH', 'INFY', 'WIT', 'GIB', 'ACN', 'EPAM', 'GLOB', 'DXC', 'KD', 'BBAR', 'DLO', 'STNE', 'NU', 'PAGS', 'MELI', 'BBD', 'ITUB', 'INTR', 'LNC', 'MET', 'EQH', 'PRU', 'BUD', 'SAM', 'TAP', 'CELH', 'STZ', 'KO', 'PEP', 'KDP', 'MNST', 'DEO', 'HEINY', 'BF.B', 'ARCB', 'CHRW', 'ODFL', 'SAIA', 'XPO', 'LSTR', 'RXO', 'FWRD', 'URI', 'CAT', 'CMI', 'TSN', 'HRL', 'JBS', 'SFD', 'PPC', 'CORZ', 'APLD', 'IREN', 'CRWV', 'BW', 'WULF', 'CIFR', 'NBIS', 'HUT', 'GEV', 'OKLO', 'SMR', 'LEU', 'BWXT', 'CCJ', 'SHEL', 'BP', 'XOM', 'CVX', 'HAL', 'SLB', 'DVN', 'COP', 'AZN', 'BMY', 'MRK', 'NVS', 'RHHBY', 'COUR', 'CHGG', 'DUOL', 'HSY', 'MDLZ', 'CAG', 'GIS', 'CPB', 'SJM', 'KHC', 'NSRGY', 'EMN', 'AXTA', 'PPG', 'CC', 'MA', 'V', 'AXP', 'AAPL', 'HPQ', 'XRX', 'LOGI', 'STX', 'MU', 'SNDK', 'WDC', 'TREE', 'SOFI', 'HAPN', 'UPST', 'AFRM', 'CHWY', 'WOOF', 'ZTS', 'ELAN', 'FRPT', 'IDXX', 'AEM', 'AG', 'PAAS', 'WPM', 'KGC', 'NEM', 'B', 'HL', 'CDE', 'SIG', 'DLR', 'PLD', 'CFG', 'FHN', 'PNC', 'ZION', 'FITB', 'HBAN', 'RF', 'TFC', 'MTB', 'USB', 'CMG', 'SBUX', 'CAVA', 'SG', 'BROS', 'DASH', 'SYY', 'WING', 'YUM', 'WEN', 'QSR', 'SHAK', 'MCD', 'BJRI', 'CAKE', 'DRI', 'CBRL', 'EAT', 'TXRH', 'BLMN', 'DIN', 'AMZN', 'ACI', 'COST', 'KR', 'BJ', 'WMT', 'TGT', 'GO', 'KLAC', 'LRCX', 'ASML', 'AMAT', 'NXPI', 'TXN', 'AEHR', 'ADI', 'ON', 'ILMN', 'TMO', 'LH', 'DGX', 'DHR', 'A', 'BIO', 'QCOM', 'QRVO', 'SWKS', 'CRUS', 'MO', 'PM', 'RLX', 'TPB', 'BTI', 'GOOG', 'META', 'RDDT', 'FOXA', 'PINS', 'SNAP', 'NOW', 'ASAN', 'GTLB', 'MNDY', 'FROG', 'TEAM', 'FSLR', 'ENPH', 'NXT', 'CSIQ', 'ARRY', 'SEDG', 'FVRR', 'KFRC', 'NSP', 'RANJY', 'RHI', 'MAN', 'KFY', 'UPWK', 'MT', 'NUE', 'STLD', 'GGB', 'NFLX', 'PUBM', 'TTD', 'WBD', 'APP', 'DIS', 'MGNI', 'PSKY', 'SPOT', 'NOK', 'ERIC', 'HOOD', 'COIN', 'MS', 'IBKR', 'SCHW', 'BULL', 'GLXY', 'FUTU', 'PATK', 'WGO', 'CWH', 'THO', 'LCII', 'H', 'HLT', 'LUV', 'WH', 'JBLU', 'AAL', 'ALK', 'UAL', 'DAL', 'ABNB', 'TRIP', 'EXPE', 'MAR', 'IHG', 'BKNG', 'CAR', 'HTZ', 'DIDIY', 'LYFT', 'UBER', 'GRAB', 'KNX', 'GBX', 'UPS', 'NSC', 'UNP', 'JBHT', 'CSX', 'RAIL', 'FDX', 'AEP', 'EXC', 'SO', 'XEL', 'EIX', 'NEE', 'PCG', 'ED', 'DUK', 'PEG', 'D', 'GOOS', 'COLM', 'RL', 'ANF', 'LULU', 'GAP', 'URBN', 'ROST', 'TJX', 'PVH', 'USFD', 'UNFI' ];
     const themeToggle = document.getElementById('themeToggle');
     themeToggle.addEventListener('click', () => {
       document.body.dataset.theme = document.body.dataset.theme === 'dark'
@@ -557,18 +557,31 @@
         if (!json.data || json.data.length === 0) // || !jsonInfo.company || jsonInfo.company.marketcap < 1000000000 || jsonInfo.company.avg30_volume < 1000000)
           return null;
 
-        var latest = json.data[json.data.length - 1];
-        var next = latest;
+        var next = json.data[json.data.length - 1];
+        var latest = next;
         
-        if (!latest.post_earnings_move_3d && json.data.length > 1) {
-          latest = json.data[json.data.length - 2];
+        const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+        
+        for (let i = json.data.length - 1; i >= 0; i--) {
+            const ev = json.data[i];
+            if (!ev.report_date) continue;
+            
+            if (ev.report_date < todayStr) {
+                latest = ev;
+                break;
+            } else if (ev.report_date === todayStr) {
+                if (ev.report_time === 'premarket' || ev.report_time === 'bmo') {
+                    latest = ev;
+                    break;
+                }
+            }
         }
 
         // Keep/Filter stocks with earnings happened in last 2 days only.
         if (!latest.report_date) return null;
-        const erDate = new Date(latest.report_date);
-        const today = new Date();
-        const diffDays = (today - erDate) / (1000 * 60 * 60 * 24);
+        
+        const diffDays = (new Date(todayStr) - new Date(latest.report_date)) / (1000 * 60 * 60 * 24);
+        
         // Using 3 days to account for weekends and timezone shifts, effectively capturing the last 2 business days.
         if (diffDays < 0 || diffDays > 3) {
             return null;
@@ -657,6 +670,11 @@
           ucpa: ucpa,
           lcpa: lcpa,
           lcp: lcp,
+          ucp3Abs: ucp3Abs,
+          ucpAbs: ucpAbs,
+          ucpaAbs: ucpaAbs,
+          lcpaAbs: lcpaAbs,
+          lcpAbs: lcpAbs,
           finvizSma200: null,
           er_date: latest.report_date || 'N/A',
           report_date: latest.report_date || 'N/A',
@@ -910,6 +928,12 @@
       data.ucpa = latestPrice ? ((latestPrice - (preErPrice + lastImpliedMoveAbs)) / latestPrice * 100).toFixed(1) : 0;
       data.lcpa = latestPrice ? ((latestPrice - (preErPrice - lastImpliedMoveAbs)) / latestPrice * 100).toFixed(1) : 0;
       data.lcp = latestPrice ? ((latestPrice - (preErPrice - 2 * lastImpliedMoveAbs)) / latestPrice * 100).toFixed(1) : 0;
+      
+      data.ucp3Abs = preErPrice + 3 * lastImpliedMoveAbs;
+      data.ucpAbs = preErPrice + 2 * lastImpliedMoveAbs;
+      data.ucpaAbs = preErPrice + lastImpliedMoveAbs;
+      data.lcpaAbs = preErPrice - lastImpliedMoveAbs;
+      data.lcpAbs = preErPrice - 2 * lastImpliedMoveAbs;
       data.priceChange = (data.high10d && data.high10d > 0) ? (((latestPrice - data.high10d) / data.high10d) * 100).toFixed(1) : 0;
       
       data.ma10Ratio = data.calculatedMa10 ? ((latestPrice - data.calculatedMa10) / data.calculatedMa10) * 100 : 0;
@@ -1183,20 +1207,20 @@
                     <td style="display:none;">${ps_ratio}</td>
                     <td class="col-group-divider" style="${colorNumDark(erMove)}">${erMove}</td>
                     <td class="priceChange" style="${colorNumDark(priceChange)}"><a href="https://robinhood.com/stocks/${ticker}" target="_blank" style="color:inherit;">${priceChange}</a></td>
-                    <td class="mcp" style="${colorNumDark(mcp)}">${mcp}</td>
-                    <td class="mcp2q col-group-divider" style="${colorNumDark(mcp2q)}">${mcp2q}</td>
-                    <td class="ucpa" style="${colorNumDark(ucpa)}">${ucpa}</td>
-                    <td class="ucp" style="${colorNumDark(ucp)}">${ucp}</td>
-                    <td class="ucp3" style="${colorNumDark(ucp3)}">${ucp3}</td>
-                    <td class="lcpa" style="${colorNumDark(lcpa)}">${lcpa}</td>
-                    <td class="lcp col-group-divider" style="${colorNumDark(lcp)}">${lcp}</td>
+                    <td class="mcp" title="$${(data.preErPrice || 0).toFixed(2)}" style="${colorNumDark(mcp)}">${mcp}</td>
+                    <td class="mcp2q col-group-divider" title="$${(data.mcp2qPreErPrice || 0).toFixed(2)}" style="${colorNumDark(mcp2q)}">${mcp2q}</td>
+                    <td class="ucpa" title="$${(data.ucpaAbs || 0).toFixed(2)}" style="${colorNumDark(ucpa)}">${ucpa}</td>
+                    <td class="ucp" title="$${(data.ucpAbs || 0).toFixed(2)}" style="${colorNumDark(ucp)}">${ucp}</td>
+                    <td class="ucp3" title="$${(data.ucp3Abs || 0).toFixed(2)}" style="${colorNumDark(ucp3)}">${ucp3}</td>
+                    <td class="lcpa" title="$${(data.lcpaAbs || 0).toFixed(2)}" style="${colorNumDark(lcpa)}">${lcpa}</td>
+                    <td class="lcp col-group-divider" title="$${(data.lcpAbs || 0).toFixed(2)}" style="${colorNumDark(lcp)}">${lcp}</td>
                     <!-- <td class="ma10" style="${colorNumDark(ma10)}">${ma10}</td> -->
                     <td class="ma50" style="${colorNumDark(ma50)}">${ma50}</td>
                     <td class="ma200 col-group-divider" style="${colorNumDark(ma200)}"><a href="https://www.barchart.com/stocks/quotes/${ticker}/overview" target="_blank" style="color:inherit;">${ma200}</a></td>
                     <td style="${isEntryNear ? 'font-weight: 900; color: #fff; font-size: 1.1em;' : ''}">${data.entry || '-'}</td>
                     <td>${data.code || '-'}</td>
                     <td class="price"><a href="https://finviz.com/quote.ashx?t=${ticker}" target="_blank" style="color:inherit;}">${price}</a></td>
-                    <td class="change_perc" style="${colorNumDark(mcp)}">${mcp}</td>
+                    <td class="change_perc" title="$${(data.preErPrice || 0).toFixed(2)}" style="${colorNumDark(mcp)}">${mcp}</td>
                     <!-- <td class="rsi col-group-divider">${rsi}</td> -->
                     <!-- <td style="${beta > 1.29 ? 'color:#22c55e;' : 'color:inherit;'}">${beta}</td> -->
                     <td class="t1">${getTCellRender(data.t1, ticker, 'https://unusualwhales.com/stock/{ticker}/analysts/', data.price)}</td>

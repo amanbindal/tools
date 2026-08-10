@@ -1245,6 +1245,11 @@
           ucpa: ucpa,
           lcpa: lcpa,
           lcp: lcp,
+          ucp3Abs: ucp3Abs,
+          ucpAbs: ucpAbs,
+          ucpaAbs: ucpaAbs,
+          lcpaAbs: lcpaAbs,
+          lcpAbs: lcpAbs,
           finvizSma200: null,
           er_date: next.report_date || 'N/A',
           report_date: latest.report_date || 'N/A',
@@ -1498,6 +1503,12 @@
       data.ucpa = latestPrice ? ((latestPrice - (preErPrice + lastImpliedMoveAbs)) / latestPrice * 100).toFixed(1) : 0;
       data.lcpa = latestPrice ? ((latestPrice - (preErPrice - lastImpliedMoveAbs)) / latestPrice * 100).toFixed(1) : 0;
       data.lcp = latestPrice ? ((latestPrice - (preErPrice - 2 * lastImpliedMoveAbs)) / latestPrice * 100).toFixed(1) : 0;
+      
+      data.ucp3Abs = preErPrice + 3 * lastImpliedMoveAbs;
+      data.ucpAbs = preErPrice + 2 * lastImpliedMoveAbs;
+      data.ucpaAbs = preErPrice + lastImpliedMoveAbs;
+      data.lcpaAbs = preErPrice - lastImpliedMoveAbs;
+      data.lcpAbs = preErPrice - 2 * lastImpliedMoveAbs;
       data.priceChange = (data.high10d && data.high10d > 0) ? (((latestPrice - data.high10d) / data.high10d) * 100).toFixed(1) : 0;
       
       data.ma10Ratio = data.calculatedMa10 ? ((latestPrice - data.calculatedMa10) / data.calculatedMa10) * 100 : 0;
@@ -1787,13 +1798,13 @@
                     <td style="display:none;">${ps_ratio}</td>
                     <td class="col-group-divider" style="${colorNumDark(erMove)}">${erMove}</td>
                     <td class="priceChange" style="${colorNumDark(priceChange)}"><a href="https://robinhood.com/stocks/${ticker}" target="_blank" style="color:inherit;">${priceChange}</a></td>
-                    <td class="mcp" style="${colorNumDark(mcp)}">${mcp}</td>
-                    <td class="mcp2q col-group-divider" style="${colorNumDark(mcp2q)}">${mcp2q}</td>
-                    <td class="ucpa" style="${colorNumDark(ucpa)}">${ucpa}</td>
-                    <td class="ucp" style="${colorNumDark(ucp)}">${ucp}</td>
-                    <td class="ucp3" style="${colorNumDark(ucp3)}">${ucp3}</td>
-                    <td class="lcpa" style="${colorNumDark(lcpa)}">${lcpa}</td>
-                    <td class="lcp col-group-divider" style="${colorNumDark(lcp)}">${lcp}</td>
+                    <td class="mcp" title="$${(data.preErPrice || 0).toFixed(2)}" style="${colorNumDark(mcp)}">${mcp}</td>
+                    <td class="mcp2q col-group-divider" title="$${(data.mcp2qPreErPrice || 0).toFixed(2)}" style="${colorNumDark(mcp2q)}">${mcp2q}</td>
+                    <td class="ucpa" title="$${(data.ucpaAbs || 0).toFixed(2)}" style="${colorNumDark(ucpa)}">${ucpa}</td>
+                    <td class="ucp" title="$${(data.ucpAbs || 0).toFixed(2)}" style="${colorNumDark(ucp)}">${ucp}</td>
+                    <td class="ucp3" title="$${(data.ucp3Abs || 0).toFixed(2)}" style="${colorNumDark(ucp3)}">${ucp3}</td>
+                    <td class="lcpa" title="$${(data.lcpaAbs || 0).toFixed(2)}" style="${colorNumDark(lcpa)}">${lcpa}</td>
+                    <td class="lcp col-group-divider" title="$${(data.lcpAbs || 0).toFixed(2)}" style="${colorNumDark(lcp)}">${lcp}</td>
                     <!-- <td class="ma10" style="${colorNumDark(ma10)}">${ma10}</td> -->
                     <td class="ma50" style="${colorNumDark(ma50)}">${ma50}</td>
                     <td class="ma200 col-group-divider" style="${colorNumDark(ma200)}"><a href="https://www.barchart.com/stocks/quotes/${ticker}/overview" target="_blank" style="color:inherit;">${ma200}</a></td>
