@@ -372,6 +372,7 @@
           <th onclick="sortTable('t2')" title="Target 2">T2</th>
           <th onclick="sortTable('t3')" title="Target 3">T3</th>
           <th onclick="sortTable('iv_rank')" title="Implied Volatility Rank">IvRank</th>
+          <th onclick="sortTable('rsi14')" title="14-Day Daily Relative Strength Index">RSI14</th>
           
           
           
@@ -423,7 +424,7 @@
       });
     }
     function calculateRSI(closes, period = 14) {
-      if (closes.length <= period) return null;
+      if (!closes || closes.length <= period) return null;
 
       let gains = 0;
       let losses = 0;
@@ -448,7 +449,8 @@
         avgLoss = (avgLoss * (period - 1) + loss) / period;
       }
 
-      const rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
+      if (avgLoss === 0) return 100;
+      const rs = avgGain / avgLoss;
       const rsi = 100 - 100 / (1 + rs);
       return rsi;
     }
@@ -484,28 +486,33 @@
       }
     }
     async function updateAndGetHigh10d(ticker, latestPrice, cachedData = null) {
-        let history = (cachedData && cachedData.history) ? cachedData.history : [];
+        let history = (cachedData && cachedData.history && cachedData.history.length >= 20) ? cachedData.history : [];
         if (!history || history.length === 0) {
             try {
-                let res = await fetch(`https://phx.unusualwhales.com/api/gex/${ticker}?timespan=10d`);
+                let res = await fetch(`https://phx.unusualwhales.com/api/gex/${ticker}?timespan=90d`);
                 let json = await res.json();
                 if (json && json.data) {
                     history = json.data.map(d => ({ date: d.date, close: parseFloat(d.close) }));
                 }
             } catch (err) {}
         }
-        const today = new Date().toISOString().split('T')[0];
-        history.push({ date: today, close: latestPrice });
+        if (latestPrice && !isNaN(latestPrice)) {
+            const today = new Date().toISOString().split('T')[0];
+            history.push({ date: today, close: latestPrice });
+        }
         const uniqueHistoryMap = {};
         history.forEach(item => { if (!isNaN(item.close)) uniqueHistoryMap[item.date] = item.close; });
         const uniqueDates = Object.keys(uniqueHistoryMap).sort();
-        const updatedHistory = uniqueDates.slice(-15).map(date => ({ date, close: uniqueHistoryMap[date] }));
+        const updatedHistory = uniqueDates.slice(-90).map(date => ({ date, close: uniqueHistoryMap[date] }));
         if (cachedData) cachedData.history = updatedHistory;
         
         const last10 = uniqueDates.slice(-10).map(date => uniqueHistoryMap[date]);
+        const closes = uniqueDates.map(date => uniqueHistoryMap[date]);
+        const rsiVal = calculateRSI(closes, 14);
         return {
             high10d: last10.length > 0 ? Math.max(...last10) : 0,
-            history: updatedHistory
+            history: updatedHistory,
+            rsi14: rsiVal !== null ? parseFloat(rsiVal.toFixed(1)) : null
         };
     }
 
@@ -610,6 +617,7 @@
         const gexData = await updateAndGetHigh10d(ticker, latestPrice, null);
         const high10d = gexData.high10d;
         const history = gexData.history;
+        const rsi14 = gexData.rsi14;
         const priceChange = (high10d && high10d > 0) ? ((latestPrice - high10d) / high10d * 100).toFixed(1) : 0;
         const mcp = preErPrice ? ((latestPrice - preErPrice) / preErPrice * 100).toFixed(1) : 0;
         const mcp2q = mcp2qPreErPrice ? ((latestPrice - mcp2qPreErPrice) / mcp2qPreErPrice * 100).toFixed(1) : 0;
@@ -643,6 +651,7 @@
           priceChange: priceChange || 0,
           high10d: high10d || 0,
           history: history,
+          rsi14: rsi14,
           mcp: mcp || 0,
           mcp2q: mcp2q || 0,
           ucp3: ucp3,
@@ -804,6 +813,7 @@
                         const high10d = gexData.high10d;
                         cached.data.high10d = high10d;
                         cached.data.history = gexData.history;
+                        cached.data.rsi14 = gexData.rsi14;
                         cached.data.priceChange = (high10d && high10d > 0) ? ((latestPrice - high10d) / high10d * 100).toFixed(1) : 0;
                         cached.data.mcp = preErPrice ? ((latestPrice - preErPrice) / preErPrice * 100).toFixed(1) : 0;
                         
@@ -834,12 +844,14 @@
             }
         }
         
-        if (cached.data.high10d === undefined || cached.data.high10d === 0) {
+        if (cached.data.high10d === undefined || cached.data.high10d === 0 || cached.data.rsi14 === undefined || !cached.data.history || cached.data.history.length < 20) {
             const latestPrice = cached.data.price || 0;
-            const gexData = await updateAndGetHigh10d(ticker, latestPrice, cached.data);
+            const gexData = await updateAndGetHigh10d(ticker, latestPrice, (cached.data.history && cached.data.history.length >= 20) ? cached.data : null);
             cached.data.high10d = gexData.high10d;
             cached.data.history = gexData.history;
+            cached.data.rsi14 = gexData.rsi14;
             cached.data.priceChange = (cached.data.high10d && cached.data.high10d > 0) ? ((latestPrice - cached.data.high10d) / cached.data.high10d * 100).toFixed(1) : 0;
+            await setCache(cacheKey, cached);
         }
         if (cached.data.ucp3 === undefined) {
             const preErPrice = cached.data.preErPrice || 0;
@@ -1156,6 +1168,7 @@
         };
 
         const rsi = data.finalRsi ? data.finalRsi.toFixed(1) : (data.calculatedRsi ? data.calculatedRsi.toFixed(1) : '-');
+        const rsi14 = (data.rsi14 !== undefined && data.rsi14 !== null && !isNaN(data.rsi14)) ? parseFloat(data.rsi14).toFixed(1) : '-';
         const iv_rank = data.iv_rank ? parseFloat(data.iv_rank).toFixed(1) : '-';
         const report_time = data.report_time || '-';
         const histMove2 = data.histMove2 != null ? parseFloat(data.histMove2).toFixed(1) : '-';
@@ -1222,6 +1235,7 @@
                     <td class="t2">${getTCellRender(data.t2, ticker, 'https://www.tipranks.com/stocks/{ticker}/forecast/', data.price)}</td>
                     <td class="t3">${getTCellRender(data.t3, ticker, null, data.price)}</td>
                     <td><a href="https://marketchameleon.com/Overview/${ticker}" target="_blank" style="color:inherit;}">${iv_rank}</a></td>
+                    <td class="rsi14">${rsi14}</td>
                   </tr>`;
       }
       tableBody.innerHTML = html;
